@@ -29,7 +29,7 @@ twitter_username: twitter_is_shit
 github_username:  teilzeitdenker
 
 # Build settings
-theme: minima
+theme: jekyll-theme-hacker
 plugins:
   - jekyll-feed
 
