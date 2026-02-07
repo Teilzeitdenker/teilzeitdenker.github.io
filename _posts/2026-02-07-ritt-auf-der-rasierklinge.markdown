@@ -1,20 +1,18 @@
 ---
 layout: default
 title:  "Ritt auf der Rasierklinge"
-date:   2026-02-05 22:57:37 +0100
-categories: jekyll update
+date:   2026-02-07
+categories: introduction
 ---
-In Zeiten von GitHub Copilot ist es nicht mehr ganz so leicht, im Bereich der wettbewerbsmäßigen Programmierung (competitive programming) herausfordernde Aufgaben zu finden, die sich nicht mit ein paar Minuten AgentChat mühelos (und folglich auch ohne jeglichen wünschenswerten Lerneffekt oder Ego-Boost) erledigen lassen. 
+In Zeiten von GitHub Copilot ist es nicht mehr ganz so leicht, im Bereich der wettbewerbsmäßigen Programmierung (competitive programming) herausfordernde Projekte und Aufgaben im Internet zu finden, die sich nicht mit einer kurzen GitHub-Suche oder ein paar Minuten AgentChat mühelos (und folglich auch ohne jeglichen wünschenswerten Lerneffekt oder Ego-Boost) "lösen" lassen. 
 
-So ist das ursprüngliche [Projekt Euler][project-euler] bereits vollständig entzaubert worden, siehe [Ciro Santillis Repo][ciro-santilli] oder noch viel schlimmer, einfach nur die Liste aller Lösungszahlen auf dem sehr passend benannten Account [Lucky Toilet][lucky-toilet].
+So ist das ursprüngliche [Projekt Euler][project-euler] bereits vollständig entzaubert worden, siehe [Ciro Santillis Repo][ciro-santilli] oder noch viel schlimmer, einfach nur die Liste aller Lösungszahlen auf dem sehr passend benannten Account [Lucky Toilet][lucky-toilet]. Die finnische CP-Seite [CSES][cses] hat zwar Ende 2025 ein Update erhalten (statt ehemals 300 sind es jetzt 400 Aufgaben), aber auch hier waren schon zu viele Leute unterwegs als dass sich nicht zu leicht Lösungen in diversen online repos finden ließen.
 
-Und auch das Projekt Euler+ auf [HackerRank][hacker-rank] wird sich dieser Entwicklung binnen absehbarer Zeit wohl nicht mehr erwehren können. Aber bis dahin werde ich daran weiterarbeiten, um wie ein Verdurstender noch die letzten köstlichen Tropfen Erkenntnisgewinn-Nektars herauszupressen. Dieser Blog soll eine Art Tagebuch meines Fortschritts ab Aufgabe 120 werden. 
+Auch das [Projekt Euler+][project-euler-plus] auf [HackerRank][hacker-rank] wird sich dieser Entwicklung binnen absehbarer Zeit wohl nicht mehr entziehen können, aber bis heute gibt es erstaunlich wenig dazu zu finden, was den Wert jeder eigenen Lösung erheblich steigert (und die Notwendigkeit des ). Bis es soweit auch dort soweit kommt, will ich mich daher weiter damit beschäftigen, um wie ein Verdurstender noch die letzten köstlichen Tropfen Erkenntnisgewinn-Nektars herauszupressen. Dieser "Blog" soll eine Art Tagebuch meines Fortschritts ab Aufgabe 120 werden. 
 
-Der im Titel genannte "Ritt auf der Rasierklinge" besteht nun darin, nicht nurmehr fade vollständige Lösungen zu posten, die ja dem geneigten Leser den vom Autor in großen Tönen gelobten Spaß am Selbstversuch vergällen würden, sondern vielmehr zielgerichtete kleine Hinweise zu geben, die eventuelles Ungemach abwenden können. Nicht jeder scheitert mit Würde und verfügt über die nötige Resilienz, seinen aufgestauten Frust durch das stetige Rennen gegen eine Ziegelmauer aus Wrong Answers und TLEs nicht irgendwann an der Tastatur oder unschuldig herumstehenden Möbeln auszulassen. 
+Der im Titel genannte "Ritt auf der Rasierklinge" besteht nun darin, hier nicht einfach ganz öde die alles verratenden Lösungen zu posten, die ja dem hilflos ausgelieferten geneigten Leser vom satanisch grinsenden Autor den in großen Tönen gelobten Spaß am Selbstversuch vergällen würden, sondern vielmehr zielgerichtete kleine Hinweise zu geben, die eventuelles Ungemach abwenden können. Denn nicht jeder scheitert mit Würde und verfügt über die nötige Resilienz, um seinen aufgestauten Frust durch das stetige Rennen gegen eine Ziegelmauer aus Wrong Answers und TLEs nicht irgendwann an der klapprigen Tastatur oder unschuldig herumstehenden Möbeln und Haustieren auslassen zu wollen. 
 
-Um das Jekyll-Theme "Hacker", das hier am Werk ist, noch kurz auszuprobieren, poste ich mal mein "hackerrank_minimal_template.cpp", das einige handgemachte I/O-Funktionen enthält, die einem bei inputlastigen Aufgaben tatsächlich den Arsch retten können. 
-
-Aber Vorsicht: Der Buffer bei write() muss angepasst werden, falls größere primitive Datentypen ausgegegeben werden. Für long longs reichen 20 Charaktere, für die 128-bit integer __int128, die nur mit g++ verfügbar sind und keine Unterstützung durch std::cout haben, sollte man auf 40 gehen. 
+Um das Jekyll-Theme [Hacker][hacker], das hier am Werk ist, kurz auszuprobieren, poste ich mal mein "hackerrank_minimal_template.cpp", das einige handgemachte I/O-Funktionen enthält, die einem bei inputlastigen Aufgaben tatsächlich den Allerwertesten retten können. 
 
 {% highlight c++ %}
 #pragma GCC optimize("Ofast", "unroll-loops", "fast-math")
@@ -65,8 +63,39 @@ auto main() -> int {
 }
 {% endhighlight %}
 
+Mit etwas Vorsicht zu genießen ist der kleine char-Buffer bei write(). Dieser muss angepasst werden, falls größere primitive Datentypen ausgegegeben werden. Für long longs reichen 20 Charaktere, für die 128-bit integer __int128, die nur mit g++ verfügbar sind und keine Unterstützung durch std::cout haben, sollte man auf 40 gehen (ich weiß, man könnte ihn auch einfach standardmäßig auf 40 setzen, aber das wäre ja Verschwendung!)
+
+Kompiliert wird unter bash einfach mit 
+
+{% highlight bash %}
+g++ -o program source.cpp -std=c++20 -Wall -Wextra
+{% endhighlight %}
+
+und eine eventuelle input.txt-Datei übergeben wir dem Programm mit
+
+{% highlight bash %}
+./program < input.txt
+{% endhighlight %}
+
+Im obigen Beispiel-Template bestände der nötige Input aus genau einem Integer, das Ergebnis ist unabhängig davon immer eine Nullnummer.
+
+Unter Windows muss man obiges Template mit einer Präprozessor-Direktive etwas anpassen, da getchar_unlocked() und Konsorten dort unbekannt sind. Kompiliere unter Powershell also mit 
+
+{% highlight powershell %}
+g++ -o program source.cpp -std=c++20 -Wall -Wextra -D WINDOWS
+{% endhighlight %}
+
+und pipe den Input einfach mit
+{% highlight powershell %}
+Get-Content input.txt | program.exe
+{% endhighlight %}
+
+in das executable.
 
 [project-euler]: https://projecteuler.net/
+[project-euler-plus]: https://www.hackerrank.com/contests/projecteuler/challenges
 [ciro-santilli]: https://github.com/cirosantilli/project-euler-solutions
 [lucky-toilet]: https://github.com/lucky-bai/projecteuler-solutions
 [hacker-rank]: https://www.hackerrank.com/
+[hacker]: https://github.com/pages-themes/hacker
+[cses]: https://cses.fi/problemset/

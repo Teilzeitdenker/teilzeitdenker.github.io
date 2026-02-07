@@ -1,0 +1,12 @@
+---
+layout: default
+title:  "Project Euler #120: Square remainders"
+date:   2026-02-08
+categories: project-euler
+---
+
+LaTeX-Support by adding the mathjax-script in index.html:
+
+$$
+\sum_{i=1}^{n} i = \frac{n(n+1)}{2}
+$$
