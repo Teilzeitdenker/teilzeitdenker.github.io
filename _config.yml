@@ -18,11 +18,10 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 
-title: Teilzeitdenken für Fortgeschrittene
+title: teilzeitdenken_für_fortgeschrittene
 email: acidernst2000@hotmail.com
 description: >- # this means to ignore newlines until "baseurl:"
-  Der ewige Ritt auf der Rasierklinge geht weiter. Wie kann man Leuten etwas erzählen, 
-  ohne immer gleich zu viel zu verraten und ihren Erkenntnisgewinn im Klo runterzuspülen? 
+  Projekt Euler+ auf HackerRank
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: twitter_is_shit
