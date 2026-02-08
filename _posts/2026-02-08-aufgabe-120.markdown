@@ -5,8 +5,85 @@ date:   2026-02-08
 categories: project-euler
 ---
 
-LaTeX-Support by adding the mathjax-script in index.html:
+Diese Aufgabe ([Square remainders][problem-120]) hat mich in vielerlei Hinsicht überrascht. Zuerst dachte ich, die HackerRank-Version sei deutlich anspruchsvoller als die [ursprüngliche Projekt-Euler-Version][project-euler-original]. Denn in der Aufgabenstellung erschien ja die Hochzahl von a gleich mal als Variable e und in der Frage war ganz allgemein nach 
 
 $$
-\sum_{i=1}^{n} i = \frac{n(n+1)}{2}
+\sum_{a=1}^{A} R(a, e) 
 $$
+
+gefragt. Das wäre schon heftig gewesen, wenn e hier beliebige Werte annehmen würde, aber gottseidank war schnell klar, dass es nur 2 oder 3 sein durfte. Puh! An der Anzahl der Tests (bis zu 10000) konnte man leicht ablesen, dass hier wohl eine geschlossene Formel vonnöten sein würde, um kein TLE zu bekommen. Das Forum im ursprünglichen Projekt Euler ist stets meine erste Anlaufstelle (die ersten 200 Aufgaben habe ich da vor etwa 5 Jahren mal gelöst, also sind mir die Forumseinträge alle zugänglich). Dort war A = 50 (und nicht 1 Milliarde), aber lieber klein anfangen. Der allgemeine Ausdruck für e = 2 (der allerdings nur für gerades A gilt) lautet:
+
+$$
+\sum_{a=3}^{2K} R(a, e) = \frac{K(K-1)(8K+5)}{3} 
+$$
+
+Das heißt, für e = 2 war nicht mehr sehr viel zu tun außer sich den Spezialfall a = 1 (naja, da ist der "Remainder" immer 0) und a = 2 (hier gilt R = 2) zu überlegen und dazuzuaddieren, damit obige Summe eben bei a = 1 und nicht bei a = 3 beginnen kann. 
+
+Ferner muss man für ungerade A noch einen Term hinzuzählen, nämlich den, der für ungerade A eben gilt, also \\( A(A-1) \\).
+
+Statt durch 3 zu teilen kann man bei der HackerRank-Aufgabe einfach das modulare Inverse von 3 bezüglich \\( 10^9 + 7 \\) multiplizieren. Und schönerweise kann man das im Kopf berechnen, denn \\( 10^9 + 8 \\) ist ja durch drei teilbar, also gilt:
+
+$$
+3^{-1} \equiv 333333336 \mod 10^9 + 7 
+$$
+
+Wegen der hohen Grenze von einer Milliarde für A und dem Term der Ordnung \\( K^3 \\) auf der rechten Seite sollte man bei der ganzen Aufgabe gleich auf __int128 als Datentyp setzen. Das erspart einem auch einiges Kopfzerbrechen wegen integer overflow (und zusätzlich einige Modulo-Operationen beim Potenzieren). 
+
+
+Für den Fall e = 3 bleibt einem nichts übrig als einfach mal auf Papier loszurechnen. Meine Tips lauten:
+1. Entwickle \\( (a - 1)^n + (a + 1)^n \\) mit Binomialkoeffizienten, lösche alle Potenzen, die \\( a^3 \\) enthalten und fasse dann getrennt nach n gerade oder ungerade zusammen.
+2. Berechne \\( R(2, 3) = 4 \\), \\( R(3, 3) = 24 \\) und \\( R(4, 3) = 56 \\) von Hand, indem einfach mal alle n von 0 bis \\( a^3 \\) eingesetzt werden. So entwickelt man auch ein Gefühl für die periodische Dynamik, die hier mit im Spiel ist. 
+3. Teste damit, dass die Formeln aus Schritt 1 auch tatsächlich stimmen. Wenn das passt, kann man auch noch \\( R(5, 3) \\) in Angriff nehmen, danach wird es aber von Hand unangenehm, denn die dritte Potenz ist dann schon sehr groß.
+4. Aber auch anhand dieser wenigen Beispiele läßt sich schon ein Muster ähnlich zu dem für e = 2 erkennen. Formuliere diese Vermutung getrennt nach a gerade und a ungerade. 
+5. Checke, dass diese Vermutung (richtigerweise) auch \\( R(6, 3) = 120 \\) und zum Beispiel \\( R(15, 3) = 3360 \\) (für \\( n_{max} = 337 \\)) liefert.
+6. Jetzt verwende eine ähnliche Herangehensweise wie bei e = 2, um erstmal für gerade \\( A = 2K \\) mit Hilfe der Faulhaber-Formeln eine geschlossene Gleichung zu bekommen (diese ist jetzt natürlich von der Ordnung \\( K^4 \\)).
+7. Bleibt noch, für ungerade A einen Term dazuzuaddieren und den Spezialfall a = 2 anzuschauen (also \\( R(2, 3) \\) auszurechnen). 
+8. Schreibe am besten für alle 4 Fälle (also e = 2, A gerade, dann e = 2, A ungerade, dann e = 3 ähnlich) eine Funktion, die das Resultat in einer Operation berechnet. Achte darauf, an den richtigen Stellen modulo zu nehmen, bei Subtraktionen ist darauf zu achten, dass man nicht in den negativen Werte-Bereich rutscht, also immer nochmal \\( + 10^9 + 7 \\) rechnen, bevor man modulo nimmt.
+9. Bastle das alles mit den Spezialfällen zusammen und dann läuft es!
+
+Codeauszug mit entsprechenden Auslassungen (nur mit g++ möglich wegen __int128) : 
+
+{% highlight c++ %}
+using namespace std;
+using int128 = __int128;
+
+const int128 MOD = 1'000'000'007;
+const int128 MODINV3 = 333'333'336;
+
+int128 get_RES_even_2(int128 A) { 
+    int128 K = A / (int128)2;
+    int128 numerator = K * (K - (int128)1) * ((int128)8 * K + (int128)5) % MOD;
+    int128 frac = numerator * MODINV3 % MOD;
+    return (frac + (int128)2) % MOD; // add 2 for the case of a = 2
+}
+
+int128 get_RES_odd_2(int128 A) { // add an extra term for A odd
+    int128 front = get_RES_even_2(A);
+    int128 to_add = A * (A - (int128)1);
+    return (front + to_add) % MOD; 
+}
+
+int128 get_RES_even_3(int128 A) { 
+    int128 K = A / (int128)2;
+    int128 pow4 = ((int128)K * K * K * K) % MOD; // this will not overflow since A < 10^9
+    int128 pow3 = ((int128)K * K * K) % MOD;
+    ...
+    return (... - ... + MOD) % MOD;
+}
+
+int128 get_RES_odd_3(int128 A) { // add an extra term for A odd
+    int128 front = get_RES_even_3(A);
+    int128 to_add = ...
+    return (front + to_add) % MOD; 
+}
+{% endhighlight %}
+
+Wenn man ganz viel Lust hat, kann man im Fall e = 3 noch algebraisch beweisen, dass die eher heuristischen Formeln für den maximalen Rest stimmen. Dazu muss man zeigen, dass der maximale Rest, den man oben postuliert hat, immer erreicht und nie überschritten wird (z.B. bei geraden n). Aber wenn man länger nachdenkt, wird schnell klar, dass die Reste bei geraden n niemals so nah an \\( a^3 \\) herankommen können, weil sie stets (2 + Vielfache von \\( a^2 \\)) sind. Ferner findet man immer ein ungerades n, bei dem der postulierte Rest tatsächlich erreicht wird (zur Not addiert man halt noch \\( a^2 \\) zu dem berechneten n dazu, falls es gerade sein sollte, deswegen nimmt man bei a = 15 statt \\( n_{max} = 112 \\) einfach \\( n_{max} = 112 + a^2 = 337 \\)).
+
+Die letzte Überraschung bei dieser Aufgabe war dann die, dass es innerhalb von 10 Jahren tatsächlich nur 100 Leute geschafft haben, alle Tests zu bestehen und die volle Punktzahl zu holen. Das ist durchschnittlich weniger als ein erfolgreicher Coder pro Monat, das fand ich krass, denn so grausam war es dann auch wieder nicht (ich sage nur ["Monopoly odds" #84][problem-84]  oder ["Arranged probability" #100][problem-100]). 
+
+
+[problem-120]: https://www.hackerrank.com/contests/projecteuler/challenges/euler120/problem
+[project-euler-original]: https://projecteuler.net/problem=120
+[problem-84]: https://www.hackerrank.com/contests/projecteuler/challenges/euler084/problem
+[problem-100]: https://www.hackerrank.com/contests/projecteuler/challenges/euler100/problem
