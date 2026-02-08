@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: post
 title:  "Ritt auf der Rasierklinge"
 date:   2026-02-07
 categories: introduction

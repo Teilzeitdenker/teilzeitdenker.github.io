@@ -1,17 +1,19 @@
 ---
-layout: default
-title:  "Project Euler #120: Square remainders"
+layout: post
+title:  "Project Euler+ #120: Square remainders"
 date:   2026-02-08
 categories: project-euler
 ---
 
-Diese Aufgabe ([Square remainders][problem-120]) hat mich in vielerlei Hinsicht überrascht. Zuerst dachte ich, die HackerRank-Version sei deutlich anspruchsvoller als die [ursprüngliche Projekt-Euler-Version][project-euler-original]. Denn in der Aufgabenstellung erschien ja die Hochzahl von a gleich mal als Variable e und in der Frage war ganz allgemein nach 
+Diese [Aufgabe][problem-120] hat mich in vielerlei Hinsicht überrascht. Zuerst dachte ich, die HackerRank-Version sei deutlich anspruchsvoller als die [ursprüngliche Projekt-Euler-Version][project-euler-original]. Denn in der Aufgabenstellung erschien ja die Hochzahl von a gleich mal als Variable e und in der Frage war ganz allgemein nach 
 
 $$
 \sum_{a=1}^{A} R(a, e) 
 $$
 
-gefragt. Das wäre schon heftig gewesen, wenn e hier beliebige Werte annehmen würde, aber gottseidank war schnell klar, dass es nur 2 oder 3 sein durfte. Puh! An der Anzahl der Tests (bis zu 10000) konnte man leicht ablesen, dass hier wohl eine geschlossene Formel vonnöten sein würde, um kein TLE zu bekommen. Das Forum im ursprünglichen Projekt Euler ist stets meine erste Anlaufstelle (die ersten 200 Aufgaben habe ich da vor etwa 5 Jahren mal gelöst, also sind mir die Forumseinträge alle zugänglich). Dort war A = 50 (und nicht 1 Milliarde), aber lieber klein anfangen. Der allgemeine Ausdruck für e = 2 (der allerdings nur für gerades A gilt) lautet:
+gefragt. Das wäre schon heftig gewesen, wenn e hier beliebige Werte annehmen würde, aber gottseidank war schnell klar, dass es nur 2 oder 3 sein durfte. Puh! Aber die nächste Hiobsbotschaft war nicht weit. Die hohe Anzahl der Tests (bis zu 10000) gab rasch Auskunft darüber, dass man hier ohne eine geschlossene Formel mit einer ordentlichen Portion TLEs abgewatscht werden würde. 
+
+Das [Forum][forum] im ursprünglichen Projekt Euler ist stets meine erste Anlaufstelle (die ersten 200 Aufgaben habe ich da vor etwa 5 Jahren mal gelöst, also sind mir die Forumseinträge alle zugänglich). Dort war A = 50 (und nicht 1 Milliarde), aber lieber klein anfangen. Der allgemeine Ausdruck für e = 2 (der allerdings nur für gerades A gilt) lautet:
 
 $$
 \sum_{a=3}^{2K} R(a, e) = \frac{K(K-1)(8K+5)}{3} 
@@ -29,19 +31,7 @@ $$
 
 Wegen der hohen Grenze von einer Milliarde für A und dem Term der Ordnung \\( K^3 \\) auf der rechten Seite sollte man bei der ganzen Aufgabe gleich auf __int128 als Datentyp setzen. Das erspart einem auch einiges Kopfzerbrechen wegen integer overflow (und zusätzlich einige Modulo-Operationen beim Potenzieren). 
 
-
-Für den Fall e = 3 bleibt einem nichts übrig als einfach mal auf Papier loszurechnen. Meine Tips lauten:
-1. Entwickle \\( (a - 1)^n + (a + 1)^n \\) mit Binomialkoeffizienten, lösche alle Potenzen, die \\( a^3 \\) enthalten und fasse dann getrennt nach n gerade oder ungerade zusammen.
-2. Berechne \\( R(2, 3) = 4 \\), \\( R(3, 3) = 24 \\) und \\( R(4, 3) = 56 \\) von Hand, indem einfach mal alle n von 0 bis \\( a^3 \\) eingesetzt werden. So entwickelt man auch ein Gefühl für die periodische Dynamik, die hier mit im Spiel ist. 
-3. Teste damit, dass die Formeln aus Schritt 1 auch tatsächlich stimmen. Wenn das passt, kann man auch noch \\( R(5, 3) \\) in Angriff nehmen, danach wird es aber von Hand unangenehm, denn die dritte Potenz ist dann schon sehr groß.
-4. Aber auch anhand dieser wenigen Beispiele läßt sich schon ein Muster ähnlich zu dem für e = 2 erkennen. Formuliere diese Vermutung getrennt nach a gerade und a ungerade. 
-5. Checke, dass diese Vermutung (richtigerweise) auch \\( R(6, 3) = 120 \\) und zum Beispiel \\( R(15, 3) = 3360 \\) (für \\( n_{max} = 337 \\)) liefert.
-6. Jetzt verwende eine ähnliche Herangehensweise wie bei e = 2, um erstmal für gerade \\( A = 2K \\) mit Hilfe der Faulhaber-Formeln eine geschlossene Gleichung zu bekommen (diese ist jetzt natürlich von der Ordnung \\( K^4 \\)).
-7. Bleibt noch, für ungerade A einen Term dazuzuaddieren und den Spezialfall a = 2 anzuschauen (also \\( R(2, 3) \\) auszurechnen). 
-8. Schreibe am besten für alle 4 Fälle (also e = 2, A gerade, dann e = 2, A ungerade, dann e = 3 ähnlich) eine Funktion, die das Resultat in einer Operation berechnet. Achte darauf, an den richtigen Stellen modulo zu nehmen, bei Subtraktionen ist darauf zu achten, dass man nicht in den negativen Werte-Bereich rutscht, also immer nochmal \\( + 10^9 + 7 \\) rechnen, bevor man modulo nimmt.
-9. Bastle das alles mit den Spezialfällen zusammen und dann läuft es!
-
-Codeauszug mit entsprechenden Auslassungen (nur mit g++ möglich wegen __int128) : 
+Der entsprechende Code für e = 2 wäre dann einfach (nur mit g++ möglich wegen __int128): 
 
 {% highlight c++ %}
 
@@ -63,6 +53,23 @@ int128 get_RES_odd_2(int128 A) { // add an extra term for A odd
     int128 to_add = A * (A - (int128)1);
     return (front + to_add) % MOD; 
 }
+
+{% endhighlight %}
+
+Das Interessante an dieser Aufgabe ist natürlich der Fall e = 3. Hier bleibt einem zunächst nichts anderes übrig als einfach mal auf Papier loszurechnen. Meine Tips lauten:
+1. Entwickle \\( (a - 1)^n + (a + 1)^n \\) mit Binomialkoeffizienten, lösche alle Potenzen, die \\( a^3 \\) enthalten und fasse dann getrennt nach n gerade oder ungerade zusammen.
+2. Berechne \\( R(2, 3) = 4 \\), \\( R(3, 3) = 24 \\) und \\( R(4, 3) = 56 \\) von Hand, indem einfach mal alle n von 0 bis \\( a^3 \\) eingesetzt werden. So entwickelt man auch ein Gefühl für die periodische Dynamik, die hier mit im Spiel ist. 
+3. Teste damit, dass die Formeln aus Schritt 1 auch tatsächlich stimmen. Wenn das passt, kann man auch noch \\( R(5, 3) \\) in Angriff nehmen, danach wird es aber von Hand unangenehm, denn die dritte Potenz ist dann schon sehr groß.
+4. Aber auch anhand dieser wenigen Beispiele läßt sich schon ein Muster ähnlich zu dem für e = 2 erkennen. Formuliere diese Vermutung getrennt nach a gerade und a ungerade. 
+5. Checke, dass diese Vermutung (richtigerweise) auch \\( R(6, 3) = 120 \\) und zum Beispiel \\( R(15, 3) = 3360 \\) (für \\( n_{max} = 337 \\)) liefert.
+6. Jetzt verwende eine ähnliche Herangehensweise wie bei e = 2, um erstmal für gerade \\( A = 2K \\) mit Hilfe der Faulhaber-Formeln eine geschlossene Gleichung zu bekommen (diese ist jetzt natürlich von der Ordnung \\( K^4 \\)).
+7. Bleibt noch, für ungerade A einen Term dazuzuaddieren und den Spezialfall a = 2 anzuschauen (also \\( R(2, 3) \\) auszurechnen). 
+8. Schreibe am besten für alle 4 Fälle (also e = 2, A gerade, dann e = 2, A ungerade, dann e = 3 ähnlich) eine Funktion, die das Resultat in einer Operation berechnet. Achte darauf, an den richtigen Stellen modulo zu nehmen, bei Subtraktionen ist darauf zu achten, dass man nicht in den negativen Werte-Bereich rutscht, also immer nochmal \\( + 10^9 + 7 \\) rechnen, bevor man modulo nimmt.
+9. Bastle das alles mit den Spezialfällen zusammen und dann läuft es!
+
+Codeauszug mit entsprechenden Auslassungen: 
+
+{% highlight c++ %}
 
 int128 get_RES_even_3(int128 A) { 
     int128 K = A / (int128)2;
@@ -89,3 +96,4 @@ Die letzte Überraschung bei dieser Aufgabe war dann die, dass es innerhalb von 
 [project-euler-original]: https://projecteuler.net/problem=120
 [problem-84]: https://www.hackerrank.com/contests/projecteuler/challenges/euler084/problem
 [problem-100]: https://www.hackerrank.com/contests/projecteuler/challenges/euler100/problem
+[forum]: https://projecteuler.net/thread=120
