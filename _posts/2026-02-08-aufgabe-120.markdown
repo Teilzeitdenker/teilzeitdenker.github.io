@@ -44,6 +44,7 @@ Für den Fall e = 3 bleibt einem nichts übrig als einfach mal auf Papier loszur
 Codeauszug mit entsprechenden Auslassungen (nur mit g++ möglich wegen __int128) : 
 
 {% highlight c++ %}
+
 using namespace std;
 using int128 = __int128;
 
@@ -76,6 +77,7 @@ int128 get_RES_odd_3(int128 A) { // add an extra term for A odd
     int128 to_add = ...
     return (front + to_add) % MOD; 
 }
+
 {% endhighlight %}
 
 Wenn man ganz viel Lust hat, kann man im Fall e = 3 noch algebraisch beweisen, dass die eher heuristischen Formeln für den maximalen Rest stimmen. Dazu muss man zeigen, dass der maximale Rest, den man oben postuliert hat, immer erreicht und nie überschritten wird (z.B. bei geraden n). Aber wenn man länger nachdenkt, wird schnell klar, dass die Reste bei geraden n niemals so nah an \\( a^3 \\) herankommen können, weil sie stets (2 + Vielfache von \\( a^2 \\)) sind. Ferner findet man immer ein ungerades n, bei dem der postulierte Rest tatsächlich erreicht wird (zur Not addiert man halt noch \\( a^2 \\) zu dem berechneten n dazu, falls es gerade sein sollte, deswegen nimmt man bei a = 15 statt \\( n_{max} = 112 \\) einfach \\( n_{max} = 112 + a^2 = 337 \\)).
