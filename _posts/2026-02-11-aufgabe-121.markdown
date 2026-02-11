@@ -7,7 +7,7 @@ categories: project-euler
 
 Diese [Aufgabe][problem-121] war bis auf die etwas missverständliche Formulierung im [Original][project-euler-original] recht einfach. Die Herausforderung bestand eher darin, sie in C++ zu lösen, ohne auf eine BigInteger-Library oder Boost zurückzugreifen. Aber für solche Fälle habe ich trickreiche Methoden entwickelt. 
 
-Das [bigint-struct][bigint-class], das ich hierzu immer verwende ist wirklich sehr gut geschrieben und hat mir schon bei manch anderer Aufgabe ermöglicht, diese überhaupt in C++ (und nicht in Python) angehen zu können (sogar den quadratic solver bei #100: Arranged probability konnte ich damit in C++ lösen können).
+Das [bigint-struct][bigint-class], das ich hierzu immer verwende ist wirklich sehr gut geschrieben und hat mir schon bei manch anderer Aufgabe ermöglicht, diese überhaupt in C++ (und nicht in Python) angehen zu können (sogar den quadratic solver bei #100: Arranged probability konnte ich damit in C++ lösen).
 
 Zurück zur Aufgabe: Wenn man die richtige rekursive Gleichung formulieren kann (diese lässt sich natürlich auch im [Forum][forum] nachschauen), dann ist es nicht schwer, hier mit ein wenig dynamic programming das Zeitlimit einzuhalten. Ich lasse die entsprechenden Teile im Codeschnipsel wieder aus, damit nicht der ganze Spaß verloren geht:
 
