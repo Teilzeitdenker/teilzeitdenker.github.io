@@ -1,0 +1,74 @@
+---
+layout: post
+title:  "Project Euler+ #121: Disc game prize fund"
+date:   2026-02-11
+categories: project-euler
+---
+
+Diese [Aufgabe][problem-121] war bis auf die etwas missverständliche Formulierung im [Original][project-euler-original] recht einfach. Die Herausforderung bestand eher darin, sie in C++ zu lösen, ohne auf eine BigInteger-Library oder Boost zurückzugreifen. Aber für solche Fälle habe ich schon meine Methoden im Internet zusammengekratzt. Die [bigint-Klasse][bigint-class], die ich hier verwende ist wirklich sehr gut geschrieben und hat mir schon bei manch anderer Aufgabe ermöglicht, diese überhaupt in C++ (und nicht in Python) angehen zu können (z.B. habe ich mit ihrer Hilfe als einer der wenigen #100: Arranged probability in C++ lösen können).
+
+Wenn man die richtige rekursive Gleichung formulieren kann (diese lässt sich natürlich auch im [Forum][forum] nachschauen), dann ist es nicht schwer, hier mit ein wenig dynamic programming das Zeitlimit einzuhalten. Ich lasse die entsprechenden Teile im Codeschnipsel wieder aus, damit nicht der ganze Spaß verloren geht:
+
+{% highlight c++ %}
+
+#pragma GCC optimize("Ofast", "unroll-loops", "fast-math")
+#include <bits/stdc++.h>
+
+using namespace std;
+
+// in here, copy the really full-fledged and quite handy to use bigint class from
+// https://github.com/theartist007/Big-Integer-Class/blob/master/bigint.cpp
+...
+...
+
+using pii = pair<int, int>;
+// store pairs of bigints as fractions
+using bigfrac = pair<bigint, bigint>;
+
+int N;
+// map of calculated values for fast retrieval
+map<pii, bigfrac> dp;
+
+bigfrac f(int n, int b) { // looking at position n when b blue discs have already been chosen
+    if (n == 0) {
+        if (b > N - b) return (bigfrac) { bigint{1}, bigint{1}}; // we found enough blue discs
+        else return (bigfrac) { bigint{0}, bigint{1}}; // well, not even half the discs were blue
+    }
+    pii vars = (pii) {n, b};
+    if (dp.find(vars) != dp.end()) return dp[vars]; // check map for an entry
+
+    // recursive formula is f(n, b) = ...
+    // where p(n) is probability to choose blue disc at position n and q(n) = 1 - p(n)
+    auto [num1, den1] = ...
+    num1 *= ...
+    den1 *= ...
+    
+    auto [num2, den2] = ...
+    ...
+
+    dp[vars] = (bigfrac) {..., ...};
+    return dp[vars];
+}
+
+int main() {
+    int t; cin >> t;
+    while (t--) {
+        dp.clear();
+        cin >> N;
+        // start with no blue discs and N positions to go through
+        auto [res_num, res_den] = f(N, 0); 
+        // calculate the game prize fund (just the truncated inverse of the winning probability)
+        bigint RES = res_den / res_num; // this uses a handy divmod-function in the bigint class!
+        cout << RES << '\n';
+    }
+    
+    return 0;
+}
+
+{% endhighlight %}
+
+
+[problem-121]: https://www.hackerrank.com/contests/projecteuler/challenges/euler121/problem
+[project-euler-original]: https://projecteuler.net/problem=121
+[forum]: https://projecteuler.net/thread=121
+[bigint-class]: https://github.com/theartist007/Big-Integer-Class/blob/master/bigint.cpp
