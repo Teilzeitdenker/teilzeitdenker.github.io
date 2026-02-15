@@ -1,0 +1,64 @@
+---
+layout: post
+title:  "Project Euler+ #122: Efficient exponentiation"
+date:   2026-02-14
+categories: project-euler
+---
+
+Der Wikipedia-Artikel zu [Additionsketten][wiki] liefert einen guten Überblick zum Thema. Ich muss zugeben, dass ich es mir bei dieser [Aufgabe][problem] ein wenig einfacher gemacht habe, indem ich die [OEIS-Sequenz][oeis] für die Länge der minimalen Kette mit einem kleinen Extra-Programm eingelesen und in Vektorschreibweise ausgegeben habe. Kann ja beim Finden konkreter Ketten nicht schaden, wenn man vorher schon weiß, wie lang die gesuchte Kette eigentlich sein soll.
+
+{% highlight c++ %}
+
+// minimal lengths of addition chains up to N = 275 taken from OEIS, 
+// i.e. we only need to calculate the actual numbers in the chain
+const array<int, 276> lengths = { 
+    0, 0, 1, 2, 2, 3, 3, 4, 3, 4, 4, 5, 4, 5, 5, 5, 4, 5, 5, 6, 5, 6, 6, 
+    ...
+    10, 8, 9, 9, 10, 9, 10, 10, 11, 9, 10, 10, 11, 10, 11, 10, 11, 9, 10, 
+    10, 11 };
+
+{% endhighlight %}
+
+Eine minimale Additions-Kette für N = 15 wäre nach dem HackerRank-Beispiel ja 1, 2, 3, 6, 12, 15. Das sind zwar 6 Zahlen, aber lengths[15] = 5, denn hierbei zählt man nur die nötigen Schritte bei der Multiplikation beginnend mit \\( n^1 \cdot n^1 = n^2 \\), das sind sozusagen die "Lücken zwischen den Zahlen". Das Bildungsgesetz der Schritte ist: Nimm die Zahl an einer Position der Kette und die Differenz zur nächsten Zahl als Exponenten von n auf der linken Seite. 
+
+Da im untersuchten Bereich bis N = 275 die Länge höchtens 11 ist, gibt es maximal 11 Schritte und wir müssen höchstens 12 Zahlen in der zugehörigen Kette speichern. Um mit der Indexierung nicht durcheinander zu kommen, habe ich beschlossen, vorne ein "padding" mit einer 0 zu machen, also kann ich für die Ketten einen (wenn auch recht starren) array mit 13 Einträgen vorhalten und es wird auf jeden Fall alles reinpassen ohne dass ich auf uninitialisierten Speicherplatz bei Indices > 12 zugreife (wenn ich ein bißchen aufpasse \*grins\*). Wenn die Tests fies designt sind, könnten sie einfach 500-mal nach der Kette für N = 275 fragen, also speichern wir mal lieber gefundene Ketten in einer Map ab: 
+
+{% highlight c++ %}
+
+using Chain = array<int, 13>; // length <= 11 in the relevant N-range
+
+int t, N; // input
+Chain chain{}; // generate the chains in here
+map<int, Chain> calculated; // save our work
+
+{% endhighlight %}
+
+Als Hilfsfunktionen brauchen wir erstens einen Reset, wenn die Kette neu berechnet werden soll (strengerweise ist der gar nicht nötig, da ich in der späteren generate()- Funktion immer nur an der Position schreibe, an der ich gerade bin, egal was da vorher stand, aber wir wollen "professionell" wirken) und natürlich müssen diese nervigen Schritte für die Exponenten nach obigem Bildungsgesetz alle auf stdout gestreamt werden.
+
+{% highlight c++ %}
+
+// always start with a chain of 1,2 (since N >= 2 no special cases needed)
+// chain is padded with 0 at index 0
+void reset() { 
+    chain = {0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
+}
+
+void print_exps(Chain c) {
+    for (int pos = 2; pos <= lengths[N] + 1; pos++) {
+        cout << "n^" << c[pos - 1];
+        cout << " * ";
+        cout << "n^" << (c[pos] - c[pos - 1]);
+        cout << " = ";
+        cout << "n^" << c[pos] << '\n'; 
+    }
+}
+
+{% endhighlight %}
+
+
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler122/problem
+[original]: https://projecteuler.net/problem=122
+[forum]: https://projecteuler.net/thread=122
+[wiki]: https://en.wikipedia.org/wiki/Addition_chain
+[oeis]: https://oeis.org/A003313
