@@ -5,7 +5,7 @@ date:   2026-02-14
 categories: project-euler
 ---
 
-Der Wikipedia-Artikel zu [Additionsketten][wiki] liefert einen guten Überblick zum Thema. Ich muss zugeben, dass ich es mir bei dieser [Aufgabe][problem] ein wenig einfacher gemacht habe, indem ich die [OEIS-Sequenz][oeis] für die Länge der minimalen Kette mit einem kleinen Extra-Programm eingelesen und in Vektorschreibweise ausgegeben habe. Kann ja beim Finden konkreter Ketten nicht schaden, wenn man vorher schon weiß, wie lang die gesuchte Kette eigentlich sein soll.
+Der Wikipedia-Artikel zu [Additionsketten][wiki] liefert einen guten Überblick zum Thema. Ich muss zugeben, dass ich es mir bei dieser [Aufgabe][problem] ein wenig einfacher gemacht habe, indem ich die [OEIS-Sequenz][oeis] für die Länge der minimalen Kette mit einem kleinen Extra-Programm eingelesen und in Vektorschreibweise ausgegeben habe. Kann ja beim Finden konkreter Kettenzahlen nicht schaden, wenn man vorher schon weiß, wie lang die gesuchte Kette eigentlich sein soll.
 
 {% highlight c++ %}
 
@@ -19,9 +19,9 @@ const array<int, 276> lengths = {
 
 {% endhighlight %}
 
-Eine minimale Additions-Kette für N = 15 wäre nach dem HackerRank-Beispiel ja 1, 2, 3, 6, 12, 15. Das sind zwar 6 Zahlen, aber lengths[15] = 5, denn hierbei zählt man nur die nötigen Schritte bei der Multiplikation beginnend mit \\( n^1 \cdot n^1 = n^2 \\), das sind sozusagen die "Lücken zwischen den Zahlen". Das Bildungsgesetz der Schritte ist: Nimm die Zahl an einer Position der Kette und die Differenz zur nächsten Zahl als Exponenten von n auf der linken Seite. 
+Eine minimale Additions-Kette für N = 15 wäre nach dem HackerRank-Beispiel ja 1, 2, 3, 6, 12, 15. Das sind zwar 6 Zahlen, aber lengths[15] = 5, denn hierbei zählt man nur die nötigen Schritte bei der Multiplikation beginnend mit \\( n^1 \cdot n^1 = n^2 \\), das sind sozusagen die "Lücken zwischen den Zahlen". Das Bildungsgesetz der Schritte ist: Nimm die Zahl an einer Position der Kette und die Differenz zur nächsten Zahl als Exponenten von n auf der linken Seite. Insbesondere muss diese Differenz zur nächsten Zahl immer bereits eine Zahl der Kette sein.
 
-Da im untersuchten Bereich bis N = 275 die Länge höchtens 11 ist, gibt es maximal 11 Schritte und wir müssen höchstens 12 Zahlen in der zugehörigen Kette speichern. Um mit der Indexierung nicht durcheinander zu kommen, habe ich beschlossen, vorne ein "padding" mit einer 0 zu machen, also kann ich für die Ketten einen (wenn auch recht starren) array mit 13 Einträgen vorhalten und es wird auf jeden Fall alles reinpassen ohne dass ich auf uninitialisierten Speicherplatz bei Indices > 12 zugreife (wenn ich ein bißchen aufpasse \*grins\*). Wenn die Tests fies designt sind, könnten sie einfach 500-mal nach der Kette für N = 275 fragen, also speichern wir mal lieber gefundene Ketten in einer Map ab: 
+Da im untersuchten Bereich bis N = 275 die Länge der gesuchten Kette höchtens 11 ist, gibt es maximal 11 Schritte und wir müssen höchstens 12 Zahlen in der zugehörigen Kette speichern. Um mit der Indexierung nicht durcheinander zu kommen, habe ich beschlossen, vorne ein "padding" mit einer 0 zu machen, also kann ich für die Ketten einen (wenn auch recht starren) array mit 13 Einträgen vorhalten und es wird auf jeden Fall alles reinpassen ohne dass ich auf uninitialisierten Speicherplatz bei Indices > 12 zugreife (wenn ich ein bißchen aufpasse \*grins\*). Wenn die Tests fies designt sind, könnten sie einfach 500-mal nach der Kette für N = 275 fragen, um ein TLE zu verursachen, also speichern wir mal lieber berechnete Ketten in einer Map ab: 
 
 {% highlight c++ %}
 
@@ -33,7 +33,7 @@ map<int, Chain> calculated; // save our work
 
 {% endhighlight %}
 
-Als Hilfsfunktionen brauchen wir erstens einen Reset, wenn die Kette neu berechnet werden soll (strengerweise ist der gar nicht nötig, da ich in der späteren generate()- Funktion immer nur an der Position schreibe, an der ich gerade bin, egal was da vorher stand, aber wir wollen "professionell" wirken) und natürlich müssen diese nervigen Schritte für die Exponenten nach obigem Bildungsgesetz alle auf stdout gestreamt werden.
+Als Hilfsfunktionen brauchen wir erstens einen Reset, wenn die Kette neu berechnet werden soll (strengerweise ist der gar nicht nötig, da ich in der späteren generate()- Funktion immer nur an der Position schreibe, an der ich gerade bin, egal was da vorher stand, aber wir wollen ja professionell sein/wirken) und natürlich müssen diese etwas nervig formatierten Schritte mit den Exponenten nach obigem Bildungsgesetz alle auf stdout gestreamt werden.
 
 {% highlight c++ %}
 
@@ -55,7 +55,58 @@ void print_exps(Chain c) {
 
 {% endhighlight %}
 
+Die main-Funktion sieht nach diesen Vorbereitungen dann recht übersichtlich aus: 
 
+{% highlight c++ %}
+
+int main() {
+    cin >> t;
+    while (t--) {
+        cin >> N;
+        cout << lengths[N] << '\n';
+        if (calculated.find(N) != calculated.end()) {
+            print_exps(calculated[N]);
+        } else {
+            reset();
+            bool found = generate();
+            if (!found) {
+                cerr << "No solution found for N = " << N << endl;
+                return 1;
+            }
+            calculated[N] = chain; // save to map
+            print_exps(chain);
+        }
+    }
+    return 0;
+}
+
+{% endhighlight %}
+
+Fehlt nur noch die generate-Funktion (und die verrate ich natürlich nicht komplett!). Darin habe ich die Ketten nach dem sogenannten Brauer-Verfahren (siehe den Abschnitt "Brauer chain" im [Wikipedia-Artikel][wiki]) konstruiert. Dieses erzeugt für N < 12509 immer auch eine minimale Kette, das reicht locker für unseren Bereich und erleichtert die Auswahl der Summanden für die nächste Zahl in der Kette erheblich. Zusätzlich kann man frühzeitig abbrechen, falls die Kette länger wird als es lengths[N] erlaubt. Hier der Code mit ein paar Auslassungen (viel Spaß beim "Befüllen"!):
+
+{% highlight c++ %}
+
+// recursive function that generates the minimal addition chain in-place
+bool generate(int pos = 2) {
+    if (chain[pos] == N)
+        return true;
+    if (...) // chain would get too long
+        return false;
+    for (...) {
+        // only look at the Brauer addition chains
+        int nxt = ...;
+        if (nxt <= N) {
+            ...;
+            if (generate(pos + 1))
+                return true;
+        }
+    }
+    return false;
+}
+
+{% endhighlight %}
+
+Eine letzte Bemerkung zum Code: Mit dem C++14-Compiler funktionierte er auf der HackerRank-Seite wunderbar. Ich konnte ihn aber mit dem C++20 Compiler nicht erfolgreich testen ("no response on stdout") und habe etwa eine Stunde zusammen mit GitHub Copilot versucht, das Problem zu finden, aber ohne Erfolg. Es scheint irgendetwas im Code zu geben, das der von HackerRank verwendete g++ Compiler nicht mag, ich habe auch alle optimization-flags weggelassen, falls es daran liegen würde, aber das half alles nichts. Auf meinen Maschinen (eine Kubuntu und eine Windows 11) kompiliert es mit -std=c++20 wunderbar und erzeugt auch den richtigen Output. Ich habs jetzt aufgegeben, aber falls jemand noch eine Idee hat, bin ich dankbar für Rückmeldungen (siehe [About]({% link about.markdown %}))
 
 [problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler122/problem
 [original]: https://projecteuler.net/problem=122
