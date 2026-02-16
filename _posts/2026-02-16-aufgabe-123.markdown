@@ -1,0 +1,110 @@
+---
+layout: post
+title:  "Project Euler+ #123: Prime square remainders"
+date:   2026-02-16
+categories: project-euler
+---
+
+Wer die [Square remainders]({% post_url 2026-02-08-aufgabe-120 %}) gelöst hat, konnte die dort errechneten Formeln für den Remainder bei e = 2 in dieser [Aufgabe][problem] wunderbar wiederverwenden. Nur die Größe der zu überschreitenden Grenze B (bis zu eine Billion) war etwas furchteinflößend. 
+
+In solchen Fällen greife ich immer gerne auf die [primesieve-library][primesieve] von kimwalisch zurück, um zumindest ein Gefühl für die Größenordnungen zu bekommen. Klar, dass man die library für Programme bei Hackerrank nicht verwenden kann. Das wäre genial: Ein kurzes 
+
+{% highlight c++ %}
+
+#include<primesieve.hpp>
+
+{% endhighlight %}
+
+und alles, was mit Primzahlen zu tun hat, wäre schon halb gelöst (beim ursprünglichen Projekt Euler mache ich das tatsächlich immer so). Aber es schadet ja nicht, im Vorhinein mal zu schauen, wie man seinen handgemachten sieve überhaupt dimensionieren muss, bis man einen Remainder von eine Billion erreicht. 
+
+Also mal wieder die [C++ API][api] durchgelesen und mit primesieve::generate_primes() alle Primzahlen unter 5 Millionen erzeugt, in einen Vektor geschrieben und für die Primzahlen an ungeradzahligen Indices die Remainder ausgerechnet. Ergebnis: Für \\( n = 191041 \\) und \\( p_n = 2617253 \\) ist die Billion das erste Mal überschritten. Definiere also ein paar globale Variablen:
+
+{% highlight c++ %}
+
+using ull = unsigned long long;
+
+constexpr int P_MAX{ 2'617'300 };
+constexpr int N_INF{ 200'000 };
+static vector<bool> sieve;
+static vector<pair<ull, int>> remainders; // store remainders and indices n in pairs
+int T;
+ull B;
+
+{% endhighlight %}
+
+Der Sieb (des Eratosthenes), den ich für solche Aufgaben immer verwende, braucht nur den halben Speicherplatz (da die geraden Zahlen > 2 eh nicht prim sind, entsprechen die bool-Einträge nur den ungeraden Zahlen) und sieht so aus: 
+
+{% highlight c++ %}
+
+void fillSieve(int size) {
+    const int half = (size >> 1) + 1;
+    sieve.resize(half, true);
+    sieve[0] = false;
+    for (int i = 1; 2 * i * i < half; ++i) {
+        if (sieve[i]) {
+            // enhanced by starting at p^2!!
+            int current = ((2 * i + 1) * (2 * i + 1) - 1) / 2;
+            while (current < half) {
+                sieve[current] = false;
+                current += 2 * i + 1;
+            }
+        }
+    }
+}
+
+{% endhighlight %}
+
+Für ungerade Zahlen größer als 2 überprüft man nun einfach mit 
+
+{% highlight c++ %}
+
+if (sieve[i>>1]) {...}
+
+{% endhighlight %}
+
+ob sie prim sind.
+Da ich nicht zu viel verraten will, fehlen in der Funktion, die den remainders-Vektor füllt, wieder ein paar Teile:
+
+{% highlight c++ %}
+
+// generate a strictly increasing vector of {remainder, n} - pairs
+void fillRemainders() {
+    remainders.push_back({2, 2}); // for n = 2 get remainder 2
+    remainders.push_back({5, 3}); // for n = 3 get remainder 5
+    int n = 5; // for n = 4 and all even n remainder is 2, so start with p_5 = 11
+    int i = 11; 
+    while (i < P_MAX) {
+        ...
+    }
+}
+
+{% endhighlight %}
+
+Viele Tests - der constraint ist \\( 1 \leq T \leq 10^5 \\) - heißt in diesem Fall, dass man nur mit binary search die nötige Zeitkomplexität erreicht. Schön, dass der remainders-Vektor per Konstruktion geordnet ist und Paare automatisch miteinander verglichen werden (immer von links nach rechts). Verwende also upper_bound(), um den Eintrag zu finden, dessen Remainder-Eintrag gerade über dem gesuchten Limit B liegt. 
+
+Dabei ist aber die Funktionsweise von upper_bound() zu beachten. Damit das gegebene B auch wirklich überschritten wird, muss im übergebenen Paar der n-Eintrag größer als alle im Vektor vorkommenden n gewählt werden (daher habe ich oben auch ein N_INF definiert). Würde man z.B. das Paar {B, 0} an upper_bound() übergeben, so würde man für B = 5 richtigerweise einen Iterator auf den {5, 3}-Eintrag erhalten, denn für C++ ist ja {5, 3} > {5, 0}. Das ist aber nicht das, was wir wollen. Für B = 5 soll das Programm ja den nächsten Eintrag, also {110, 5} ausgeben. Also übergeben wir stattdessen das "deutlich größere" Paar {B, N_INF}, um das gewünschte Verhalten zu erzwingen.
+
+{% highlight c++ %}
+
+int main() {
+    // prepare sieve and remainders vector
+    fillSieve(P_MAX); 
+    fillRemainders();
+    cin >> T;
+    while (T--) {
+        cin >> B;
+        pair<ull, int> to_exceed = {B, N_INF}; 
+        auto it = upper_bound(remainders.begin(), remainders.end(), to_exceed);
+        cout << (*it).second << '\n';
+    }
+    return 0;
+
+{% endhighlight %}
+
+Auch diese Aufgabe wurde nur von Wenigen vollständig gelöst (in 10 Jahren nurmehr etwa 170 Coder von etwa 1000, die Lösungen eingereicht haben). Das lag wohl daran, dass die meisten durch die Ähnlichkeit mit Aufgabe 120 abgeschreckt wurden. Eigentlich waren die Lösungsmethoden hier aber völlig andere, da Primzahlen mit ins Spiel kamen und nicht nach der Summe der Remainder, sondern nur nach einem ganz bestimmten n gefragt war, schon immer faszinierend, wie man aufs Glatteis geführt wird. 
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler123/problem
+[primesieve]: https://github.com/kimwalisch/primesieve
+[api]: https://github.com/kimwalisch/primesieve/blob/master/doc/CPP_API.md
+[original]: https://projecteuler.net/problem=123
+[forum]: https://projecteuler.net/thread=123
