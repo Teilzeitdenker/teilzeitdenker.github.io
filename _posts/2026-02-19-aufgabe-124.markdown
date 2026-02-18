@@ -1,0 +1,22 @@
+---
+layout: post
+title:  "Project Euler+ #124: Ordered radicals"
+date:   2026-02-19
+categories: project-euler
+---
+
+Mein lieber [Scholli][scholli], das war eine harte Nuss! Ein Böhmermann würde sagen: "Die hatte Eier aus Stahl!". Bin ganz baff, weil die [Aufgabe][problem] von ihren genialen Machern auch so klug designt war, dass man, obwohl noch lange nicht fertig, nie desillusioniert oder gelangweilt war, weil ständig gefordert wurde, seinen Algorithmus immer weiter zu verbessern bzw. schlußendlich das ganze Pferd von hinten aufzuzäumen und einen völlig anderen Ansatz zu finden, um vor allem den letzten Teil zu lösen. 
+
+Pro Tag habe ich mir jeweils einen Constraint-Abschnitt vorgenommen. Der erste war einfach, der zweite tricky, aber den dritten musste ich mir auf allerhand Umwegen erkämpfen und jetzt bin ich fix und alle, aber glücklich. Gibt es eigentlich eine Compilation auf Youtube von "Math nerds ticking out before computer"? Nur gut, dass da keine Kamera mitlief.
+
+
+
+{% highlight c++ %}
+
+
+{% endhighlight %}
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler124/problem
+[scholli]: https://de.wikipedia.org/wiki/Mehmet_Scholl
+[original]: https://projecteuler.net/problem=124
+[forum]: https://projecteuler.net/thread=124
