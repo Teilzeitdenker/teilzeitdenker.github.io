@@ -5,18 +5,289 @@ date:   2026-02-19
 categories: project-euler
 ---
 
-Mein lieber [Scholli][scholli], das war eine harte Nuss! Ein Böhmermann würde sagen: "Die hatte Eier aus Stahl!". Bin ganz baff, weil die [Aufgabe][problem] von ihren genialen Machern auch so klug designt war, dass man, obwohl noch lange nicht fertig, nie desillusioniert oder gelangweilt war, weil ständig gefordert wurde, seinen Algorithmus immer weiter zu verbessern bzw. schlußendlich das ganze Pferd von hinten aufzuzäumen und einen völlig anderen Ansatz zu finden, um vor allem den letzten Teil zu lösen. 
+Mein lieber [Scholli][scholli], das war eine harte Nuss! Böhmermann würde wohl sagen: "Die hatte Eier aus Stahl!". Bin ganz baff, weil die [Aufgabe][problem] von ihren genialen Machern auch so klug designt war, dass man, obwohl noch lange nicht fertig, nie desillusioniert oder gelangweilt war, weil man ständig gefordert wurde, seinen Algorithmus weiter zu verbessern bzw. schlußendlich das ganze Pferd von hinten aufzuzäumen und einen völlig anderen Ansatz zu finden, um vor allem den letzten Teil zu lösen. 
 
-Pro Tag habe ich mir jeweils einen Constraint-Abschnitt vorgenommen. Der erste war einfach, der zweite tricky, aber den dritten musste ich mir auf allerhand Umwegen erkämpfen und jetzt bin ich fix und alle, aber glücklich. Gibt es eigentlich eine Compilation auf Youtube von "Math nerds ticking out before computer"? Nur gut, dass da keine Kamera mitlief.
+Pro Tag habe ich mir jeweils einen Constraint-Abschnitt vorgenommen. Der erste war einfach, ein primitiver radSieve und partial_sort() bringt einen an die 30%-Marke. Der zweite Teil war tricky, aber ein wenig CSES-Erfahrung hilft hier weiter. Den dritten Teil musste ich mir auf allerhand Umwegen erkämpfen und jetzt bin ich fix und alle, aber "Menschen, Leben, Tanzen, Welt, oh-ejoho-ohoh-ejoho", ich hab's geschafft. Gibt es eigentlich eine Compilation auf Youtube von "Math nerds losing it before computer"? Nur gut, dass da keine Kamera mitlief.
 
+Ich möchte hier wirklich empfehlen, mit einer Sandbox loszulegen und einfach mal ein paar Sachen auszuprobieren. Einen radSieve zu schreiben ist nicht schwer (siehe [Project Nayuki][proj-nayuki] unter "Radical function"). Wenn man das für die ersten zweihunderttausend Zahlen macht und die Radikale dann in einen Vektor mit
+
+{% highlight c++ %}
+
+pair<int, int> // use {rad(n), n} for these pairs!
+
+{% endhighlight %}
+
+schreibt, dann kann man mit [partial_sort()][partial-sort] schon den gewünschten Effekt erzielen und die ersten 3 test cases lösen (man muss halt den Index (k - 1) rausziehen, weil C++ zero-indexed ist). Das einzig fiese ist, dass man das offline machen muss, denn die L's müssen aufsteigend sein, damit man sich nicht Paare vorne rein sortiert, die man da nicht haben möchte. 
+
+Allerdings reicht partial_sort() nicht, um auch nur einen der weiteren Tests zu lösen, also habe ich das nach dem ersten Tag wieder verworfen und werde hier nur die fortgeschrittenere Lösung diskutieren.
+
+Da das aufsteigende Ordnen der test cases aber weiterhin hilfreich war, habe ich dafür mal ein sortierbares struct geschrieben. Außerdem machen wir noch einige Definitionen, die das Leben im Allgemeinen (und das Programmieren im Speziellen) erleichtern.
+
+{% highlight c++ %}
+
+using ull = unsigned long long;
+using int128 = __int128;
+using vi = vector<int>;
+using vvi = vector<vector<int>>;
+using vull = vector<ull>;
+using pii = pair<int, int>;
+
+struct TestCase {
+    ull L;
+    int k;
+    int idx;
+
+    bool operator<(const TestCase& other) const {
+        return L < other.L;
+    }
+};
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+const int L_MAX = 200'001; // because of padding need 1 more
+
+{% endhighlight %}
+
+Statt des primitiven radSieves habe ich das Berechnen der Radikale etwas ausführlicher gemacht, was auf den ersten Blick etwas umständlich wirken mag. Da man für den dritten Teil mit den großen L's aber die einzelnen Primfaktoren braucht, die in einem Radikal vorkommen, wird sich die Mühe später lohnen:
+
+{% highlight c++ %}
+
+//---------------------------------- Helper functions (universal) ------------------------------------
+
+vvi createPrimeFacs(int size) {
+    vvi primeFacs(size + 1);
+    for (int i = 2; i <= size; i += 2) {
+        primeFacs[i].push_back(2);
+    }
+    for (int i = 3; i <= size; i += 1) {
+        if (primeFacs[i].empty()) { // prime
+            for (int j = i; j <= size; j += i) primeFacs[j].push_back(i);
+        }
+    }
+    return primeFacs;
+}
+
+vi createRads(int size, const vvi& primeFacs) {
+    vi rads(size + 1);
+    rads[0] = 0;
+    rads[1] = 1;
+    for (int i = 2; i <= size; i++) {
+        int r = 1;
+        for (auto p : primeFacs[i]) r *= p;
+        rads[i] = r;
+    }
+    return rads;
+}
+
+{% endhighlight %}
+
+Es schadet nun nicht, erst einmal einen Blick auf die main()-Funktion zu werfen, um sich einen Überblick über das Vorgehen zu verschaffen: 
+
+{% highlight c++ %}
+
+//---------------------------------- MAIN function ----------------------------------------------
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int T;
+    cin >> T;
+
+    // Sort the inputs and use an offline algorithm
+    vector<TestCase> testCases;
+    bool big_Ls = false;
+
+    for (int idx = 0; idx < T; idx++) {
+        ull L;
+        int k;
+        cin >> L >> k;
+        if (L >= L_MAX) big_Ls = true;
+        testCases.push_back({L, k, idx});
+    }
+    sort(testCases.begin(), testCases.end());
+
+    auto primeFacs = createPrimeFacs(L_MAX);
+    auto rads = createRads(L_MAX, primeFacs);
+
+    if (!big_Ls) {
+        solveSmallL(testCases, rads, T);
+    } else {
+        solveBigL(testCases, rads, primeFacs, T);
+    }
+
+    return 0;
+}
+
+{% endhighlight %}
+
+Bis auf die beiden spannenden solve()-Funktionen für kleine und große L ist hier alles klar.
+
+Schauen wir uns erstmal die kleinen L an (die sind natürlich einfacher) und versuchen, die 60%-Marke zu knacken. Eine Testanzahl von \\( T = 10^5 \\) ist natürlich schon eine Hausnummer. Wenn partial_sort() hier nicht funktioniert, brauchen wir wohl eine bessere Zeitkomplexität. Da \\( T \\), \\( k \\) und \\( L \\) alle im selben Größenordnungsbereich liegen, also um die \\( 10^5 \\), kann man sehen, dass man bei \\( T \\) Abfragen mit Sortieren bei einer Komplexität von \\( O(L^2\log L) \\) landet. Würden wir aber alle Paare \\( ( rad(n), n ) \\) mit aufsteigendem n nacheinander in eine geordnete Menge einfügen und immer, wenn die Anzahl der Paare in der Menge ein gewünschtes L erreicht, genau eine Abfrage machen, so könnten wir eine bessere Zeitkomplexität erreichen. 
+
+Ein sogenannter [Fenwick Tree][fenwick] (auch binary indexed tree genannt) erreicht beim Einfügen (update) und Abfragen (search) eine Zeitkomplexität von \\( O(\log L) \\). Da wir jedes Paar nur ein einziges Mal einfügen, hat das Aufbauen des Baums eine Komplexität von \\( O(L\log L) \\). Alle Abfragen zusammen haben ebenfalls eine Komplexität von \\( O(L\log L) \\). Da wir hier nur die Summe dieser beiden Vorgänge nehmen müssen, ist die Gesamtkomplexität ebenfalls \\( O(L\log L) \\) und damit deutlich besser als bei der Sortiermethode!
+
+Hat man [Laaksons Buch][laakson] gelesen, dann weiß man, dass der g++-Compiler über ein paar eingebaute sogenannte policy-based data-sets (kurz "pbds") verfügt, auf die man hier zurückgreifen kann. Es ist natürlich nicht verboten, selbst einen Fenwick tree zu schreiben, auch dafür findet man genug Material im Internet. Ich begnüge mich einfach mit dem Einbinden der nötigen header und einem typedef:
 
 
 {% highlight c++ %}
 
+//---------------------------------- GNU Containers ----------------------------------------------
+
+// for usage of policy-based datastructures
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+
+using namespace __gnu_pbds;
+typedef tree<pii, null_type, less<pii>, rb_tree_tag, tree_order_statistics_node_update> ordered_set;
 
 {% endhighlight %}
+
+Dieses ordered_set ist auf Paare von ints zugeschnitten und sortiert aufsteigend. Die Bedeutung der anderen template-Parameter kann man in der [Gnu-Dokumentation][pbds] nachlesen.
+
+Jetzt kann man mit .insert() ganz einfach Elemente hinzufügen. Sehr praktisch! Also füllen wir mal immer bis zum nächsten L auf:
+
+{% highlight c++ %}
+
+//---------------------------------- Helper functions (big T) ------------------------------------
+
+void fillOrderedRadsUpTo(int L_nxt, const vi& rads, ordered_set& orderedRads, int& L_curr) {
+    for (int i = L_curr + 1; i <= L_nxt; i++) {
+        orderedRads.insert({rads[i], i});
+    }
+    L_curr = L_nxt;
+}
+
+{% endhighlight %}
+
+Mit .find_by_order() erhält man einen Iterator auf das Element an einem bestimmten index, wieder sehr praktisch.
+Damit können wir schon den Vorhang für die erste solve()-Funktion lüften, denn die test cases sind ja schon sortiert:
+
+{% highlight c++ %}
+
+//---------------------------------- Solve functions --------------------------------------------
+
+void solveSmallL(const vector<TestCase>& testCases, const vi& rads, int T) {
+    ordered_set orderedRads; // contains pairs of { radical, number }
+    int L_curr = 0;
+    vi results(T);
+
+    for (const auto& tc : testCases) {
+        fillOrderedRadsUpTo(tc.L, rads, orderedRads, L_curr);
+        // find_by_order is also 0-indexed, use (k - 1) to find the right element
+        auto it = orderedRads.find_by_order(tc.k - 1); // gives iterator to a pair
+        results[tc.idx] = (*it).second; // write to results vector
+    }
+
+    for (auto res : results)
+        cout << res << endl;
+}
+
+{% endhighlight %}
+
+Das war gar nicht so schwer. Aber jetzt wird es ungemütlich! Im dritten Teil können die L's bis zu \\( 10^{18} \\) groß werden. Zwar wieder nur 20 Tests, aber in ein ordered_set einfügen geht wirklich nicht mehr (außer wir wüssten, welche Elemente genau interessant wären!). Ein starker Hinweis war aber, dass das k weiterhin innerhalb der Grenze von zweihunderttausend lag, man braucht also die wirklich großen Radikale nicht mehr anzuschauen, um Elemente bei diesen kleinen Indices herauszufischen. 
+
+Diese Überlegungen haben mich eine Weile lang in die Sandbox verbannt, wo ich meine sieves schrittweise bis auf 5 Millionen Einträge auffüllte und dann die maximalen Radikale unter den ersten zweihunderttausend der Liste ausrechnen ließ. Diese wurden natürlich immer kleiner, denn es kommen ja auch weiter oben Zahlen mit sehr kleinen Radikalen vor, die sich dann "vordrängeln". Beispielsweise beliebige Potenzen von 2, 3 und 5 haben ja alle genau diese Primzahlbasis als Radikale, landen also sehr weit vorne in der Liste. Bei L = 5 Millionen lag das maximale Radikal unter den ersten zweihunderttausend nur noch bei etwa 18000. 
+
+Langer Rede, kurzer Sinn: Nach einigen weiteren Experimenten ist mir dann gedämmert, dass ich eben ausrechnen muss, wie viele Zahlen unterhalb eines bestimmten Limits L dasselbe Radikal haben. Dazu brauchte ich dann allerdings die Primfaktoren dieses Radikals, was im Nachhinein erklärt, warum ich obigen radSieve verändert habe. Hier kommen jetzt die entscheidenden rekursiven Funktionen (aber diesmal mit Auslassungen). Ich sage mal so, man muss ein wenig mit den generischen Datentypen spielen, um overflows zu vermeiden:
+
+{% highlight c++ %}
+
+//---------------------------------- Helper functions (big L) ------------------------------------
+
+// wrapper for count-function
+int getCountOfNumsWithSameRad(int r, ull L_limit, const vvi& primeFacs) {
+    return getCountOfNumsWithSameRad_impl(r, L_limit, primeFacs, 0, (int128)r);
+}
+
+// Count numbers with same radical
+int getCountOfNumsWithSameRad_impl(int r, ull L_limit, const vvi& primeFacs, int pos, int128 num) {
+    if (pos == (int)primeFacs[r].size()) {
+        return 1; // found one valid number
+    }
+    int count = 0;
+    int128 actual = 1;
+    while (num * actual <= (int128)L_limit) { // use int128 for this check to avoid overflow
+        count += ... 
+        actual *= ...
+    }
+    return count;
+}
+
+{% endhighlight %}
+
+Diese Funktion habe ich in der Sandbox erstmal ausgiebig für einfache Fälle getestet, z.B. r = 2, 3, 6, 10 usw.
+Allerdings reicht Zählen ja nicht aus. Irgendwann haben wir genug gezählt und es wird ernst. Dann brauchen wir eine konkrete Zahl zu einem Radikal, also müssen wir noch eine Funktion schreiben, die alle Zahlen erzeugt, die unterhalb eines Limits dasselbe Radikal haben. Gottseidank funktioniert das ganz ähnlich und lässt sich noch besser testen als obige Funktion, weil man genau sieht, welche Zahlen im Vektor erzeugt werden:
+
+{% highlight c++ %}
+
+// wrapper for generating function
+vull getNumsWithSameRad(int r, ull L_limit, const vvi& primeFacs) {
+    vull result;
+    getNumsWithSameRad_impl(r, L_limit, primeFacs, result, 0, (int128)r);
+    return result;
+}
+
+// Generate all numbers with same radical (stores results)
+void getNumsWithSameRad_impl(int r, ull L_limit, const vvi& primeFacs, vull& result, int pos, int128 num) {
+    if (pos == (int)primeFacs[r].size()) {
+        result.push_back((ull)num); // cast back to ull
+        return;
+    }
+    int128 actual = 1;
+    while (num * actual <= (int128)L_limit) { // use int128 for this check to avoid overflow
+        ...
+        actual *= ...
+    }
+}
+
+{% endhighlight %}
+
+Aber wir sind noch nicht fertig! In der zweiten solve()-Funktion müssen wir die Teile noch ordentlich zusammensetzen und es ist letztlich gar nicht so einfach, in dem generierten Vektor wirklich die gesuchte Zahl (insbesondere den richtigen Index, an dem sie versteckt ist) zu berechnen. Hier der Code wieder mit ein paar Auslassungen (aber Erklärungen wie vorgegangen wird):
+
+{% highlight c++ %}
+
+void solveBigL(const vector<TestCase>& testCases, const vi& rads,
+               const vvi& primeFacs, int T) {
+    vull results(T); // numbers may be big, but not bigger than 10^18
+
+    for (const auto& tc : testCases) {
+        ull L_limit = tc.L;
+        int k = tc.k;
+
+        int r = 0; // look at all possible rads in increasing order
+        int k_curr = 0; // running k (sum of numbers of already searched rads)
+        while (k_curr < k) { // increase k_curr until it exceeds given k
+            r++;
+            if (rads[r] != r) continue; // a number is a radical, if rad(n) = n (squarefree)
+
+            k_curr += ...
+        }
+        // now generate the actual numbers for the last radical
+        auto numsWithSameRad = ...
+        // don't forget to sort this vector!
+        sort(numsWithSameRad.begin(), numsWithSameRad.end());
+        // have to go back to the right position, since k_curr > k now
+        // Best is to start at the last entry of the vector
+        int position = ...
+        // write to results
+        results[tc.idx] = numsWithSameRad[position];
+    }
+
+    for (auto res : results) // ull is supported by std::cout
+        cout << res << endl;
+}
+
+{% endhighlight %}
+
+Ein ganz schönes Biest war das. Bin gespannt wie es weitergeht, aber jetzt brauch ich erstmal ein wenig Pause!
 
 [problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler124/problem
 [scholli]: https://de.wikipedia.org/wiki/Mehmet_Scholl
 [original]: https://projecteuler.net/problem=124
 [forum]: https://projecteuler.net/thread=124
+[proj-nayuki]: https://www.nayuki.io/page/the-versatile-sieve-of-eratosthenes
+[partial-sort]: https://en.cppreference.com/w/cpp/algorithm/partial_sort.html
+[fenwick]: https://en.wikipedia.org/wiki/Fenwick_tree
+[laakson]: https://cses.fi/book/book.pdf
+[pbds]: https://gcc.gnu.org/onlinedocs/libstdc++/manual/policy_data_structures.html
