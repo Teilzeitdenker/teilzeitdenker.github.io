@@ -44,7 +44,7 @@ struct TestCase {
 
 //---------------------------------- GLOBAL variables -------------------------------------------
 
-const int L_MAX = 200'001; // because of padding need 1 more
+const int SZ_sieve = 200'001; // because of padding need 1 more
 
 {% endhighlight %}
 
@@ -67,17 +67,18 @@ vvi createPrimeFacs(int size) {
     return primeFacs;
 }
 
-vi createRads(int size, const vvi& primeFacs) {
-    vi rads(size + 1);
+vi createRads(const vvi& primeFacs) {
+    int size = primeFacs.size();
+    vi rads(size);
     rads[0] = 0;
     rads[1] = 1;
-    for (int i = 2; i <= size; i++) {
+    for (int i = 2; i < size; i++) {
         int r = 1;
         for (auto p : primeFacs[i]) r *= p;
         rads[i] = r;
     }
     return rads;
-}
+} 
 
 {% endhighlight %}
 
@@ -107,8 +108,8 @@ int main() {
     }
     sort(testCases.begin(), testCases.end());
 
-    auto primeFacs = createPrimeFacs(L_MAX);
-    auto rads = createRads(L_MAX, primeFacs);
+    auto primeFacs = createPrimeFacs(SZ_sieve);
+    auto rads = createRads(primeFacs);
 
     if (!big_Ls) {
         solveSmallL(testCases, rads, T);
@@ -145,7 +146,7 @@ typedef tree<pii, null_type, less<pii>, rb_tree_tag, tree_order_statistics_node_
 
 Dieses ordered_set ist auf Paare von ints zugeschnitten und sortiert aufsteigend. Die Bedeutung der anderen template-Parameter kann man in der [Gnu-Dokumentation][pbds] nachlesen.
 
-Jetzt kann man mit .insert() ganz einfach Elemente hinzufügen. Sehr praktisch! Also füllen wir mal immer bis zum nächsten L auf:
+Jetzt kann man mit .insert() ganz einfach Elemente hinzufügen. Sehr praktisch! Also füllen wir mal immer bis zum nächsten L auf und updaten den laufenden Wert von L:
 
 {% highlight c++ %}
 
@@ -160,7 +161,7 @@ void fillOrderedRadsUpTo(int L_nxt, const vi& rads, ordered_set& orderedRads, in
 
 {% endhighlight %}
 
-Mit .find_by_order() erhält man einen Iterator auf das Element an einem bestimmten index, wieder sehr praktisch.
+Mit .find_by_order() erhält man einen Iterator auf das Element an einem bestimmten Index, wieder extrem praktisch, das ist genau was wir für diese Aufgabe brauchen!
 Damit können wir schon den Vorhang für die erste solve()-Funktion lüften, denn die test cases sind ja schon sortiert:
 
 {% highlight c++ %}
