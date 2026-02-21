@@ -1,0 +1,117 @@
+---
+layout: post
+title:  "Project Euler+ #125: Palindromic sums"
+date:   2026-02-21
+categories: project-euler
+---
+
+Nach dem Hammer war das eine gute [Aufgabe][problem] zum Verschnaufen. Dachte ich. Die meisten Tests waren auch gnädig und liefen auf Anhieb durch, aber es gab da drei Stück (die Tests 10, 11 und 12), die sich widerspenstig sträubten und mir grinsend immer wieder TLE's kredenzten. 
+
+Auch nachdem ich eine map angelegt hatte, die getane Arbeit (für Input-Paare von N, d) speicherte, ging dieser Unfug weiter. Ich hatte den starken Verdacht, dass es an der Überprüfung von Palindromen lag, die ich nicht effizient genug hinbekam. Zunächst erstellte ich -- wie auch bisher bei Palindrom-Aufgabe auf Projekt Euler -- einfach einen Vektor der Ziffern und verglich nacheinander die vorderen und hinteren Indices von außen her, bis ich entweder ungleiche fand und false zurückgab oder aber unbescholten die Mitte der Zahl erreichte. Das sah in etwa so aus:
+
+{% highlight c++ %}
+
+using vi = vector<int>;
+
+// digits will be stored in reverse order, no difference for palindromes
+vi digits(int n){ 
+    vi digs;
+    while(n != 0) {
+        digs.push_back(n % 10);
+        n /= 10;
+    }
+    return digs;
+}
+
+bool is_pal(int n){
+    vi v = digits(n);
+    int sz = v.size();
+    for(int i = 0; i < sz/2; ++i){
+        if (v[i] != v[(sz-1)-i]) return false;
+    }
+    return true;
+}
+
+{% endhighlight %}
+
+
+Ich überlegte schon, alle Palindrome unter einer Milliarde zu erzeugen und immer diesen Vektor durchsuchen zu lassen. Es müsste ja nur etwa 110'000 Stück geben (man verdoppelt entweder die ersten 9999 Zahlen komplett, macht also z.B. aus 6438 eine 64388346 oder aber lässt die mittlere Zahl stehen und verdoppelt nur den Rest, was für die ersten 99999 Zahlen unter 1 Milliarde bleibt, z.B. wird dabei aus 37295 eine 372959273). Durchsucht man diesen Vektor mit binary_search() wäre das auch eine mögliche Methode, um is_pal() zu schreiben, wer weiß, aber so weit kam es gar nicht.
+
+Denn vorher wollte ich noch probieren, ob es reicht, wenn man das Erzeugen von Vektoren (also das Anfordern von Speicherplatz auf dem Heap) gänzlich vermeidet. Das ewige Zuweisen von Speicher und die vielen .push_back() sind zu langsam. Also habe ich einfach die Zahl nach und nach mit einfachen integer-Anweisungen "umgedreht" und dann die ursprüngliche Zahl damit verglichen. Das sieht dann so aus:
+
+{% highlight c++ %}
+
+bool is_pal(int n) {
+    if (n % 10 == 0) return false; // last digit zero -> no pal of mine
+    int rev = n % 10;
+    int left = n / 10;
+    while (left > 0) {
+        rev *= 10;
+        rev += left % 10;
+        left /= 10;
+    }
+    return rev == n;
+}
+
+{% endhighlight %}
+
+Und tatsächlich: Mit dieser Version besteht man auch die letzten drei Tests. Puh, da bin ich der unangenehmen Aufgabe der Palindrom-Erzeugung nochmal von der Schippe gesprungen. 
+
+Der Rest des Programms (mit Auslassungen) war eigentlich nicht besonders spektakulär:
+
+{% highlight c++ %}
+
+using ull = unsigned long long;
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+int T, N, d;
+map<pair<int, int>, ull> calculated; // save our work
+
+//---------------------------------- Helper functions -------------------------------------------
+
+
+set<int> get_pals(ull lim, int diff) {
+    set<int> found; // use a set, since some palindromes are reached multiple times
+    for (ull i = 1; 2*i*i < lim; i++) { // stop if i*i + i*i is bigger than lim
+        ull b = i + diff;
+        ull sum = i * i + b * b; // start with at least two summands
+        while (sum < lim) {
+            ...
+        }
+    }
+    return found;
+}
+
+//---------------------------------- MAIN function ----------------------------------------------
+
+int main() {
+    cin >> T;
+    while (T--) {
+        cin >> N >> d;
+
+        pair<int, int> key = {N, d};
+
+        auto it = calculated.find(key);
+        if (it != calculated.end()) { // stored?
+            cout << (*it).second << endl;
+            continue;
+        }
+
+        auto found = get_pals((ull)N, d);
+
+        ull res = 0; // may be big
+        for (const auto& pal : found) res += pal;
+        cout << res << endl;
+
+        calculated[key] = res; // store
+    }
+    return 0;
+}
+
+{% endhighlight %}
+
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler125/problem
+[forum]: https://projecteuler.net/thread=125
+[bigint-class]: https://github.com/theartist007/Big-Integer-Class/blob/master/bigint.cpp

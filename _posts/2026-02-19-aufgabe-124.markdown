@@ -128,7 +128,7 @@ Schauen wir uns erstmal die kleinen L an (die sind natürlich einfacher) und ver
 
 Ein sogenannter [Fenwick Tree][fenwick] (auch binary indexed tree genannt) erreicht beim Einfügen (update) und Abfragen (search) eine Zeitkomplexität von \\( O(\log L) \\). Da wir jedes Paar nur ein einziges Mal einfügen, hat das Aufbauen des Baums eine Komplexität von \\( O(L\log L) \\). Alle Abfragen zusammen haben ebenfalls eine Komplexität von \\( O(L\log L) \\). Da wir hier nur die Summe dieser beiden Vorgänge nehmen müssen, ist die Gesamtkomplexität ebenfalls \\( O(L\log L) \\) und damit deutlich besser als bei der Sortiermethode!
 
-Hat man [Laaksons Buch][laakson] gelesen, dann weiß man, dass der g++-Compiler über ein paar eingebaute sogenannte policy-based data-sets (kurz "pbds") verfügt, auf die man hier zurückgreifen kann. Es ist natürlich nicht verboten, selbst einen Fenwick tree zu schreiben, auch dafür findet man genug Material im Internet. Ich begnüge mich einfach mit dem Einbinden der nötigen header und einem typedef:
+Hat man [Laaksons Buch][laakson] gelesen (siehe auf S.44 f), dann weiß man, dass der g++-Compiler über ein paar eingebaute sogenannte policy-based data-sets (kurz "pbds") verfügt, auf die man hier zurückgreifen kann. Es ist natürlich nicht verboten, selbst einen Fenwick tree zu schreiben, auch dafür findet man genug Material im Internet. Ich begnüge mich einfach mit dem Einbinden der nötigen header und einem typedef:
 
 
 {% highlight c++ %}
