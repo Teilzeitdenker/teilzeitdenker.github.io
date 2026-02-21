@@ -7,7 +7,7 @@ categories: project-euler
 
 Nach dem Hammer war das eine gute [Aufgabe][problem] zum Verschnaufen. Dachte ich. Die meisten Tests waren auch gnädig und liefen auf Anhieb durch, aber es gab da drei Stück (die Tests 10, 11 und 12), die sich widerspenstig sträubten und mir grinsend immer wieder TLE's kredenzten. 
 
-Auch nachdem ich eine map angelegt hatte, die getane Arbeit (für Input-Paare von N, d) speicherte, ging dieser Unfug weiter. Ich hatte den starken Verdacht, dass es an der Überprüfung von Palindromen lag, die ich nicht effizient genug hinbekam. Zunächst erstellte ich -- wie auch bisher bei Palindrom-Aufgabe auf Projekt Euler -- einfach einen Vektor der Ziffern und verglich nacheinander die vorderen und hinteren Indices von außen her, bis ich entweder ungleiche fand und false zurückgab oder aber unbescholten die Mitte der Zahl erreichte. Das sah in etwa so aus:
+Auch nachdem ich eine map angelegt hatte, um die getane Arbeit (für Input-Paare von N, d) zu speichern, ging dieser Unfug weiter. Ich hatte ja von Anfang an den starken Verdacht, dass es an der Funktion zur Überprüfung von Palindromen lag, die ich nicht effizient genug hinbekam. Zunächst erstellte ich -- wie auch bisher bei Palindrom-Aufgaben auf Projekt Euler -- einfach einen Vektor der Ziffern und verglich nacheinander die vorderen und hinteren Indices von außen her, bis ich entweder ungleiche Ziffern fand und false zurückgab oder aber unbescholten die Mitte der Zahl erreichte. Das sah in etwa so aus:
 
 {% highlight c++ %}
 
@@ -34,10 +34,9 @@ bool is_pal(int n){
 
 {% endhighlight %}
 
+Ich überlegte schon, alle Palindrome unter einer Milliarde zu erzeugen und immer diese Menge durchsuchen zu lassen. Es dürfte ja "nur" etwa 110'000 Stück geben (man verdoppelt entweder die ersten 9999 Zahlen komplett, macht also z.B. aus 6'438 eine 64'388'346, damit erhält man alle Palindrome mit einer geraden Anzahl von Ziffern oder aber lässt die mittlere Zahl stehen und verdoppelt nur den Rest, was für die ersten 99'999 Zahlen unter 1 Milliarde bleibt, z.B. wird dabei aus 37'295 eine 372'959'273 und damit erzeugt man alle Palindrome mit einer ungeraden Anzahl von Ziffern). Sortiert man einen Vektor dieser Zahlen, kann man binary_search() anwenden und das wäre auch eine mögliche Methode, um is_pal() zu schreiben, wer weiß, aber so weit kam es am Ende gar nicht.
 
-Ich überlegte schon, alle Palindrome unter einer Milliarde zu erzeugen und immer diesen Vektor durchsuchen zu lassen. Es müsste ja nur etwa 110'000 Stück geben (man verdoppelt entweder die ersten 9999 Zahlen komplett, macht also z.B. aus 6438 eine 64388346 oder aber lässt die mittlere Zahl stehen und verdoppelt nur den Rest, was für die ersten 99999 Zahlen unter 1 Milliarde bleibt, z.B. wird dabei aus 37295 eine 372959273). Durchsucht man diesen Vektor mit binary_search() wäre das auch eine mögliche Methode, um is_pal() zu schreiben, wer weiß, aber so weit kam es gar nicht.
-
-Denn vorher wollte ich noch probieren, ob es reicht, wenn man das Erzeugen von Vektoren (also das Anfordern von Speicherplatz auf dem Heap) gänzlich vermeidet. Das ewige Zuweisen von Speicher und die vielen .push_back() sind zu langsam. Also habe ich einfach die Zahl nach und nach mit einfachen integer-Anweisungen "umgedreht" und dann die ursprüngliche Zahl damit verglichen. Das sieht dann so aus:
+Denn vorher wollte ich noch probieren, ob es reicht, wenn man das Erzeugen von Vektoren (also das Anfordern von Speicherplatz auf dem Heap) gänzlich vermeidet. Das ewige Zuweisen von Adressen und die vielen .push_back() sind zu langsam. Also habe ich einfach die Zahl nach und nach mit einfachen integer-Anweisungen "umgedreht" und dann die ursprüngliche Zahl damit verglichen. Das sieht dann so aus:
 
 {% highlight c++ %}
 
@@ -55,9 +54,9 @@ bool is_pal(int n) {
 
 {% endhighlight %}
 
-Und tatsächlich: Mit dieser Version besteht man auch die letzten drei Tests. Puh, da bin ich der unangenehmen Aufgabe der Palindrom-Erzeugung nochmal von der Schippe gesprungen. 
+Und tatsächlich: Mit dieser Version besteht man auch die letzten drei Tests. Puh, da bin ich der unangenehmen Aufgabe der Palindrom-Erzeugung gerade nochmal von der Schippe gesprungen. 
 
-Der Rest des Programms (mit Auslassungen) war eigentlich nicht besonders spektakulär:
+Der Rest des Programms (hier wieder mit Auslassungen wiedergegeben) war eigentlich nicht besonders spektakulär:
 
 {% highlight c++ %}
 
@@ -73,10 +72,10 @@ map<pair<int, int>, ull> calculated; // save our work
 
 set<int> get_pals(ull lim, int diff) {
     set<int> found; // use a set, since some palindromes are reached multiple times
-    for (ull i = 1; 2*i*i < lim; i++) { // stop if i*i + i*i is bigger than lim
+    for (ull i = 1; ...) { // stop if i*i + i*i is bigger than lim
         ull b = i + diff;
         ull sum = i * i + b * b; // start with at least two summands
-        while (sum < lim) {
+        while (sum < lim) { // palindromes must be strictly less than limit!
             ...
         }
     }
@@ -111,6 +110,7 @@ int main() {
 
 {% endhighlight %}
 
+Die nächste Aufgabe wird wohl wieder schwerer, an die #126 kann ich mich noch vom Original Projekt Euler erinnern, das war die mit den vielen Blöcken und Schichten, da hab ich lange dran gesessen damals. 
 
 [problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler125/problem
 [forum]: https://projecteuler.net/thread=125
