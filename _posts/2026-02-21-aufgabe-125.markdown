@@ -110,7 +110,53 @@ int main() {
 
 {% endhighlight %}
 
-Die nächste Aufgabe wird wohl wieder schwerer, an die #126 kann ich mich noch vom Original Projekt Euler erinnern, das war die mit den vielen Blöcken und Schichten, da hab ich lange dran gesessen damals. 
+Kleiner Nachtrag: Ich habe dann die Version mit der Erzeugung der Palindrome doch noch ausprobiert. War auch einigermaßen erfolgreich (d.h. die Methode ergibt die richtigen Lösungen), aber leider war binary_search() auf einem Vektor mit 109'998 Einträgen dann doch zu langsam (der Logarithmus ist etwa 13) und diesmal bekommen nicht nur die Tests 10 bis 12, sondern zusätzlich auch noch Test 14 ein TLE. Es ist also noch schlechter, als die Ziffer-Vektor-Methode. Hier ein paar Ausschnitte (der Rest des Codes kann belassen werden, in main() muss vor dem Input-Lesen nur fill_palindromes() aufgerufen werden und der Vektor dann noch mit sort() geordnet werden).
+
+{% highlight c++ %}
+
+using pii = pair<int, int>;
+
+vector<int> palindromes = {1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 22, 33, 44, 55, 66, 77, 88, 99};
+
+//---------------------------------- Helper functions -------------------------------------------
+
+pii get_rev_and_len(int n) {
+    int rev = n % 10;
+    int left = n / 10;
+    int len = 1;
+    while (left > 0) {
+        rev *= 10;
+        rev += left % 10;
+        left /= 10;
+        len++;
+    }
+    return {rev, len};
+}
+
+void fill_palindromes() {
+    for (int i = 10; i < 10000; i++) { // pals with even num of digs
+        auto [rev, len] = get_rev_and_len(i);
+        int pal = i;
+        while (len--) pal *= 10;
+        pal += rev;
+        palindromes.push_back(pal);
+    }
+    for (int i = 10; i < 100000; i++) { // pals with odd num of digs
+        auto [rev, len] = get_rev_and_len(i / 10);
+        int pal = i;
+        while (len--) pal *= 10;
+        pal += rev;
+        palindromes.push_back(pal);
+    }
+}
+
+bool is_pal(int n) { // just do binary search on the sorted vector
+    return binary_search(palindromes.begin(), palindromes.end(), n);
+}
+
+{% endhighlight %}
+
+Die nächste Aufgabe wird wohl wieder schwerer, an die #126 kann ich mich vom originalen Projekt Euler erinnern, das war die mit den vielen Blöcken und Schichten, da hab ich lange dran gesessen damals. 
 
 [problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler125/problem
 [forum]: https://projecteuler.net/thread=125
