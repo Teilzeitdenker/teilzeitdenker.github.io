@@ -1,0 +1,89 @@
+---
+layout: post
+title:  "Project Euler+ #126: Cuboid layers"
+date:   2026-03-05
+categories: project-euler
+---
+
+So schwer wie gedacht war die [Aufgabe][problem] dann gar nicht.
+Aber aus Respekt hatte ich mathematisch auch bereits alles ordentlich vorbereitet, bevor ich überhaupt ans Programmieren gegangen bin. Vielleicht ging es deswegen auch so reibungslos gleich beim ersten Versuch durch.
+
+Ein Gebäude will ja gut geplant sein, also habe ich das [Forum][forum] erstmal geraidet und auf Seite 8 eine extrem hilfreiche Beobachtung von godmar gefunden (der bekommt jetzt auch eins meiner kostbaren Kudos dafür). Darin gibt er nicht nur eine geschlossene Formel für die Anzahl der Würfel in der \\( k \\)-ten Schicht an, sondern er erwähnt auch, dass man bei festem \\( n, k \\) und \\( c \\) die beiden anderen Variablen mit ["Simon's favorite factoring trick (SFFT)"][sfft] berechnen kann.
+
+Nachdem ich diese Webseite durchgelesen hatte, war der Weg zum Ziel eigentlich klar: 
+1. Setze \\( f(k, a, b, c) = n \\) und überlege mir maximale Grenzen für eine Iteration über \\( k \\) und \\( c \\), wobei ich die Annahme mache, dass \\( c \\) die kleinste Abmessung des ursprünglichen cuboids ist, also \\( a \geq b \geq c \\)
+2. Multipliziere die Gleichung komplett aus, teile durch 2 (\\( n \\) muss ja sowieso gerade sein, damit \\( C(n) \\) nicht null ist) und fasse so zusammen, dass man SFFT anwenden kann
+3. Finde und/oder zähle alle Teiler der SFFT-Konstante auf der rechten Seite, die die nötigen Bedingungen erfüllen. Dafür braucht man eine wirklich effiziente Methode und muss verschiedene Möglichkeiten probieren
+
+In Schritt 1 wählte ich \\( k \\) so, dass \\( k = 0 \\) der ersten Schicht entspricht. Dann lautet die allgemeine Formel für die Anzahl der Würfel in der \\( k \\)-ten Schicht:
+
+$$
+    f(k, a, b, c) = 2(ab + ac + bc) + 4k(a + b + c - 1) + (2k)^2
+$$
+
+Setzt man das gleich \\( n \\) und verwendet, dass \\( a, b, c \geq 1 \\), so sieht man, dass \\( 4k^2 + 8k + 6 \leq n \\) sein muss und hat schon die erste Iterationsgrenze. 
+
+Für festes \\( k \\) erhält man eine Grenze für \\( c \\), wenn man verwendet, dass \\( c \\) die kleinste Abmessung ist und einfach mal \\( a = b = c \\) setzt. 
+
+In Schritt 2 nimmt man nun an, dass \\( k \\) und \\( c \\) bereits gewählt und konstant sind. Nach dem Teilen durch 2 und ein wenig Wurschtelei erhält man eine Gleichung der Form
+
+$$
+    ab + ra + rb = s
+$$
+
+mit Konstanten \\( r \\) und \\( s \\). Diese ist nach SFFT äquivalent zur Gleichung 
+
+$$
+    (a + r)(b + r) = s + r^2
+$$
+
+und man muss für alle ganzzahligen Lösungen nur noch die Teiler der Konstante \\( sfft = s + r^2 \\) finden. Allerdings sind nicht alle diese Teiler relevant! Damit die Relation \\( a \geq b \geq c \\) gilt, muss der erste Divisor, also \\( a + r \\), größer oder gleich dem zweiten sein und außerdem \\( b + r \geq c + r \\) gelten. 
+
+Schaut man sich also den "eingequetschten" zweiten Divisor an, so muss dieser mindestens \\( c + r \\) betragen und darf aber höchstens so groß wie die Wurzel aus \\( sfft \\) sein, weil sonst ja der erste Divisor kleiner wäre, absolut genial! Das ist ein wirklich kleiner Bereich. 
+
+In einem ersten Versuch habe ich die Teiler explizit berechnet. Dazu habe ich meinen kompletten Werkzeugkasten aus primesieve, fill_primes(), get_facs_and_mults() (Primfaktorzerlegung mit Multiplizitäten) und get_divisors() aus Aufgabe 100 wiederbelebt und losgelegt. Das möchte ich hier gar nicht tiefer besprechen. Die Methode funktioniert zwar, man kann auch ganz wunderbar die originale Projekt-Euler Aufgabe damit lösen (also das erste \\( n \\) finden, für das \\( C(n) = 1000 \\) gilt), aber sobald man im Input einige Zahlen im Bereich bis zu einer Million berechnen lässt, merkt man schon im Terminal, dass es zu lange dauert. Und da HackerRank ja bis zu 50 Tests verlangt, war klar, das würde nicht reichen. 
+
+Also habe ich weiter überlegt und gesehen, dass es ja überhaupt nicht nötig ist, die Teiler explizit zu berechnen. Der Bereich aus dem sie stammen müssen (also zwischen \\( c + r \\) und der Wurzel aus \\( sfft \\)), ist zudem so klein, dass auch eine Primfaktorzerlegung überflüssig wird und im Gegenteil alles nur ausbremst. Man kann einfach alle Zahlen der "range" durchgehen und den modulo-Test machen, basta!  
+
+Eine zweite solve-Funktion brachte den Geschwindigkeits-Durchbruch.
+Nach uns der Überschallknall! Den kompletten primesieve-Murks konnte ich wieder abschaffen und zum Schluss war die Lösung extremst übersichtlich. Hier natürlich wieder mit Auslassungen (ich bin doch nicht euer Rechensklave!):
+
+{% highlight c++ %}
+
+int solve(int n) {
+    int cnt = 0;
+    // see scribbles for limits of k and c
+    for (int k = 0; 4*k*k + 8*k +6 <= n; k++) {
+        for (int c = 1; ... <= n; c++) {
+            // use simon's favorite factoring trick
+            int sfft = ...;
+            int low = 2*c + 2*k;
+            // only count how many divisors are in the relevant range
+            for (int d = low; d*d <= sfft; d++) {
+                if (sfft % d == 0) cnt++;
+            }
+        }
+    }
+    return cnt;
+}
+
+auto main() -> int {
+    int tests;
+    cin >> tests;
+    while (tests--) {
+        int n;
+        cin >> n;
+        // for odd n, C(n) = 0
+        if (n % 2 == 1) cout << 0 << "\n";
+        else cout << solve(n) << "\n";
+    }
+    return 0;
+}
+
+{% endhighlight %}
+
+Mit diesem leidlich kurzen Programm habe ich als achtunddreißigster in den letzten 10 Jahren die Tests zu 100% lösen können. Das hat richtig Fun gemacht!
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler126/problem
+[forum]: https://projecteuler.net/thread=126
+[sfft]: https://artofproblemsolving.com/wiki/index.php/Simon's_Favorite_Factoring_Trick
