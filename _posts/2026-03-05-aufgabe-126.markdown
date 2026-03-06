@@ -84,9 +84,9 @@ auto main() -> int {
 
 Mit diesem leidlich kurzen Programm habe ich als achtunddreißigster in den letzten 10 Jahren die Tests zu 100% lösen können. Das hat richtig Fun gemacht! \*_nerdiges Grinsen_\*
 
-<!-- <div style="text-align: center;">
+<div style="text-align: center;">
   <img src="/assets/images/gangsta.png" alt="Gangsta">
-</div> -->
+</div>
 
 [problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler126/problem
 [forum]: https://projecteuler.net/thread=126
