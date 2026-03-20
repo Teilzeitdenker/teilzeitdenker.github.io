@@ -182,9 +182,18 @@ Und das wars schon! Mit diesem Programm konnte ich (wenn ich \\( L_{max} = 120'0
 
 Was geht da schief, wo ist das bottleneck? Meine erste Idee war natürlich die gcd()-Funktion. Kann ich die Anzahl von Prüfungen irgendwie weiter verkleinern (nein!), kann ich die von Hand schneller schreiben (nein!), gibt es eine Möglichkeit, Werte zu cachen (ja!), also mach ich das mal. Ich raide das [Forum][forum] und finde eine Lösung von WaveM3, der einen CachedGCD entworfen hat. Das baue ich in meine Lösung ein, aber leider bringt es absolut keine Verbesserung. Timing liefert etwa 2.5 Sekunden (ob mit oder ohne Cache), um alle Tripel zu finden und den BIT zu füllen, das ist zu lang!
 
-Es hilft nichts, ich muss die Anzahl der Loops verringern. Dazu wäre es gut erstmal zu wissen, wie viele es sind. Also einen counter numLoops eingeführt, es sind sagenhafte 600 Millionen Loops, oh Mann. Bei wie vielen Tripeln eigentlich. Noch einen counter numTriples eingeführt, es sind nur etwa 83'000. Also sind 0,1 Promille der untersuchten Kombinationen Treffer (abc-hits). Das muss besser gehen. Der entscheidende Gedanke war dann, dass ich eine zweite Schleife einführe, die für kleine Radikale von \\( b \\) die Prüfung extra übernimmt. Dazu erstelle ich eine Liste mit Kandidaten für kleine Radikale, kann man ganz allgemein mit einer breakpoint-Variable machen, dann ist das universeller (entspricht natürlich nicht ganz der Entstehung des Ganzen, aber mei!). Geht man diese Liste von Kandidaten dann von groß nach klein geordnet durch, dann landet man irgendwann bei einem \\( b \\), für das gilt, dass \\( a = c - b >= b \\) ist. In diesem Moment kann man aber breaken, denn das wird für alle weiteren \\( b \\) in der Liste ebenfalls gelten, die sind ja noch kleiner! So spart man sich jede Menge loops, denn in der Abbruchbedingung für den ersten Loop kann man den breakpoint mit ins Produkt aufnehmen. Natürlich kann man hier auch wieder nach dem Sweet Spot suchen, bei welchem Breakpoint die Gesamtzahl der Loops minimal wird. In meinen Experimenten war das bei etwa 60 der Fall. Dann sind es "nur" noch etwa 50 Millionen Loops insgesamt und die Zeit für das Finden aller Tripel sinkt auf etwa 0.25 Sekunden! Hammer, das reicht locker und löst alle test cases! Es klappt aber auch schon für niedrigere Breakpoints, z.B. für 20 (damit habe ich es zuerst versucht). 
+Es hilft nichts, ich muss die Anzahl der Loops verringern. Dazu wäre es gut erstmal zu wissen, wie viele es sind. Also einen counter numLoops eingeführt, es sind sagenhafte 600 Millionen Loops, oh Mann. Bei wie vielen Tripeln eigentlich. Noch einen counter numTriples eingeführt, es sind nur etwa 83'000. Also sind 0,1 Promille der untersuchten Kombinationen Treffer (abc-hits). Das muss besser gehen. 
 
-Nachdem ich das jetzt so ausführlich beschrieben habe, zeige ich noch die Erstellung der Kandidatenliste für die b's mit kleinen Radikalen und wie der erste Loop mit breakpoint dann ausschaut. Den zweiten Loop muss man sich ein bißchen selbst überlegen, ist aber nicht schwer, vom Aufbau her sieht er genau so aus wie der erste Loop:
+Das Problem ist ja, dass einfach zu viele Triples überprüft werden, bei denen die Wahrscheinlichkeit, dass es ein abc-hit ist, extrem klein ist. Das ist vor allem für \\( a \\)-Werte der Fall, deren Radikal ohnehin schon recht groß ist. Die Abbruchbedingung für die Schleife oben hat ein klares Manko. Sie gibt als (minimalen) Wert für \\( \mathrm{rad}(b) = 1 \\) vor. Das könnte man natürlich schonmal auf 2 setzen, denn \\( b \\) ist ja größer als \\( a \\), aber das ist mir ein bißchen zu wenig. 
+
+Überlegen wir uns das mal so: Wir gehen so ganz gemütlich die geordneten Radikale für \\( \mathrm{rad}(a) \\)  durch. Je größer das Radikal wird, umso größer wird die Wahrscheinlichkeit, dass wir überhaupt keinen abc-hit mehr bekommen, denn das \\( b \\) wird ja noch einen eventuell großen Faktor liefern, der dann das Produkt über das maximale \\( c^r \\) hebt. Das Problem ist, dass immer wieder b's vorkommen, die sehr kleine Radikale haben, so dass die WSK nicht null wird und wir nicht abbrechen können. Wenn wir aber genau diesen b's mit kleinen Radikalen eine "Sonderbehandlung" widerfahren lassen, dann können wir die Abbruchbedingung deutlich verschärfen. Klar, wir müssen einen kleinen Preis bezahlen, nämlich, dass immer, wenn wir auf ein \\( b \\) mit einem kleinen Radikal treffen, wir diesen Fall auf später verschieben müssen und diese Schleife quasi umsonst gedreht haben. Andererseits sparen wir uns durch diese Herangehensweise das Abklappern von so unwahrscheinlich vielen Tripeln, bei denen bereits das erste Radikal recht groß ist, dass es sich wirklich lohnt. Man nimmt sich also das Beste aus beiden Welten (zu viele Kandidaten für kleine b-Radikale darf man auch nicht zulassen, dann wird der performance gain durch das doppelte Bearbeiten nämlich wieder neutralisiert!)
+
+Mit diesen Hintergedanken führe ich eine zweite Schleife ein, die für kleine Radikale von \\( b \\) die Prüfung der Tripel extra übernimmt. 
+Dazu erstelle ich eine Liste mit Kandidaten für kleine Radikale, das kann man ganz allgemein mit einer breakpoint-Variable machen, dann ist das universeller (entspricht natürlich nicht ganz der Entstehung des Ganzen, das hab ich erst später so verallgemeinert, aber mei!). Geht man diese Liste von Kandidaten dann von groß nach klein geordnet durch, landet man irgendwann bei einem \\( b \\), für das \\( a = c - b >= b \\) ist. In diesem Moment kann man aber breaken, denn das wird für alle weiteren \\( b \\) in der Liste ebenfalls gelten, die sind ja noch kleiner! So spart man sich auch in der Extrabehandlung nochmal jede Menge loops. 
+
+Natürlich kann man bezüglich des Breakpoints nach dem absoluten Sweet Spot suchen, bei dem die Gesamtzahl der Loops minimal wird. In meinen Experimenten war das bei etwa 60 der Fall. Dann sind es "nur" noch etwa 50 Millionen Loops insgesamt und die Zeit für das Finden aller Tripel sinkt auf etwa 0.25 Sekunden! Das reicht locker und löst alle test cases! Es klappt aber auch schon für niedrigere Breakpoints, z.B. für 20 (damit habe ich es zuerst gelöst, siehe Code unten). Interessant ist, dass die Gesamtzahl der Loops ab 60 dann wieder steigt, eine zu große Liste von Kandidaten für \\( b \\) ist also kontraproduktiv. 
+
+Nachdem ich das jetzt so ausführlich beschrieben habe, zeige ich noch die Erstellung der Kandidatenliste für die b's mit kleinen Radikalen und wie der erste Loop mit verschärfter Abbruchbedingung dann aussieht. Den zweiten Loop muss man sich ein bißchen selbst überlegen, ist aber nicht schwer, die Prüfung der Triples bleibt gleich:
 
 {% highlight c++ %}
 
@@ -225,13 +234,13 @@ int main() {
             newTriple(a, b, c);
         }
 
-        // use candidates list for b to reduce time for finding triples 
-        // from ~2.5 s without to ~0.5 s !!
+        // use candidates list for b (in case of BREAKPOINT = 20 there are 242 candidates) 
+        // in a second loop to reduce time for finding triples from ~2.5 s without to ~0.5 s 
         for (int b : cands) {
             int a = c - b; // may be negative!
             if (a <= 0) continue;
             if (a >= b) break; // all other cands lead to even bigger a's, so stop here 
-            ... 
+            ... // check and add triples
         }
 
         // process matching queries 
@@ -244,7 +253,7 @@ int main() {
 
 {% endhighlight %}
 
-Das war's, ganz schön starker Tobak. Da lobe ich mir doch den 80% performance gain, was mich an ein kleines Meme erinnert!
+Das war's, ganz schön starker Tobak. Da lobe ich mir doch den 80% performance gain durch die zweite Schleife, was mich gleich an ein kleines Meme erinnert!
 
 <div style="text-align: center;">
   <img src="/assets/images/howard.png" alt="Howard">
