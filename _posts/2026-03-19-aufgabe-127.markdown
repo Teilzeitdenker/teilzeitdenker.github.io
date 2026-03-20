@@ -1,0 +1,255 @@
+---
+layout: post
+title:  "Project Euler+ #127: abc-hits"
+date:   2026-03-19
+categories: project-euler
+---
+
+Naja, eigentlich müsste die [Aufgabe][problem] ja r-abc-hits heißen, denn für die HackerRank-Version wurde eine Hochzahl \\( 0 \leq r \leq 1.5 \\) eingeführt, um noch ein paar mehr Tripel als hits zuzulassen. Die [ursprüngliche Aufgabe][original] ist quasi der Spezialfall \\( r = 1\\). Zwar ist der maximale Wert für \\( c \\) im HackerRank-Fall 20% niedriger, was aber extrem erschwerend hinzukommt, ist, dass bis zu 100'000 Tests mit unterschiedlichen \\( r \\) und \\( c_{max} \\) angekündigt werden. 
+
+Puh, da muss ich wohl wieder mit einem binary indexed tree (BIT) draufschießen, um überhaupt eine Chance zu haben. Aber wie frage ich den ab? Es gibt eigentlich nur zwei Möglichkeiten. Entweder man sortiert die Tests nach ihrem maximalen \\( c \\) (nach Aufgabenstellung ist das \\( L - 1 \\)) oder eben nach aufsteigendem \\( r \\). 
+
+Im ersten Fall könnte man dann alle Tripel mit einem bestimmten \\( c \\)-Wert suchen und in den BIT einfügen (an welcher Stelle?), dann alle Tests mit diesem maximalen \\( c \\) beantworten und weitermachen, bis \\( c = L_{max} \\) ist. Das hätte den Vorteil, dass man nur einmal alle Tripel finden muss.
+
+Im zweiten Fall würde man für aufsteigende \\( r \\) alle Tripel finden, die passen. Wo man diese in den BIT einfügen muss, ist klar (eben bei dem entsprechenden \\( c \\)) und wie man die Tests mit diesem \\( r \\) beantwortet ist auch klar, man frägt den BIT einfach beim \\( c_{max} \\) des Tests ab. Allerdings muss man im schlimmsten Fall 100'000 mal alle Möglichkeiten für Tripel durchgehen und schauen, ob sie für das aktuelle \\( r \\) passen. Das ist viel zu aufwändig und dauert. Also Möglichkeit 1!
+
+Im ersten Fall fehlt aber eine klare "Nummerierung", da \\( r \\) kein Integer ist. Man muss also erst mal einen künstlichen "r-Index" einführen, damit man den BIT an diesem Index updaten und abfragen kann. Indem man alle in den Tests gegebenen \\( r \\) sortiert und die Position in dieser Liste verwendet, ist man eigentlich schon fertig. Das ist dann auch die Stelle im BIT, an der man das \\( c \\) eines beliebigen gefundenen Tripels updaten muss. Abfragen kann man einfach beim "r-Index" des aktuellen Tests, praktisch! Ganz nebenbei: Netterweise ist \\( T_{max} = L_{max} \\), die Größe des BIT ist also in beiden Fällen gleich. 
+
+Fangen wir also mal mit ein paar using-Direktiven und dem struct für den BIT an: 
+
+{% highlight c++ %}
+
+using ll = long long;
+using vll = vector<ll>; // for results
+using vi = vector<int>; // for radicals
+using pii = pair<int, int>; 
+using vpii = vector<pii>; // for sorted radicals
+using pdi = pair<double, int>; // for tests
+
+//---------------------------------- Binary Indexed Tree ------------------------------------
+
+struct BIT {
+        int size;
+        vector<ll> bit; // use ll since sums may be bigger than INT_MAX
+        BIT(int n) : size(n), bit(n + 1) {}
+        void update(int x, int v) {
+                x++;
+                for (; x <= size; x += x & (-x)) bit[x] += v;
+        }
+        // sum of values in [0,b]
+        ll query(int b) {
+                b++;
+                ll result = 0;
+                for (; b > 0; b -= b & (-b)) result += bit[b];
+                return result;
+        }
+};
+
+{% endhighlight %}
+
+Außerdem können wir den radical sieve aus Aufgabe 124 wieder entschlacken (wir brauchen ja nicht mehr die einzelnen Primfaktoren zu speichern) und da wir die Radikale später nach ihrer Größe sortieren wollen ohne die Information über die Ausgangszahl zu verlieren, generieren wir noch einen Vektor von Paaren sortedRads:
+
+{% highlight c++ %}
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+const int L_MAX = 100'000;
+vi rads(L_MAX);
+vpii sortedRads(L_MAX);
+BIT bit(L_MAX); // for O(log n) update and query
+
+//---------------------------------- Helper functions ------------------------------------
+
+void fillRads() {
+    fill(rads.begin(), rads.end(), 1);
+    rads[0] = 0;
+    for (int i = 2; i < (int)rads.size(); i++)
+        if (rads[i] == 1)  // prime
+            for (int j = i; j < (int)rads.size(); j += i)
+                rads[j] *= i;
+}
+
+void fillSortedIndexedRads() {
+    for (int i = 1; i < (int)sortedRads.size(); i++)
+        sortedRads[i] = {rads[i], i};
+    sort(sortedRads.begin(), sortedRads.end());
+}
+
+{% endhighlight %}
+
+Nun zum Einlesen der Tests: Wir speichern erstmal alles in einem tests-Vektor (der Index ist kostbar, weil wir offline arbeiten, müssen wir den result-Vektor ja an der passenden Stelle schreiben), außerdem führen wir Buch über alle r's, die wir bekommen, sortieren diese und bekommen so unseren "r-Index". Die Tests müssen wir aufsteigend nach ihren maximalen \\( c \\) sortieren. Dafür nehmen wir einen array von Vektoren aus Integer-Paaren. Warum? Der array-Index entspricht dem \\( c \\), die Paare im Vektor an dieser Stelle entsprechen den (r-Index, test-Index) - Tupeln, die wir beim Beantworten brauchen. Immer wenn wir ein \\( c \\) durchgeackert haben, lösen wir die dazu passenden Tests aus diesem array. Wenn wir das nicht machen würden, würden wir danach ja Tripel mit größeren \\( c \\) in den BIT einfügen und falsche Ergebnisse bekommen. 
+
+{% highlight c++ %}
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+const double R_MAX = 1.5;
+vector<pdi> tests;
+vector<double> rs;
+vpii queriesWithMaxC[L_MAX];
+
+//---------------------------------- MAIN function ----------------------------------------------
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int T;
+    cin >> T;
+
+    vll res(T); // results may be long long 
+
+    for (int idx = 0; idx < T; idx++) {
+        double r; int L;
+        cin >> r >> L;
+        tests.push_back({r, L});
+        rs.push_back(r);
+    }
+    // r-index "compression"
+    sort(rs.begin(), rs.end()); 
+    rs.resize(unique(rs.begin(), rs.end()) - rs.begin());
+    // prepare queries data structure
+    for (int t_idx = 0; t_idx < T; t_idx++) {
+        int r_idx = lower_bound(rs.begin(), rs.end(), tests[t_idx].first) - rs.begin();
+        int maxc = tests[t_idx].second - 1;
+        queriesWithMaxC[maxc].push_back({r_idx, t_idx});
+    }
+
+    fillRads();
+    fillSortedIndexedRads();
+
+    // ... solve the test cases ...
+    
+    for (auto& ans : res) cout << ans << endl;
+
+    return 0;
+}
+
+{% endhighlight %}
+
+Bevor wir Tripel suchen, überlegen wir erst, wie wir mit einem gefundenen umgehen würden. Zunächst müssen wir für dieses Tripel das passende \\( r \\) berechnen. Dann schauen wir in unserem vector von r's nach, ab welchem Index dieses berechnete \\( r \\) relevant würde. Schließlich fügen wir den \\( c \\)-Wert unseres Tripels an diesem r-Index in den BIT ein: 
+
+{% highlight c++ %}
+
+//---------------------------------- Helper functions ------------------------------------
+
+void newTriple(int a, int b, int c) {
+    int fullRad = rads[a] * rads[b] * rads[c];
+    double r = log(fullRad) / log(c);
+    int r_idx = upper_bound(rs.begin(), rs.end(), r) - rs.begin();
+    bit.update(r_idx, c);
+}
+
+{% endhighlight %}
+
+Jetzt geht es ans Suchen von r-abc-hits. In der main-Funktion fangen wir bei \\( c = 3 \\) an (denn alle Zahlen müssen positiv sein, außerdem \\( a < b \\) und \\( c = a + b \\)) und rechnen erst mal die Grenze aus, also das maximale \\( c^r \\). Jetzt gehen wir die sortierten Radikale durch, um eine geeignete Abbruchbedingung zu erhalten. Wenn die Radikale zu groß werden, können wir für dieses \\( c \\) aufhören zu suchen und Tests beantworten. Das sieht dann so aus:
+
+{% highlight c++ %}
+
+int main() {
+    // ...
+
+    // ... solve the test cases ...
+    
+    // go through all c's and look for triples
+    for (int c = 3; c < L_MAX; c++) {
+        double mx_cr = pow(c, R_MAX);
+        // go through the sorted radicals to get a nice break when limit is reached
+        for (int j = 1; j < L_MAX && sortedRads[j].first * 1LL * rads[c] < mx_cr; j++) {
+            int a = sortedRads[j].second;
+            int b = c - a;
+            if (b < 2) continue;
+            if (a >= b) continue;
+            if (1LL * rads[a] * rads[b] * rads[c] >= mx_cr) continue;
+            if (__gcd(a, b) > 1) continue;
+            newTriple(a, b, c);
+        }
+
+        // process matching queries
+        for (auto& [r_idx, t_idx] : queriesWithMaxC[c])
+            res[t_idx] = bit.query(r_idx);
+    }
+
+
+    // ...
+}
+
+{% endhighlight %}
+
+Wir prüfen das Tripel also auf Herz und Nieren, bevor wir es akzeptieren. Wichtig ist hier, dass die Berechnung von größten gemeinsamen Teilern ziemlich teuer ist (modulo-Operationen und divisions entsprechen relativ vielen Zyklen), diese Prüfung sollte also auf jeden Fall als Letztes erfolgen. Dazu nehmen wir die (bereits aggressiv optimierte) in g++ eingebaute gcd()-Funktion. 
+
+Und das wars schon! Mit diesem Programm konnte ich (wenn ich \\( L_{max} = 120'000 \\) gesetzt habe und ein entsprechendes input.txt-file mit einem test case mit \\( r = 1.0 \\) und \\( L = L_{max} \\) reingepipt habe) locker die originale Projekt-Euler-Aufgabe lösen. Allerdings fiel mir da schon auf, dass es zu lange dauert (es ist schon ein Kreuz, immer dasselbe!). Und tatsächlich, die Tests bekommen alle ein TLE, autsch!
+
+Was geht da schief, wo ist das bottleneck? Meine erste Idee war natürlich die gcd()-Funktion. Kann ich die Anzahl von Prüfungen irgendwie weiter verkleinern (nein!), kann ich die von Hand schneller schreiben (nein!), gibt es eine Möglichkeit, Werte zu cachen (ja!), also mach ich das mal. Ich raide das [Forum][forum] und finde eine Lösung von WaveM3, der einen CachedGCD entworfen hat. Das baue ich in meine Lösung ein, aber leider bringt es absolut keine Verbesserung. Timing liefert etwa 2.5 Sekunden (ob mit oder ohne Cache), um alle Tripel zu finden und den BIT zu füllen, das ist zu lang!
+
+Es hilft nichts, ich muss die Anzahl der Loops verringern. Dazu wäre es gut erstmal zu wissen, wie viele es sind. Also einen counter numLoops eingeführt, es sind sagenhafte 600 Millionen Loops, oh Mann. Bei wie vielen Tripeln eigentlich. Noch einen counter numTriples eingeführt, es sind nur etwa 83'000. Also sind 0,1 Promille der untersuchten Kombinationen Treffer (abc-hits). Das muss besser gehen. Der entscheidende Gedanke war dann, dass ich eine zweite Schleife einführe, die für kleine Radikale von \\( b \\) die Prüfung extra übernimmt. Dazu erstelle ich eine Liste mit Kandidaten für kleine Radikale, kann man ganz allgemein mit einer breakpoint-Variable machen, dann ist das universeller (entspricht natürlich nicht ganz der Entstehung des Ganzen, aber mei!). Geht man diese Liste von Kandidaten dann von groß nach klein geordnet durch, dann landet man irgendwann bei einem \\( b \\), für das gilt, dass \\( a = c - b >= b \\) ist. In diesem Moment kann man aber breaken, denn das wird für alle weiteren \\( b \\) in der Liste ebenfalls gelten, die sind ja noch kleiner! So spart man sich jede Menge loops, denn in der Abbruchbedingung für den ersten Loop kann man den breakpoint mit ins Produkt aufnehmen. Natürlich kann man hier auch wieder nach dem Sweet Spot suchen, bei welchem Breakpoint die Gesamtzahl der Loops minimal wird. In meinen Experimenten war das bei etwa 60 der Fall. Dann sind es "nur" noch etwa 50 Millionen Loops insgesamt und die Zeit für das Finden aller Tripel sinkt auf etwa 0.25 Sekunden! Hammer, das reicht locker und löst alle test cases! Es klappt aber auch schon für niedrigere Breakpoints, z.B. für 20 (damit habe ich es zuerst versucht). 
+
+Nachdem ich das jetzt so ausführlich beschrieben habe, zeige ich noch die Erstellung der Kandidatenliste für die b's mit kleinen Radikalen und wie der erste Loop mit breakpoint dann ausschaut. Den zweiten Loop muss man sich ein bißchen selbst überlegen, ist aber nicht schwer, vom Aufbau her sieht er genau so aus wie der erste Loop:
+
+{% highlight c++ %}
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+ll BREAKPOINT = 20;
+vi cands; // candidates for b with small radicals!
+
+//---------------------------------- Helper functions ------------------------------------
+
+void fillCandidatesForB(ll bp) {
+    cands.clear();
+    for (int i = 2; i < L_MAX; i++)
+        if (rads[i] < bp)
+            cands.push_back(i);
+    sort(cands.begin(), cands.end(), greater<int>()); // sort descendingly !
+}
+
+//---------------------------------- MAIN function ----------------------------------------------
+
+int main() {
+    // ...
+
+    fillCandidatesForB(BREAKPOINT);
+
+    // now go through all c's and look for triples
+    for (int c = 3; c < L_MAX; c++) {
+        double mx_cr = pow(c, R_MAX);
+        // go through the sorted radicals and get an earlier break out because of breakpoint
+        for (int j = 1; j < L_MAX && sortedRads[j].first * BREAKPOINT * rads[c] < mx_cr; j++) {
+            int a = sortedRads[j].second; 
+            int b = c - a;
+            if (b < 2) continue;
+            if (rads[b] < BREAKPOINT) continue; // done in second loop
+            if (a >= b) continue;
+            if (1LL * rads[a] * rads[b] * rads[c] >= mx_cr) continue;
+            if (__gcd(a, b) > 1) continue;
+            newTriple(a, b, c);
+        }
+
+        // use candidates list for b to reduce time for finding triples 
+        // from ~2.5 s without to ~0.5 s !!
+        for (int b : cands) {
+            int a = c - b; // may be negative!
+            if (a <= 0) continue;
+            if (a >= b) break; // all other cands lead to even bigger a's, so stop here 
+            ... 
+        }
+
+        // process matching queries 
+        for (auto& [r_idx, t_idx] : queriesWithMaxC[c]) 
+            res[t_idx] = bit.query(r_idx);
+    }
+
+    // ...
+}
+
+{% endhighlight %}
+
+Das war's, ganz schön starker Tobak. Da lobe ich mir doch den 80% performance gain, was mich an ein kleines Meme erinnert!
+
+<div style="text-align: center;">
+  <img src="/assets/images/howard.png" alt="Howard">
+</div>
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler127/problem
+[forum]: https://projecteuler.net/thread=127
+[original]: https://projecteuler.net/problem=127
