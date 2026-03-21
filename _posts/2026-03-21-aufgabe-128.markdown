@@ -1,0 +1,94 @@
+---
+layout: post
+title:  "Project Euler+ #128: Hexagonal tile differences"
+date:   2026-03-21
+categories: project-euler
+---
+
+
+Letzte Woche habe ich einen Grundkurs für Imkerei besucht (wenn ich wirklich anfange, Bienen zu halten, schreibe ich darüber vielleicht auch ein bißchen), da sehe ich in den herrlichen Waben natürlich schon den goldenen Honig fließen oder im Brutnest Ammenbienen die jungen Larven in Futtersaft und Gelée royale einlegen. Eine super ansprechende, wunderschöne Aufgabe. 
+
+Ich kann mich erinnern, dass ich damals (als ich die originale PE-Aufgabe gelöst habe) wirklich [Hexagonalpapier][hexagon-paper] ausgedruckt habe, um mir die ersten paar Ringe zu veranschaulichen, von Hand die Differenzen auszurechnen, Gesetzmäßigkeiten zu erkennen, zu schauen, ob ich diese beweisen kann, allgemeine Formeln herzuleiten etc. Das hat mich damals schon gecatcht und ich kann es nur empfehlen, sich da mal reinzudenken. 
+
+Was HackerRank betrifft, war es allerdings nur ein kleiner Happen für zwischendurch. Die [Aufgabe][problem] war identisch mit dem [Original][original] bis auf die Grenzen, bis zu denen gerechnet werden musste. Ich dachte zunächst, dass mir der prime sieve hier überquillt und ich auf Miller-Rabin zurückgreifen müsste. So habe ich das zunächst auch gelöst, nur um im Nachhinein herauszufinden, dass ich gar nicht hätte zweigleisig fahren müssen. Ich kann mich einfach nicht daran gewöhnen, dass der verfügbare Arbeitsspeicher so dermaßen viel größer geworden ist. 
+
+Dimensioniert man den Sieb hoch (die genauen Werte habe ich mir mit T&E natürlich hart erarbeitet), passen tatsächlich alle Zahlen, die man überprüfen muss, hinein. Eine kleine Bemerkung hierzu (aus der man mein fortgeschrittenes Alter leider sehr gut herauslesen können wird). Ich erinnere mich an Zeiten, da konnte man beim Saturn Hansa so kleine Brickets von DDR2-RAM kaufen und zu Hause seine Maschine damit pimpen, wenn man wusste, wo die Steckplätze sind. Ich entsinne mich dunkel, mal einen Riegel mit 16 MB gekauft zu haben und stolz wie Omas Lumpi gewesen zu sein, dass ich meinen kostbaren Aldi-Medion-Desktop (boah, was war die Schlange lang am Montag morgen, was trugen die Leute kistenweise die Türme aus dem Markt raus!) aufschrauben, den Staub rausblasen und dann seinen Arbeitsspeicher damit sage und schreibe verdoppeln konnte. Zum Vergleich: Der primesieve von dem wir hier reden hätte so gerade auf diesen DDR2-Riegel gepasst! Hier die Konstanten, die man braucht, und der sieve selbst: 
+
+{% highlight c++ %}
+
+typedef unsigned long long ull;
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+constexpr int PRIME_LIMIT{ 91'500'000 }; // this is enough for all prime checks, sieve has 11.5 MB
+constexpr ull MAX_RING{ 7'600'000 }; // yields 80'013 elements in the results vector
+static vector<bool> sieve;
+static vector<ull> results{0, 1, 2}; // start search at ring 2 (next elements are 8, 19, 20)
+int T, k;
+
+//---------------------------------- Helper functions -------------------------------------------
+
+// fill the sieve representing prime numbers up to size (but using less space)
+void fillSieve(int size) {
+    const int half = (size >> 1) + 1;
+    sieve.resize(half, true);
+    sieve[0] = false;
+    for (int i = 1; 2 * i * i < half; ++i) {
+        if (sieve[i]) {
+            // enhanced by starting at p^2!!
+            int current = ((2 * i + 1) * (2 * i + 1) - 1) / 2;
+            while (current < half) {
+                sieve[current] = false;
+                current += 2 * i + 1;
+            }
+        }
+    }
+}
+
+static bool isPrime(ull n)
+{
+    if (n <= 1) return false;
+    if ((n & 0x1) == 0) /* even: */
+        return (n == 2);
+    return sieve[n >> 1];
+}
+
+{% endhighlight %}
+
+Bei den Konstanten steht auch schon der maximale Ring-Index der Waben dabei, bis zu dem man gehen musste, um 80000 Einträge zu finden, die \\( PD(n) = 3 \\) erfüllen. Um den results Vektor zu füllen, schreiben wir eine kleine Funktion (deren Innenleben - also die zu überprüfenden Zahlen - ich zum Teil wieder verheimliche), ein kurzes und knackiges main() führt diese Elemente zusammen. Wenn man es gar nicht schafft, sich die Ausdrücke für die zu überprüfenden Differenzen herzuleiten, so bietet das [Forum][forum] viel Lesestoff, aus dem man sicher "leicht" die richtigen Formeln rekonstruieren kann (das Forum ist aber stets mit Vorsicht zu genießen, ich habe schon oft Dinge arglos übernommen, um später festzustellen, dass sie kompletter Müll waren und bei der leichteren Original-Aufgabe nur zufällig zum richtigen Ergebnis führten). Ich rate dazu, die eine tolle Differenz, die bei beiden Waben vorkommt, zuerst zu überprüfen. Wenn die nicht prim ist, kann man diese Schleife sofort überspringen. 
+
+{% highlight c++ %}
+
+void getResults() {
+    // i = ring index, m = number of hexagons in ring i - 1, j = number in first hexagon of ring i
+    // the expressions for the differences must be found out yourself
+    for (ull i = 2, j = 8, m = 6; i < MAX_RING ; m += 6, j += m, i++) { 
+        if (!isPrime(...)) continue; // this difference appears for both cells
+        if (isPrime(...) && isPrime(...)) 
+            results.push_back(j); // start cell has 3 prime differences
+        if (isPrime(...) && isPrime(...)) 
+            results.push_back(j + m + 5); // end cell has 3 prime differences
+    }
+}
+
+auto main() -> int {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    fillSieve(PRIME_LIMIT);
+    getResults();
+    cin >> T;
+    while (T--) {
+        cin >> k;
+        cout << results[k] << endl;
+    }
+    return 0;
+}
+
+{% endhighlight %}
+
+Nette Aufgabe! @beelover 
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler128/problem
+[original]: https://projecteuler.net/problem=128
+[forum]: https://projecteuler.net/thread=128
+[hexagon-paper]: https://museprintables.com/download/paper/1-cm-purple-hexagon-graph-paper-legal/
