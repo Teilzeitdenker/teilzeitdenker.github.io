@@ -5,28 +5,219 @@ date:   2026-03-24
 categories: project-euler
 ---
 
-[Aufgabe][problem]  
-[Original][original] 
-[Forum][forum]
+Das war eine mir sehr entgegenkommende [Aufgabe][problem]. Als Algebraiker fand ich es herrlich erfrischend, mal wieder mit der Eulerschen Phi-Funktion, der Carmicheal-Funktion, ein wenig Gruppentheorie, modularem Rechnen usw. hantieren zu dürfen.
+
+Hier geht es ja um die Teilbarkeit sich wiederholender Einheitenzahlen, sogenannter "repunits". Vordergründig. Eigentlich geht es aber um modulares Potenzieren und wie man sich aussichtsreiche Kandidaten für die Hochzahlen beschafft. 
+
+Schauen wir uns die repunit \\( R(k) \\) einmal genauer an, dann sehen wir schnell, dass
+
+$$
+R(k) = \frac{10^k - 1}{9}
+$$
+
+gilt. Soll diese Zahl durch ein gegebenes \\( n \\) mit \\( \mathrm{gcd}{(10, n)} = 1 \\) teilbar sein, muss 
+
+$$
+\frac{10^k - 1}{9} \equiv 0 \pmod{n}
+$$
+
+gelten. Dies ist gleichbedeutend mit 
+
+$$
+10^k \equiv 1 \pmod{9n}, \tag{*}
+$$
+
+was man schnell als eine dem kleinen Satz von Fermat recht ähnlich sehende Aussage identifiziert (modulares Exponentieren). Und tatsächlich: Obwohl \\( 9n \\) ja nicht prim ist, gilt nach dem sogenannten [Satz von Euler-Fermat][euler-fermat] (einer leichten Verallgemeinerung) für alle Zahlen \\( a \\) die teilerfremd zu \\( 9n \\) sind (und das gilt für 10 ja netterweise), dass 
+
+$$
+a^{\varphi(9n)} \equiv 1 \pmod{9n}, \tag{**}
+$$
+
+wobei \\( \varphi(9n) \\) die Eulersche Phi-Funktion ist. Zahlentheoretisch gibt \\( \varphi(x) \\) die Anzahl der zu \\( x \\) teilerfremden Elemente des Restklassenkörpers \\( \mathbb{Z} / (x) \\) an und kann leicht aus der Primfaktorzerlegung von \\( x \\) berechnet werden. Man könnte jetzt ganz picky sein und daran erinnern, dass die [Carmichael-Funktion][carmichael] \\( \lambda(9n) \\) eine evtl. noch kleinere Potenz angibt, für die (*) und (**) gelten, aber die ist ein wenig unangenehmer zu berechnen als die Phi-Funktion und da immer gilt, dass \\( \lambda(x) \mid \varphi(x) \\) machen wir ohne Carmichael weiter. 
+
+Wichtig ist jetzt, dass wir die __kürzeste__ repunit suchen, die durch \\( n \\) teilbar ist (so ist in der Aufgabe ja \\( A(n) \\) definiert). Wir wollen also die __kleinste__ Potenz \\( k \\) bestimmen, für die (*) gilt. Gruppentheoretisch ist dann klar, dass diese kleinste Potenz ein __Teiler__ von \\( \varphi(9n) \\) sein muss und damit haben wir unsere Kandidaten. Der Fahrplan sieht also folgendermaßen aus: 
+
+1. Finde die Primfaktorzerlegung von \\( 9n \\)
+2. Berechne damit \\( \varphi(9n) \\)
+3. Finde alle Teiler von \\( \varphi(9n) \\), dazu brauchen wir die Primfaktorzerlegung von \\( \varphi(9n) \\)
+4. Probiere alle diese Kandidaten in (*) einzusetzen, am besten aufsteigend, wir suchen ein Minimum!
+5. Euler und Fermat garantieren, dass einer funzt. Also wem das nicht reicht...
+
+So weit die Theorie. Hier war eher die Umsetzung herausfordernd, denn die Zahlen werden ordentlich groß. Für \\( n \\) muss mit Zahlen bis \\( 10^{13} \\) gerechnet werden. Da wir aber \\( 9n \\) zerlegen müssen, brauchen wir einen Primzahlsieb, der Auskunft über Zahlen bis mindestens \\( \sqrt{9 \cdot 10^{13}} \\) enthält, um alles zerlegen zu können. Ich finde es immer wieder schön, dass beim Rausteilen der Primfaktoren dann evtl. etwas übrig bleibt, was dann eine (einzige) Primzahl außerhalb des Siebes sein muss (siehe Code unten). Wir speichern in unserem Sieb allerdings nur die ungeraden Einträge und behandeln die 2 immer extra, das spart schonmal 50% des Speicherplatzes. 
+
+Um bei der Zerlegung nicht immer durch die Siebeinträge gehen zu müssen (die Wahrscheinlichkeit für eine Primzahl liegt unter 10 Millionen bei etwa 6,5%, in unserem Sieb also bei ca. 13%, da iteriert man 7 mal zu oft, und wir haben immerhin bis zu 20'000 Tests zu bestehen, in denen wir jeweils zweimal zerlegen müssen), schreiben wir einmalig alle Primzahlen in einen primes-Vektor und verwenden diesen für die Zerlegung. Tut man das nicht, bekommt man übrigens schon TLE und zwar für alle Tests außer dem Appetizer. 
 
 {% highlight c++ %}
 
-code ...
+typedef __int128 int128;
+typedef unsigned long long ull;
+typedef pair<ull, int> pli;
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+constexpr int PRIME_LIMIT{9'500'000}; // in order to decompose all integers up to 9*10^13
+static vector<bool> sieve;
+static vector<ull> primes;
+
+//---------------------------------- Helper functions -------------------------------------------
+
+// fill the sieve representing prime numbers up to PRIME_LIMIT (using half the space)
+void fillSieve() {
+    const int half = (PRIME_LIMIT >> 1) + 1;
+    sieve.resize(half, true);
+    sieve[0] = false;
+    for (int i = 1; 2 * i * i < half; ++i) {
+        if (sieve[i]) {
+            // enhanced by starting at p^2!!
+            int current = ((2 * i + 1) * (2 * i + 1) - 1) / 2;
+            while (current < half) {
+                sieve[current] = false;
+                current += 2 * i + 1;
+            }
+        }
+    }
+}
+
+// checking primality only for primes lower than PRIME_LIMIT
+bool isPrime(ull x) {
+    if (x <= 1) return false;
+    if ((x & 1) == 0) return x == 2;
+    return sieve[x >> 1];
+}
+
+// use the sieve to also get the primes into a vector
+void fillPrimes() {
+    primes.push_back(2);
+    ull i = 3;
+    while (i < PRIME_LIMIT) {
+        if (isPrime(i)) {
+            primes.push_back(i);
+        }
+        i += 2;
+    }
+}
+
+// tool for prime decomposition into factors and multiplicities (in pairs) that works for numbers
+// up to PRIME_LIMIT^2, since there will possibly be only one prime bigger than PRIME_LIMIT 
+vector<pli> prime_decomposition(ull n) {
+    vector<pli> facs_and_mults;
+    for (const auto& p : primes) { 
+        if (n % p == 0) {
+            facs_and_mults.push_back({ p, 1 });
+            n /= p;
+            while (n % p == 0) {
+                facs_and_mults.back().second++;
+                n /= p;
+            }
+        }
+        if (n == 1) return facs_and_mults; // early termination
+    }
+    // if we get here, there is one last prime factor (the rest of n) left that is bigger than PRIME_LIMIT
+    facs_and_mults.push_back({ n, 1 });
+    return facs_and_mults;
+}
 
 {% endhighlight %}
 
-
-
+Um alle Teiler einer Zahl zu bestimmen, greifen wir natürlich auf prime_decomposition() zurück. Ferner muss man nun überlegen, wie man am schnellsten alle Teiler erzeugt. Ich habe mich dazu entschieden, die bereits berechneten Teiler einfach mit der aktuellen Potenz des Primfaktors zu multiplizieren und "dranzuhängen": 
 
 
 {% highlight c++ %}
 
-code ...
+// fast generate all divisors of a number by running through all possible multiplicities
+vector<ull> get_divisors(ull n) {
+    vector<ull> divisors;
+    if (n == 0) return divisors;
+    if (n == 1) { 
+        divisors.push_back(1);
+        return divisors;
+    }
+    auto facs_and_mults = prime_decomposition(n); // pairs of {prime, multiplicity}
+    divisors.push_back(1);
+    for (int i = 0; i < (int)facs_and_mults.size(); i++) { // go through prime divisors
+        ull mul = 1; 
+        int sz = (int)divisors.size(); // use entries already in divisors (only 1 for i = 0)
+        for (int k = 1; k <= (int)facs_and_mults[i].second; k++) {
+            mul *= facs_and_mults[i].first;
+            for(int l = 0; l < sz; l++) 
+                // multiply every already present divisor with power of this prime factor and push
+                divisors.push_back(mul * divisors[l]);
+        }
+    }
+    return divisors;
+}
 
 {% endhighlight %}
 
+Modulares Potenzieren ist nicht schwer. Allerdings haben wir es hier mit riesigen Zahlen zu tun, also Vorsicht bei der Wahl der Datentypen! Geht man hier nicht mit allen Variablen auf die in g++ verfügbaren 128-bit-Integer hoch, so hagelt es Wrong Answers (wegen overflow). Also Obacht!
 
+{% highlight c++ %}
+
+ull mod_exp(ull base, ull exp, ull mod)
+{
+    int128 Res = 1; // except for variable exp, use 128-bit-integers to avoid overflow
+    int128 Base = base;
+    int128 Mod = mod;
+    while (exp > 0)
+    {
+        if (exp & 1) Res = (Res * Base) % Mod;
+        Base = (Base * Base) % Mod;
+        exp >>= 1;
+    }
+    return (ull)Res;
+}
+
+{% endhighlight %}
+
+Das muss jetzt nur noch zusammengebaut werden, zum Spaß lasse ich mal recht viel frei (außer der Berechnung der Phi-Funktion), den Kladderadatsch kann jetzt jeder selbst zusammenschustern (das ist quasi "The proof is left to the reader!" für Informatiker).
+
+{% highlight c++ %}
+
+/---------------------------------- Main function ----------------------------------------------
+
+auto main() -> int {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    // prepare the sieve and the primes vector
+    ...
+
+    int T; 
+    ull n; 
+    cin >> T;
+
+    while (T--) {
+        cin >> n;
+        // calculate prime decomposition of 9*n
+        ...
+
+        // with this calculate phi_9n as Euler phi of 9*n
+        ull phi_9n = 9*n;
+        for (const auto& [p, _] : ... ) {
+            phi_9n /= p;
+            phi_9n *= p - 1;
+        }
+        
+        // calculate all divisors of phi_9n and sort them ascendingly
+        ...
+
+        // find minimal divisor d that fulfills 10^d modulo (9*n) = 1
+        ull res; 
+        ...
+
+        // output this d as the minimal length of divisible repunit
+        cout << res << endl;
+    }
+
+    return 0;
+}
+
+{% endhighlight %}
+
+Mehr davon! Sowas mag ich gerne. 
 
 [problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler129/problem
 [original]: https://projecteuler.net/problem=129
 [forum]: https://projecteuler.net/thread=129
+[carmichael]: https://de.wikipedia.org/wiki/Carmichael-Funktion
+[euler-fermat]: https://de.wikipedia.org/wiki/Satz_von_Euler

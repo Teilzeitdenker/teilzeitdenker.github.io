@@ -20,7 +20,7 @@ typedef unsigned long long ull;
 
 //---------------------------------- GLOBAL variables -------------------------------------------
 
-constexpr int PRIME_LIMIT{ 91'500'000 }; // this is enough for all prime checks, sieve has 11.5 MB
+constexpr int PRIME_LIMIT{ 91'500'000 }; // this is enough for all prime checks, sieve has 5.7 MB
 constexpr ull MAX_RING{ 7'600'000 }; // yields 80'013 elements in the results vector
 static vector<bool> sieve;
 static vector<ull> results{0, 1, 2}; // start search at ring 2 (next elements are 8, 19, 20)
