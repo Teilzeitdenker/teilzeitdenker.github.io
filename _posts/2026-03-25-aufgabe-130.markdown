@@ -1,0 +1,130 @@
+---
+layout: post
+title:  "Project Euler+ #130: Composites with prime repunit property"
+date:   2026-03-25
+categories: project-euler
+---
+
+Hierbei handelte es sich um eine "leichte" (was eben nach HackerRank-Standards so als "easy" durchgeht) Erweiterung der vorigen Aufgabe, allerdings mit der Erschwernis, dass man ohne den deterministischen Miller-Rabin-Test nicht mehr auskam. 
+
+Der Vollständigkeit halber hier mal die Version dieses Tests, die ich immer verwende (mit entsprechendem Copyright-Hinweis). Die besten Zeugen-Konglomerate zum Testen findet man unter [dieser Adresse][rabin-bases]:
+
+{% highlight c++ %}
+
+typedef __int128 int128;
+typedef unsigned long long ull;
+typedef unsigned int ui;
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+constexpr int PRIME_LIMIT{10'000'000}; // take some more than sqrt(10^12)
+static vector<bool> sieve;
+
+//---------------------------------- Helper functions -------------------------------------------
+
+void fillSieve() {
+    const int half = (PRIME_LIMIT >> 1) + 1;
+    sieve.resize(half, true);
+    sieve[0] = false;
+    for (int i = 1; 2 * i * i < half; ++i) {
+        if (sieve[i]) {
+            // enhanced by starting at p^2!!
+            int current = ((2 * i + 1) * (2 * i + 1) - 1) / 2;
+            while (current < half) {
+                sieve[current] = false;
+                current += 2 * i + 1;
+            }
+        }
+    }
+}
+
+// functions sprp() (short for 'strong probable prime') and isPrime() taken from
+// https://stackoverflow.com/questions/24096332/miller-rabin-primality-test-accuracy/35825375#35825375
+// @copyright Brett Hale 2017
+static bool sprp(ull n, ull a)
+{
+    ull m = n - 1, r, y;
+    ui s = 1, j;
+    while ((m & (1ULL << s)) == 0) s++;
+    r = m >> s; /* r, s s.t. 2^s * r = n - 1, r odd. */
+    if ((a %= n) == 0) /* else (0 < a < n) */
+        return true;
+    {
+        int128 u = 1, w = a; // g++ only
+        while (r != 0)
+        {
+            if ((r & 0x1) != 0)
+                u = (u * w) % n; /* (mul-rdx) */
+            if ((r >>= 1) != 0)
+                w = (w * w) % n; /* (sqr-rdx) */
+        }
+        if ((y = (ull)u) == 1)
+            return true;
+    }
+    for (j = 1; j < s && y != m; j++)
+    {
+        int128 u = y;
+        u = (u * u) % n; /* (sqr-rdx) */
+        if ((y = (ull)u) <= 1) /* (n) is composite: */
+            return false;
+    }
+    return (y == m);
+}
+
+static bool isPrime(ull n)
+{
+    if (n <= 1) return false;
+    if ((n & 0x1) == 0) /* even: */
+        return (n == 2);
+    // use already filled prime sieve for small enough numbers
+    if (n < PRIME_LIMIT) return sieve[n >> 1];
+
+    // best bases for a DETERMINISTIC Miller-Rabin test
+
+    // works up to UINT32_MAX
+    const ull sprp32_base[] = /* (Jaeschke) */{
+        2, 7, 61, 0 };
+
+    // 4-element-base for numbers up to 55'245'642'489'451 > 5*10^13
+    const ull sprp64_shortest_base[] = /* (Worley) */{
+        2, 141889084524735, 1199124725622454117ULL, 11096072698276303650ULL, 0 };
+
+    // this base will only be needed for numbers up to 2^64 
+    // (see record history on https://miller-rabin.appspot.com)
+    // const ull sprp64_base[] = /* (Sinclair) */{
+    //     2, 325, 9375, 28178, 450775, 9780504, 1795265022, 0 };
+
+    const ull* sprp_base;
+    sprp_base = (n <= UINT32_MAX) ? sprp32_base : sprp64_shortest_base;
+    for (; *sprp_base != 0; sprp_base++)
+        if (!sprp(n, *sprp_base)) return false;
+    return true; /* prime. */
+}
+
+{% endhighlight %}
+
+Nun zur eigentlichen [Aufgabe][problem]. Wir sollen in einem gegebenen Intervall \\( [ L, R ] \\), das freundlicherweise "nur" maximal 1,5 Millionen Zahlen umfasst, diejenigen Zahlen bestimmen, die sich in einer solchen Hinsicht wie Primzahlen verhalten, dass \\( A(n) \mid (n - 1) \\), obwohl die Zahl \\( n \\) gar nicht prim ist. Nach den mathematischen Ausführungen zur letzten Aufgabe, ist ja \\( A(n) \\) die kleinste Zahl mit der Eigenschaft, dass
+
+$$
+10^{A(n)} \equiv 1 \pmod{9n}
+$$
+
+Ist \\( A(n) \\) nun ein Teiler von \\( n - 1 \\), folgt für solche Zahlen natürlich auch 
+
+$$
+10^{n - 1} \equiv 1 \pmod{9n} \tag{*}
+$$
+
+Für Primzahlen \\( p > 5 \\) ist das gleichbedeutend mit dem kleinen Satz von Fermat, also nicht besonders spannend. Für Zahlen, die nicht prim sind, ist es eine Besonderheit, sie verfügen über diese "prime repunit property" und sollen identifiziert werden. Da alle Werkzeuge dazu bereits geliefert sind, hier nur eine kleine schrittweise Beschreibung, wie man das so effizient wie möglich erreichen kann:
+
+1. Fülle den Primzahlsieb und lies die Grenzen des Intervalls als ull ein
+2. Iteriere nur über die ungeraden Zahlen dieses Intervalls
+3. Überprüfe bei jeder Zahl zunächst, ob sie durch 5 teilbar ist, wenn ja -> _continue;_
+4. Überprüfe mit der mod_exp()-Funktion (siehe letzte Aufgabe), ob die prime repunit property (*) erfüllt ist, wenn nein ->  _continue;_ 
+5. Überprüfe, ob die Zahl prim ist, wenn ja ->  _continue;_
+6. Wenn die Zahl allen Prüfungen bis hierhin standgehalten hat, sofort auf stdout ausgeben
+
+Zu bemerken ist, dass es unklug wäre, zuerst zu überprüfen, ob die Zahl prim ist (die hinteren Tests bekommen dann ein TLE), denn wie man an der sprp()-Funktion gut erkennen kann, besteht ein Miller-Rabin-Test unter Umständen aus sehr viel modularem Exponentieren. Im Gegensatz dazu ist aber die prime repunit property genau mit __einer__ modularen Potenz überprüfbar. Und da die Zahlen, die sie erfüllen, ja fast nur die Primzahlen sind (bis eben auf die Ausnahmen, die wir suchen), können wir auf diese Weise sehr kostengünstig schon eine Menge Uninteressantes herausfiltern. Den Rest schieben wir unters MRT (also hier natürlich ein teslafreier **M**iller-**R**abin-**T**est), das sind aber bei maximal 1,5 Millionen Zahlen, von denen gerade mal etwa 6% prim sind, nicht viel mehr als 100'000, also schaffbar. Have fun!
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler130/problem
+[rabin-bases]: https://miller-rabin.appspot.com
