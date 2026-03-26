@@ -173,7 +173,7 @@ Das muss jetzt nur noch zusammengebaut werden, zum Spaß lasse ich mal recht vie
 
 {% highlight c++ %}
 
-/---------------------------------- Main function ----------------------------------------------
+//---------------------------------- Main function ----------------------------------------------
 
 auto main() -> int {
     ios_base::sync_with_stdio(0);
