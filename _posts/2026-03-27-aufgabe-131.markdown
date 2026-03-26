@@ -1,0 +1,241 @@
+---
+layout: post
+title:  "Project Euler+ #131: Prime cube partnership"
+date:   2026-03-27
+categories: project-euler
+---
+
+In dieser [Aufgabe][problem] ging es darum, für welche Primzahlen \\( p \\) ein Ausdruck der Form \\( n^3 + n^2p \\) existiert, der eine Kubikzahl darstellt. Dabei ist \\( n \\) eine positive ganze Zahl. Als Beispiel war \\( n = 8 \\) und \\( p = 19 \\) mit \\( 8^3 + 8^2 \cdot 19 = 12^3 \\) gegeben (hier fiel schon auf, dass 8 und auch \\( 8 + 19 = 27 \\) Kubikzahlen sind). 
+
+Na dann wollen wir doch mal beweisen, dass das immer so sein muss. Schließlich ist es ja so: Wenn auf Projekt Euler eine Formulierung wie "What is perhaps most surprising..." gewählt wird, dann ist das stets ein starker Hinweis darauf, dass sich hier nichts wirklich "Überraschendes" abspielt, sondern eine Gesetzmäßigkeit am Werke ist. Aber ich mag, wie charmant diese Brotkrumen fallen gelassen werden, damit man der Fährte nur noch unauffällig folgen muss:
+
+1. Zeige \\( \mathrm{gcd}(n, p) = 1 \\)
+2. Zeige, dass sowohl \\( n \\) als auch \\( n + p \\) Kubikzahlen sein müssen
+3. Zeige, dass diese sogar aufeinanderfolgend sein müssen, d.h. wenn \\( n = a^3 \\), dann muss \\( n + p = (a + 1)^3 \\), also ist die Primzahl \\( p = (n + p) - n \\) immer die Differenz zweier aufeinanderfolgender Kubikzahlen. 
+
+Fangen wir mal mit 1. an. Nehmen wir an, es gäbe einen gemeinsamen Teiler \\( d > 1 \\). Da \\( p \\) prim ist, muss \\( d = p \\) gelten, also \\( n = kp \\) für ein \\( k > 1 \\) (\\( n = p \\) ist nicht möglich, denn \\( 2p^3 \\) ist keine Kubikzahl). Einsetzen liefert, dass
+
+$$
+n^3 + n^2p = (k^3 + k^2)p^3 = k^2(k + 1)p^3 
+$$
+
+eine Kubikzahl sein muss. Wegen \\( \mathrm{gcd}(k, k + 1) = 1 \\) müssen folglich auch \\( k^2 \\) und \\( k + 1 \\) Kubikzahlen sein. Mit \\( k^2 \\) ist aber auch \\( k \\) eine Kubikzahl (man schaue sich einen beliebigen Primfaktor \\( q \\) von \\( k \\) an. Dieser muss, damit \\( k^2\\) Kubikzahl ist, schon ein Vielfaches von 3-mal in \\( k \\) vorkommen). Wir haben also zwei aufeinanderfolgende Zahlen \\( k \\) und \\( k + 1 \\), die Kubikzahlen sollen, was \\( k = 0 \\) zur Folge hat, also Widerspruch!
+
+Für 2. bemerken wir zunächst, dass auch \\( \mathrm{gcd}(n, n + p) = 1 \\) (ein Teiler \\( d > 1 \\) der beiden Zahlen wäre auch ein Teiler von \\( p = (n + p) - n \\), was 1. widerspräche). Verwendet man dies in folgender Zerlegung unserer Kubikzahl
+
+$$
+n^3 + n^2p = n^2(n + p),
+$$
+
+so kann man bereits folgern, dass sowohl \\( n^2 \\) (und damit auch wieder \\( n \\) selbst) als auch \\( n + p \\) Kubikzahlen sein müssen. 
+
+Für 3. schreiben wir \\( n = a^3 \\) und \\( n + p = b^3 \\) als Kubikzahlen mit \\( a,b \geq 1 \\)  und schreiben die Differenz
+
+$$
+p = (n + p) - n = b^3 - a^3 = (b - a)(b^2 + ab + a^2)
+$$
+
+als Zerlegung in ein Produkt. Da \\( p \\) prim ist, kann dies keine echte Zerlegung in Faktoren \\( > 1 \\) sein und es muss folglich \\( b - a = 1 \\) gelten (übrigens muss \\( p > 5 \\) sein, denn die kleinste Differenz aufeinanderfolgender Kubikzahlen ist \\( 8 - 1 = 7 \\)).
+
+Der Ausdruck für die Differenz zweier aufeinanderfolgender Kubikzahlen ist selbst eine bekannte Zahlenfolge. Es sind 
+
+$$
+H_a = (a + 1)^3 - a^3  = 3a(a + 1) + 1 = 1 + 6T_a
+$$
+
+die [zentrierten Sechseckszahlen][hex-numbers] oder Hexzahlen (\\( T_a \\) sind die stinknormalen Dreieckszahlen). Stöbert man in der Math World im entsprechenden Artikel herum, so findet man in der allerletzten Zeile tatsächlich einen Hinweis auf die von uns gesuchten primen Hexzahlen, die sogenannten [kubanischen Primzahlen][cuban-primes] (diese "Übersetzung" ist natürlich eher satirisch zu verstehen, ich denke nicht, dass Fidel Castro hier seine Zigarrengriffel mit im Spiel hatte).
+
+Die HackerRank-Aufgabe kann man also so verstehen: Finde die Anzahl der kubanischen Primzahlen unterhalb einer gegebenen Grenze \\( L \leq L_{max} = 25 \cdot 10^{12} \\), wobei bis zu 100'000 Tests am Stück mit verschiedenen Grenzen bestanden werden müssen. 
+
+Na dann mal in die Hände gespuckt und meinen Primzahlsieb zusammengeschraubt. Meine erste Wahl fiel wieder auf Miller-Rabin (das hatte ich ja in der letzten Aufgabe gezeigt). Um die vielen Tests zu bestehen, braucht man auf jeden Fall einen komplett gefüllten Vektor mit all diesen kubanischen Primzahlen, den man dann mit upper_bound() durchforsten kann, um möglichst schnell den Index von \\( L \\) abfragen zu können. Beim Timen stellte sich allerdings heraus, dass trotz optimaler Basis für die MRT's, durchoptimiertem mod_exp() und bis an die Grenzen des Arbeitsspeichers gefülltem Sieb die kubanischen Freiheitskämpfer sich mehr als 2.5 Sekunden lang widersetzten und partout nicht aus ihren Partisanenverstecken in meinen Vektor gesellen wollten. Also musste ich "back to the cave", also ins [Forum][forum], um nach anderen Ideen zu suchen (nicht ohne schonmal 50% der Punkte mitgenommen zu haben, indem ich die Grenzen entsprechend runterschraubte, denn die ersten Tests haben nur ein maximales Limit von 1 Million). 
+
+Auf Seite 5 wurde ich fündig, wo antonio aus Kanada einen cuban_primes_sieve vorschlägt, der folgendermaßen funktioniert: Der Eintrag an der Stelle \\( i \\) entspricht der Hexzahl \\( H_i \\). Nun geht man die Primzahlen bis \\( \sqrt{L_{max}} = 5 \cdot 10^6 \\) durch und muss für jede Primzahl \\( q \\) herausfinden, welche der Hexzahlen durch sie teilbar ist, um diese Einträge dann wie bei der Eratosthenes-Methode wegstreichen zu können. Am Schluß iteriert man über den fertigen cuban_prime_sieve, um den Vektor zu befüllen, der Rest wie gehabt. 
+
+Bloß, wie findet man heraus, welche Hexzahlen durch \\( q \\) teilbar sind? Naja, auf jeden Fall gilt für eine solche Zahl \\( H_i \equiv 0 \pmod{q} \\), also 
+
+$$
+3i(i + 1) + 1 \equiv 0 \pmod{q}
+$$
+
+Dies kann man zu einer quadratischen Gleichung über dem Körper \\( \mathbb{Z} / (q) \\) umformen:
+
+
+$$
+\begin{align}
+i^2 + i &\equiv -3^{-1} \pmod{q} \\
+4i^2 + 4i &\equiv -3^{-1}\cdot 4 \pmod{q} \\
+4i^2 + 4i + 1 &\equiv -3^{-1}\cdot 4 + 1 \pmod{q} \\
+(2i + 1)^2 &\equiv -3^{-1} \pmod{q} 
+\end{align}
+$$
+
+Schön, wie man auf der rechten Seite einfach wie mit Brüchen rechnen kann (es ist eben ein Restklassen-**Körper**). Minus vier Drittel plus eins ist minus ein Drittel.
+
+Zur Lösung einer Gleichung \\( x^2 \equiv n \pmod{p} \\) über Restklassenkörpern gibt es effiziente Algorithmen, z.B. den von Tonelli-Shanks, dessen Implementierung man auf [Rosetta Code][rosetta] findet (in allen gängigen Programmiersprachen). 
+
+Hat man damit erst die richtigen Indizes bestimmt, dann kann es ans Abhaken gehen. Dabei ist zu beachten, dass man den Index ja nur modulo q kennt, also für die zwei Lösungen \\( \\left\\{ i_1, i_2 \\right\\} \\) aus Tonelli-Shanks gleich ganze Reihen von Indizes \\( \\left\\{ i_1 + tq, i_2 + sq \\right\\}, t, s \geq 0 \\) abstreichen muss. Zusätzlich dazu muss man aufpassen, dass die Einträge die man abstreicht, auch Hexzahlen entsprechen, die __echt__ größer als \\( q \\) sind (denn wenn sie gleich \\( q \\) ist duftet sie unwahrscheinlich gut nach Tabak und Gewürzen und tanzt bis nachts um 3 zur Musik von Buena Vista Social Club). 
+
+Hier erstmal die basics: 
+
+{% highlight c++ %}
+
+typedef __int128 int128;
+typedef unsigned long long ull;
+typedef unsigned int ui;
+typedef pair<ull, ull> pll;
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+constexpr ull PRIME_LIMIT{5'000'000}; 
+constexpr ull A_MAX{2'886'752}; 
+static vector<bool> usual_primes_sieve;
+static vector<bool> cuban_primes_sieve(A_MAX, true);
+
+//---------------------------------- Helper functions -------------------------------------------
+
+void fill_usual_primes_sieve() { // using less space
+    const int half = (PRIME_LIMIT >> 1) + 1;
+    usual_primes_sieve.resize(half, true);
+    usual_primes_sieve[0] = false;
+    for (int i = 1; 2 * i * i < half; ++i) {
+        if (usual_primes_sieve[i]) {
+            // enhanced by starting at p^2!!
+            int current = ((2 * i + 1) * (2 * i + 1) - 1) / 2;
+            while (current < half) {
+                usual_primes_sieve[current] = false;
+                current += 2 * i + 1;
+            }
+        }
+    }
+}
+
+static bool isPrime(ull n) // only works up to PRIME_LIMIT
+{
+    if (n <= 1) return false;
+    if ((n & 0x1) == 0) /* even: */
+        return (n == 2);
+    return usual_primes_sieve[n >> 1];
+}
+
+{% endhighlight %}
+
+Dabei sollte man bemerken, dass die Konstante A_MAX natürlich aus der kleinen Rechnung \\( H_a \leq L_{max} \\) herleitbar ist. Als Nächstes braucht man das gute alte mod_exp(), für die rechte Seite der Restklassengleichung noch mod_inv(), außerdem das Legendre-Symbol, um sich Tonelli-Shanks zusammenbasteln zu können:
+
+{% highlight c++ %}
+
+ull mod_exp(const ull& base, ull exp, const ull& mod)
+{
+    int128 Res = 1;
+    int128 Base = base % mod;
+    int128 Mod = mod;
+    while (exp > 0)
+    {
+        if (exp & 1) Res = (Res * Base) % Mod;
+        Base = (Base * Base) % Mod;
+        exp >>= 1;
+    }
+    return (ull)Res;
+}
+
+// modular inverse and legendre symbol for odd primes only
+ull mod_inv(const ull& a, const ull& p) {
+    return mod_exp(a, p - 2, p);
+}
+
+ull legendre_symbol(const ull& a, const ull& p) {
+    return mod_exp(a, (p - 1)/2, p);
+}
+
+// Tonelli-Shanks adapted from Rosetta code
+pll tonelli_shanks(const ull& n, const ull& p) {
+    if (legendre_symbol(n, p) != 1) return {0, 0};
+    ull q = p - 1;
+    ui s = 0;
+    while ((q & (1ULL << s)) == 0) s++;
+    q = (q >> s);
+    if (s == 1) {
+        ull res = mod_exp(n, (p + 1)/4, p);
+        return {res, p - res};
+    }    
+    // find non-square z
+    ull z = 2;
+    while (legendre_symbol(z, p) != p - 1) z++;
+
+    ull c = mod_exp(z, q, p);
+    ull t = mod_exp(n, q, p);
+    ui m = s;
+    ull res = mod_exp(n, (q + 1) >> 1, p);
+    
+    while (t != 1) {
+        ui i = 1;
+        z = (t * t) % p;
+        while (z != 1 && i < m - 1) {
+            i++;
+            z = (z * z) % p;
+        }
+        ull b = mod_exp(c, 1 << (m - i - 1), p);
+        c = (b * b) % p;
+        t = (t * c) % p;
+        m = i;
+        res = (res * b) % p;
+    }
+    return {res, p - res};
+}
+
+{% endhighlight %}
+
+Womit wir zum eigentlichen Herzstück kommen, nämlich dem Füllen unseres kubanischen Primzahlsiebs. Diesen Teil habe ich oben so ausführlich beschrieben, dass ich ihn wieder mit Auslassungen versehe:
+
+{% highlight c++ %}
+
+static void fill_cuban_primes_sieve() {
+    for (ull p = 7; p < PRIME_LIMIT; p += 2) { // look only at odd numbers
+        if (!isPrime(p)) continue;
+        // solve (2*i + 1)^2 = (-3)^(-1) mod p with tonelli-shanks
+        ull n = mod_inv(p - 3, p);
+        auto [s, t] = tonelli_shanks(n, p);
+        if (s == t) continue; // only possible if no solution, i.e. pair is {0, 0}
+        // the solutions give 2*i + 1, so have to subtract 1 
+        // and multiply by inverse of 2 to get i, all taken modulo p of course
+        ...
+        // go through i = sol_j + k*p with k >= 0 and set cuban_primes_sieve entries to false
+        // 3*i*(i + 1) + 1 must be > p (if it is = p it is a prime!) and i < A_MAX
+        ...
+    }
+}
+
+//---------------------------------- Main function ----------------------------------------------
+
+auto main() -> int {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    // prepare the sieves
+    fill_usual_primes_sieve();
+    fill_cuban_primes_sieve();
+
+    vector<ull> results;
+    for (ull a = 1; a < A_MAX; a++) {
+        if (cuban_primes_sieve[a]) results.push_back(3*a*(a + 1) + 1);
+    }
+
+    int T;
+    cin >> T;
+    while (T--) {
+        ull L;
+        cin >> L;
+        auto idx = upper_bound(results.begin(), results.end(), L - 1) - results.begin();
+        cout << idx << endl;
+    }
+    return 0;
+}
+
+{% endhighlight %}
+
+Das macht Nummer 66 auf dem nach einer würzigen Havanna und süßem Rum duftenden Leaderboard meiner freiheitsliebenden Programmiergenossen, viva la revolución!
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler131/problem
+[forum]: https://projecteuler.net/thread=131
+[hex-numbers]: https://mathworld.wolfram.com/HexNumber.html
+[cuban-primes]: https://mathworld.wolfram.com/CubanPrime.html
+[rosetta]: https://rosettacode.org/wiki/Tonelli-Shanks_algorithm
