@@ -13,7 +13,7 @@ Na dann wollen wir doch mal beweisen, dass das immer so sein muss. Schließlich 
 2. Zeige, dass sowohl \\( n \\) als auch \\( n + p \\) Kubikzahlen sein müssen
 3. Zeige, dass diese sogar aufeinanderfolgend sein müssen, d.h. wenn \\( n = a^3 \\), dann muss \\( n + p = (a + 1)^3 \\), also ist die Primzahl \\( p = (n + p) - n \\) immer die Differenz zweier aufeinanderfolgender Kubikzahlen. 
 
-Fangen wir mal mit 1. an. Nehmen wir an, es gäbe einen gemeinsamen Teiler \\( d > 1 \\). Da \\( p \\) prim ist, muss \\( d = p \\) gelten, also \\( n = kp \\) für ein \\( k > 1 \\) (\\( n = p \\) ist nicht möglich, denn \\( 2p^3 \\) ist keine Kubikzahl). Einsetzen liefert, dass
+_Beweis:_ Fangen wir mal mit 1. an. Nehmen wir an, es gäbe einen gemeinsamen Teiler \\( d > 1 \\). Da \\( p \\) prim ist, muss \\( d = p \\) gelten, also \\( n = kp \\) für ein \\( k > 1 \\) (\\( n = p \\) ist nicht möglich, denn \\( 2p^3 \\) ist keine Kubikzahl). Einsetzen liefert, dass
 
 $$
 n^3 + n^2p = (k^3 + k^2)p^3 = k^2(k + 1)p^3 
@@ -35,7 +35,7 @@ $$
 p = (n + p) - n = b^3 - a^3 = (b - a)(b^2 + ab + a^2)
 $$
 
-als Zerlegung in ein Produkt. Da \\( p \\) prim ist, kann dies keine echte Zerlegung in Faktoren \\( > 1 \\) sein und es muss folglich \\( b - a = 1 \\) gelten (übrigens muss \\( p > 5 \\) sein, denn die kleinste Differenz aufeinanderfolgender Kubikzahlen ist \\( 8 - 1 = 7 \\)).
+als Zerlegung in ein Produkt. Da \\( p \\) prim ist, kann dies keine echte Zerlegung in Faktoren \\( > 1 \\) sein und es muss folglich \\( b - a = 1 \\) gelten (übrigens muss \\( p > 5 \\) sein, denn die kleinste Differenz aufeinanderfolgender Kubikzahlen ist \\( 8 - 1 = 7 \\)). \\( \square \\)
 
 Der Ausdruck für die Differenz zweier aufeinanderfolgender Kubikzahlen ist selbst eine bekannte Zahlenfolge. Es sind 
 
@@ -47,7 +47,7 @@ die [zentrierten Sechseckszahlen][hex-numbers] oder Hexzahlen (\\( T_a \\) sind 
 
 Die HackerRank-Aufgabe kann man also so verstehen: Finde die Anzahl der kubanischen Primzahlen unterhalb einer gegebenen Grenze \\( L \leq L_{max} = 25 \cdot 10^{12} \\), wobei bis zu 100'000 Tests am Stück mit verschiedenen Grenzen bestanden werden müssen. 
 
-Na dann mal in die Hände gespuckt und meinen Primzahlsieb zusammengeschraubt. Meine erste Wahl fiel wieder auf Miller-Rabin (das hatte ich ja in der letzten Aufgabe gezeigt). Um die vielen Tests zu bestehen, braucht man auf jeden Fall einen komplett gefüllten Vektor mit all diesen kubanischen Primzahlen, den man dann mit upper_bound() durchforsten kann, um möglichst schnell den Index von \\( L \\) abfragen zu können. Beim Timen stellte sich allerdings heraus, dass trotz optimaler Basis für die MRT's, durchoptimiertem mod_exp() und bis an die Grenzen des Arbeitsspeichers gefülltem Sieb die kubanischen Freiheitskämpfer sich mehr als 2.5 Sekunden lang widersetzten und partout nicht aus ihren Partisanenverstecken in meinen Vektor gesellen wollten. Also musste ich "back to the cave", also ins [Forum][forum], um nach anderen Ideen zu suchen (nicht ohne schonmal 50% der Punkte mitgenommen zu haben, indem ich die Grenzen entsprechend runterschraubte, denn die ersten Tests haben nur ein maximales Limit von 1 Million). 
+Na dann mal in die Hände gespuckt und meinen Primzahlsieb zusammengeschraubt. Meine erste Wahl fiel wieder auf Miller-Rabin (das hatte ich ja in der letzten Aufgabe gezeigt). Um die vielen Tests zu bestehen, braucht man auf jeden Fall einen komplett gefüllten Vektor mit all diesen kubanischen Primzahlen, den man dann mit upper_bound() durchforsten kann, um möglichst schnell den Index von \\( L \\) abfragen zu können. Beim Timen stellte sich allerdings heraus, dass trotz optimaler Basis für die MRT's, durchoptimiertem mod_exp() und bis an die Grenzen des Arbeitsspeichers gefülltem Sieb die kubanischen Freiheitskämpfer sich mehr als 2.5 Sekunden lang widersetzten und partout nicht aus ihren Partisanenverstecken in meinen Vektor gesellen wollten. Also musste ich "back to the cave", d.h. ins allseits beliebte [Forum][forum], um nach anderen Ideen zu suchen (nicht ohne schonmal 50% der Punkte mitgenommen zu haben, indem ich die Grenzen entsprechend runterschraubte, denn die ersten Tests haben nur ein maximales Limit von 1 Million, da braucht man Miller-Rabin gar nicht). 
 
 Auf Seite 5 wurde ich fündig, wo antonio aus Kanada einen cuban_primes_sieve vorschlägt, der folgendermaßen funktioniert: Der Eintrag an der Stelle \\( i \\) entspricht der Hexzahl \\( H_i \\). Nun geht man die Primzahlen bis \\( \sqrt{L_{max}} = 5 \cdot 10^6 \\) durch und muss für jede Primzahl \\( q \\) herausfinden, welche der Hexzahlen durch sie teilbar ist, um diese Einträge dann wie bei der Eratosthenes-Methode wegstreichen zu können. Am Schluß iteriert man über den fertigen cuban_prime_sieve, um den Vektor zu befüllen, der Rest wie gehabt. 
 
@@ -119,7 +119,7 @@ static bool isPrime(ull n) // only works up to PRIME_LIMIT
 
 {% endhighlight %}
 
-Dabei sollte man bemerken, dass die Konstante A_MAX natürlich aus der kleinen Rechnung \\( H_a \leq L_{max} \\) herleitbar ist. Als Nächstes braucht man das gute alte mod_exp(), für die rechte Seite der Restklassengleichung noch mod_inv(), außerdem das Legendre-Symbol, um sich Tonelli-Shanks zusammenbasteln zu können:
+Dabei sollte man bemerken, dass die Konstante A_MAX natürlich aus der kleinen Rechnung \\( H_a \leq L_{max} \\) herleitbar ist. Als Nächstes braucht man das gute alte mod_exp(), für die rechte Seite der Restklassengleichung noch mod_inv(), außerdem das Legendre-Symbol, um sich daraus schließlich den kompletten Tonelli-Shanks zusammenbasteln zu können:
 
 {% highlight c++ %}
 
