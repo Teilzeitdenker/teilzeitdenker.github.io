@@ -97,11 +97,11 @@ void fillPrimes() {
     }
 }
 
-// tool for prime decomposition into factors and multiplicities (in pairs) that works for numbers
-// up to PRIME_LIMIT^2, since there will possibly be only one prime bigger than PRIME_LIMIT 
+// tool for prime decomposition as in problem 129
 vector<pli> prime_decomposition(ull n) {
     vector<pli> facs_and_mults;
-    for (const auto& p : primes) { 
+    for (const auto p : primes) {
+        if (p * p > n) break; // there can be only one prime factor left
         if (n % p == 0) {
             facs_and_mults.push_back({ p, 1 });
             n /= p;
@@ -110,9 +110,9 @@ vector<pli> prime_decomposition(ull n) {
                 n /= p;
             }
         }
-        if (n == 1) return facs_and_mults; // early termination
+        if (n == 1) return facs_and_mults;
     }
-    // if we get here, there is one last prime factor (the rest of n) left that is bigger than PRIME_LIMIT
+    // if we get here, there is one last prime factor (the rest of n) left that is bigger than sqrt(N)
     facs_and_mults.push_back({ n, 1 });
     return facs_and_mults;
 }

@@ -1,0 +1,231 @@
+---
+layout: post
+title:  "Project Euler+ #132: Large repunit factors"
+date:   2026-03-30
+categories: project-euler
+---
+
+Auch in dieser [Aufgabe][problem] ging es wieder um die inzwischen allseits beliebten repunits. Allerdings erreicht die Anzahl der Einsen jetzt schon langsam furchteinflößende Bereiche. In der [ursprünglichen Aufgabe][original] sollte man für die repunit mit 1 Milliarde Einsen (sozusagen das Gigaplex unter den repunits) ihre 40 kleinsten Primfaktoren finden und addieren. Die Schreibweise für diese repunit lautet \\( R(10^9) \\). 
+
+In der grausam anmutenden HackerRank-Version geht es in Supra-Googolplex-mäßige Bereiche hoch, denn hier sollte man bis zu 45 Primfaktoren von repunits der Form \\( R(a^b) \\) aufaddieren, wobei sowohl die Basis \\( a \\) als auch die Hochzahl \\( b \\)  bis zu \\( 10^8 \\) groß sein konnten. Zur Erinnerung: Ein Googolplex ist eine 1 mit \\( 10^{100} \\) Nullen (dies übersteigt schon die Anzahl aller Atome oder sogar Elementarteilchen im bekannten Universum bei Weitem). Hier ging es allerdings noch krasser zu, denn wir müssen ja schlimmstenfalls 45 Primfaktoren einer repunit mit \\( 100000000^{100000000} \\) Einsen bestimmen, ächz, keuch, stöhn! 
+
+Doch damit noch nicht genug: Zusätzlich waren bis zu 25'000 Tests in dieser Disziplin angekündigt. Also musste es schnell gehen und die nötigen Datenstrukturen sollten brav alle vorkalkuliert werden, um schnelle Queries zu unterstützen. 
+
+Also erstmal durchschnaufen, klein anfangen. Ich wäre ja schon froh, wenn ich herausfinden könnte, wie hoch ich das PRIME_LIMIT überhaupt wählen muss. Ich nahm also meine Lösung von Aufgabe 129, passte sie für Primzahlen ein wenig an (man kann z.B. außer für p = 3 immer modulo p statt modulo 9p nehmen und die Berechnung der Eulerschen Phi-Funktion fällt weg, weil \\( \varphi(p) = p - 1 \\) für Primzahlen gilt), reproduzierte damit die alte Lösung für k = 40 und schraubte das dann auf k = 45 hoch, um mal zu sehen, wie groß die Primzahlen überhaupt werden. Die letzte in dieser Liste ergibt sich zu 670'001. 
+
+Das Geniale ist nun, dass in der HackerRank-Version zunächst etwas seltsam anmutende untere Grenzen, nämlich \\( a \geq 10 \\) und \\( b \geq 9 \\) angegeben waren und außerdem dastand, dass \\( a \\) immer durch 10 teilbar wäre. Das bedeutet aber, dass __immer__ \\( 10^9 \mid a^b \\) gilt. Wegen 
+
+$$
+p \mid R(a^b) \Leftrightarrow A(p) \mid a^b
+$$
+
+heißt das aber, dass alle Primzahlen, für die \\( A(p) \mid 10^9 \\) gilt (und die haben wir in der ursprünglichen Aufgabe ja gesucht), immer auch Primfaktoren von \\( R(a^b) \\) sind (es kann aber auch noch viele andere geben). Unterhalb von 670'001 finden wir dann aber mindestens unsere 45 Stück, also können wir das sorgenfrei als PRIME_LIMIT verwenden (und eigentlich alle ull im Code auf int setzen, aber das habe ich mir gespart, solche Mikro-Optimierungen in den Datentypen machen letztlich keinen großen Unterschied und ich übernehme gerne die bereits geschriebenen Funktionen wie sie sind, da weiß ich, dass sie funktionieren. Ich bin auch kein großer Fan von Templates, die werden schnell unübersichtlich und sind auch nicht so flexibel wie sie auf den ersten Blick vielleicht scheinen).
+
+Bei näherer Untersuchung der Teilbarkeitsrelationen fiel mir auf, dass bereits an der Basis \\( a \\) ablesbar ist, ob \\( A(p) \\) überhaupt teilen _kann_. Denn wenn das Radikal \\( \mathrm{rad}(a) \\) nicht von \\( \mathrm{rad}(A(p)) \\) geteilt wird, kann man es vergessen (und spart sich modulare Potenzen en masse). Also den rad-sieve anschmeißen (dabei schöpfe ich mir gleich einen primes-Vektor ab), ein paar Funktionen zur Primzahlzerlegung und Teilerbestimmung wiederbeleben und einen Vektor mit den \\( A(p) \\) füllen, dazu vorgehen wie in Aufgabe 129. Hier der Code dafür:
+
+{% highlight c++ %}
+
+using namespace std;
+
+typedef __int128 int128;
+typedef unsigned long long ull;
+typedef pair<ull, int> pli;
+typedef pair<int, int> pii;
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+constexpr int PRIME_LIMIT{670'005}; // biggest possible factor for k <= 45 is 670'001
+static vector<int> rads(PRIME_LIMIT, 1);
+static vector<int> primes;
+static vector<int> A(PRIME_LIMIT);
+
+//---------------------------------- Helper functions -------------------------------------------
+
+void fillRadsAndPrimes() {
+    rads[0] = 0;
+    for (int i = 2; i < (int)rads.size(); i++)
+        if (rads[i] == 1) { // prime
+            primes.push_back(i);
+            for (int j = i; j < (int)rads.size(); j += i)
+                rads[j] *= i;
+        }
+}
+
+// tool for prime decomposition into factors and multiplicities (in pairs) as in problem 129
+vector<pli> prime_decomposition(ull n) { ... }
+
+// generate all divisors of a number as in problem 129
+vector<ull> get_divisors(ull n) { ... }
+
+// modular exponentiation as in problem 129
+ull mod_exp(ull base, ull exp, ull mod) { ... }
+
+// compute multiplicative order of 10 mod p by stripping prime factors from p-1
+// this is much faster than testing all sorted divisors: O(sum_of_exponents) vs O(num_divisors)
+// should have done it this way in problem 129, too
+void fillAp() {
+    A[3] = 3;
+    for (auto p : primes) {
+        if (p < 7) continue; // p = 2 and p = 5 not needed, because they never divide R(a^b)
+        auto facs = prime_decomposition(p - 1);
+        ull ord = p - 1;
+        for (auto& [q, e] : facs) {
+            for (int i = 0; i < e; i++) {
+                if (mod_exp(10, ord / q, p) == 1) // check, if ord / q would suffice
+                    ord /= q; // if so, can reduce the multiplicity of this prime
+                else
+                    break;
+            }
+        }
+        A[p] = (int)ord;
+    }
+}
+
+{% endhighlight %}
+
+Aber wie weiter? Die langsamste Version ist natürlich, die mod_exp()-Funktionen aufeinanderzustapeln und gnadenlos durch alle Primzahlen durchzuiterieren (zu beachten ist, dass es reicht, \\( a^b \pmod{\varphi(p)} \\) zu kennen, da ja die multiplikative Ordnung aller Zahlen modulo p die Eulersche Phi-Funktion teilt). Damit besteht man übrigens immerhin die ersten 8 von 21 Tests und bekommt dafür schonmal 60% der Punkte (ein wenig viel, wie mir scheint). Das verwendet weder die Radikale noch die gesammelten \\( A(p) \\) und sähe so aus (ich schreibe mal _slow_ dazu, damit klar ist, dass wir diese Funktion später nicht mehr brauchen): 
+
+{% highlight c++ %}
+
+ull sum_of_first_k_factors_slow(ull a, ull b, int k) {
+    ull sum = 0;
+    int counter = 0;
+    if (mod_exp(10, mod_exp(a, b, 18), 27) == 1) { // special case p = 3
+        sum += 3;
+        counter++;}
+        if (counter == k) return sum;
+    for (auto p : primes) { // other primes p > 5
+        if (p <= 5) continue;
+        if (mod_exp(10, mod_exp(a, b, p - 1), p) == 1) {
+            sum += p;
+            counter++;
+            if (counter == k) return sum;
+        }
+    }
+    return sum; // this should never be reached...didn't find enough factors here
+}
+
+{% endhighlight %}
+
+Viel schneller wird es, wenn wir unsere Radikale vergleichen. Dabei fiel mir Folgendes auf: Da die Hochzahl \\( b \\) ja mindestens 9 ist, werden alle Primzahlen, die in \\( a \\) vorkommen, ja mindestens 9-mal in \\( a^b \\) vorkommen. Ab der Primzahl q = 5 ist \\( q^{10} \\) bereits größer als PRIME_LIMIT, also __reicht__ es für unsere Zwecke bei diesen größeren Faktoren schon, wenn \\( \mathrm{rad}(A(p)) \mid \mathrm{rad}(a) \\), um auf \\( A(p) \mid a^b \\) zu schließen. Aber nicht, wenn \\( A(p) \\) von \\( 2^{10} \\) oder \\( 3^{10} \\) geteilt wird. Für diese Zahlen ist Extra-Arbeit mit modularem Potenzieren nötig, also habe ich einen bool-Array extra_work[] eingeführt, in dem ich alle Zahlen unterhalb PRIME_LIMIT, die zu solchen "problematischen" \\( A(p) \\) gehören, mit true markiert habe (insgesamt waren es 65 Primzahlen, bei denen \\( A(p) \\) durch \\( 2^{10} \\) und nur eine einzige Primzahl, bei der \\( A(p) \\) durch \\( 3^{10} \\) teilbar war, nämlich p = 472393). Für diese Zahlen habe ich dann den mod_exp()-Test komplett durchgeführt, ansonsten habe ich nur mit der Teilbarkeit der Radikale argumentiert. Damit erreichte ich schon 93.33% der Punkte, nur noch zwei Tests (19 und 21) mit TLE, aber das waren wahrscheinlich genau die mit den fiesen 25'000 Tests. Mist! Reicht noch nicht!
+
+Ich überlegte, wie ich das Iterieren über alle Primzahlen vermeiden konnte. Hier lag der größte Aufwand, denn bei ca. 50'000 Primzahlen muss man ja bei 25'000 Tests im schlimmsten Fall 1,25 Milliarden Schleifen berechnen und in diesem Bereich liegt auch immer etwa die 1-Sekunden-Grenze, da bringen alle quick terminations und kleinen Tricks nichts. Außerdem muss man doch ausnutzen können, dass diese verflixten Primzahlen, die in der ursprünglichen Aufgabe mit \\( a^b = 10^9 \\) herauskommen, immer als Lösungen auftauchen (auch wenn sie vielleicht erst hinter k = 45 vorkommen, sie erfüllen immer die Teilbarkeitsrelationen). Das sind genau die kleinsten Primzahlen, für die \\( A(p) = 2^x5^y \\) mit \\( x,y \leq 9 \\), also insbesondere \\( \mathrm{rad}(A(p)) = 2 \cdot 5 = 10 \\) gilt. 
+
+Hier meine Idee, die letztlich auch den Durchbruch brachte (und sogar den ganzen extra_work[]-Mechanismus überflüssig machte). Erstelle eine map, die alle Primzahlen nach \\( \mathrm{rad}(A(p)) \\) gruppiert. Berechne nun für eine gegebene Potenz \\( a^b \\) einfach \\( \mathrm{rad}(a) \\) und gehe alle Teiler durch. Wir brauchen nur die Primzahlen aus den zugehörigen map-Einträgen zu checken. Alle anderen Primzahlen bleiben damit außen vor! 
+
+
+{% highlight c++ %}
+
+//---------------------------------- GLOBAL variables ------------------------------------------
+
+static unordered_map<int, vector<int>> rad_groups; // rad(A[p]) -> sorted list of primes
+
+//---------------------------------- Helper functions ------------------------------------------
+
+// group primes by rad(A[p]) for fast lookup
+// Each vector will already be sorted since primes is sorted
+void buildRadGroups() {
+    for (auto p : primes) {
+        int a = A[p];
+        if (a == 0) continue; // we left entries at p = 2 and p = 5 at 0
+        rad_groups[rads[a]].push_back(p);
+    }
+}
+
+{% endhighlight %}
+
+Aber das gefiel mir immer noch nicht ganz. Denn da können (vor allem für kleine Radikale) immer noch extrem viele Primzahlen zusammenkommen. Wenn man die __alle__ einfach mergt, kontrolliert man sich tot und leider muss man sie entweder in ein set einfügen, oder nochmal extra sortieren, damit man auch die k kleinsten bekommt. 
+
+Am besten wäre es, man würde diese Primzahlen _der Reihe nach_ durcharbeiten, mit einem min-heap (in C++ einer priority_queue) wäre es perfekt. Aber den wollen wir ja nicht sofort mit allen Primzahlen befüllen. Nehmen wir also zunächst nur die kleinste Primzahl aus jeder rad_group und wenn wir diese bearbeitet haben, schnappen wir uns die nächste und pushen sie in die queue usw. Um uns den Index innerhalb einer prime list merken zu können, auf den wir gerade zeigen (am Anfang 0), führen wir ein kleines struct ein:
+
+{% highlight c++ %}
+
+//---------------------------------- Helper struct ---------------------------------------------
+
+// Struct for merge: holds a pointer to a rad_group's prime vector
+// and an index into it, tracking which prime is next to be considered
+struct PointedRadGroup { const vector<int>* vec; int idx; };
+
+{% endhighlight %}
+
+Diese rad_groups sind gleich in zweifacher Hinsicht "pointed", denn die Primzahlliste ist nur als Pointer in ihr gespeichert und gleichzeitig stellt der andere Eintrag idx sozusagen einen "Pointer" auf eine bestimmte Primzahl innerhalb der Liste dar. 
+
+Beim Befüllen der priority_queue brauchen wir eine Möglichkeit, nach dem Poppen herauszufinden (also natürlich erst, wenn die "Zigarette danach" erloschen ist), aus welcher Gruppe der letzte Eintrag kam, damit wir den entsprechenden idx inkrementieren können und die nächste Primzahl aus der Gruppe wieder pushen können. Das ist aber nicht schwierig, wir nehmen einfach den "Gruppenindex" gi (Index im Vektor groups) und geben diesen mit in die queue. Hier der Code der schnellen Funktion, um die ersten k Faktoren zu summieren und natürlich main(), aber mit Auslassungen:
+
+{% highlight c++ %}
+
+ull sum_of_first_k_factors_fast(int a, int b, int k) {
+    // Compute rad(a) and its divisors -- these are the possible rad(A[p]) values
+    // a may be bigger than PRIME_LIMIT, so cannot use rads[a]
+    // But prime_decomposition works up to PRIME_LIMIT^2
+    auto facs = prime_decomposition(a);
+    ull ra = 1; 
+    for (auto& [f, _] : facs) ra *= f;
+    auto divs = get_divisors(ra);
+
+    // Set up merge of prime lists
+    vector<PointedRadGroup> groups;
+    priority_queue<pii, vector<pii>, greater<pii>> pq; // min-heap of {prime, group_index}
+
+    for (const auto& d : divs) {
+        auto it = rad_groups.find((int)d);
+        if (it != rad_groups.end()) {
+            int gi = (int)groups.size(); // get the index that this group will have in groups vector
+            groups.push_back({&it->second, 0}); // store pointer to prime list and idx = 0
+            // now put first prime of group inside the priority queue
+            // to find the corresponding group later, push the index of the group, too
+            pq.push({it->second[0], gi}); 
+        }
+    }
+    // Extract the first k primes from all groups (in sorted order) that pass divisibility check
+    ull sum = 0;
+    int cnt = 0;
+    while (!pq.empty() && cnt < k) {
+        auto [prime, gi] = pq.top();
+        pq.pop();
+        // Advance this group's idx to the next prime in the corresponding list
+        auto& g = groups[gi];
+        g.idx++;
+        if (g.idx < (int)g.vec->size()) // if not exhausted 
+            // push next prime of this group to the queue
+            pq.push({(*g.vec)[g.idx], gi});
+
+        // Full verification: 10^(a^b mod (prime - 1)) == 1 (mod prime)
+        // This could even be enhanced by the extra_work[] mechanism I tried earlier
+        // full check would then only be necessary for 66 cases of A(p)
+        // (the ones that are divisible by 2^10 or 3^10 )
+        if (mod_exp(10, mod_exp(a, b, prime - 1), prime) == 1) {
+            sum += prime;
+            if (++cnt == k) break;
+        }
+    }
+    return sum;
+}
+
+//---------------------------------- Main function ----------------------------------------------
+
+auto main() -> int {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    // prepare data structures (rads, primes, A[p] and rad_groups)
+    ...
+
+    int T;
+    cin >> T;
+    while (T--) { // read a, b, k and solve
+        ...
+    }
+    return 0;
+}
+
+{% endhighlight %}
+
+Heftig, das war eine schwere Geburt. Es gab wirklich unheimlich viele Stellschrauben, an denen man drehen konnte, viele Möglichkeiten, effizientere Schleifen und Abbruchbedingungen einzuführen und immer wieder Kleinigkeiten zu verbessern, aber man konnte sich dabei auch ordentlich verlaufen und in diverse Sackgassen manövrieren. 
+
+Ich musste mindestens dreimal mehrstündige Spaziergänge mit meinem Diktiergerät machen, um den Kopf freizukriegen und immer neue Lösungsansätze und Ideen zu entwickeln. Das wurde aber mit einem bisher unerreichten 34.Platz auf dem Leaderbord (innerhalb von 10 Jahren haben nur etwa 50 Leute überhaupt Punkte geholt) geradezu lukullisch belohnt. Nicht schlecht, Herr Specht!
+
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler132/problem
+[original]: https://projecteuler.net/problem=132
+[forum]: https://projecteuler.net/thread=132
