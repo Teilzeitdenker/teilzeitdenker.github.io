@@ -92,8 +92,9 @@ ull sum_of_first_k_factors_slow(ull a, ull b, int k) {
     int counter = 0;
     if (mod_exp(10, mod_exp(a, b, 18), 27) == 1) { // special case p = 3
         sum += 3;
-        counter++;}
-        if (counter == k) return sum;
+        counter++;
+        if (counter == k) return sum; // maybe a = 30 and k = 1 or so
+    }
     for (auto p : primes) { // other primes p > 5
         if (p <= 5) continue;
         if (mod_exp(10, mod_exp(a, b, p - 1), p) == 1) {
@@ -178,24 +179,25 @@ ull sum_of_first_k_factors_fast(int a, int b, int k) {
     }
     // Extract the first k primes from all groups (in sorted order) that pass divisibility check
     ull sum = 0;
-    int cnt = 0;
-    while (!pq.empty() && cnt < k) {
-        auto [prime, gi] = pq.top();
+    int counter = 0;
+    while (!pq.empty() && counter < k) {
+        auto [p, gi] = pq.top();
         pq.pop();
-        // Advance this group's idx to the next prime in the corresponding list
+        // Advance this group's idx to the next p in the corresponding list
         auto& g = groups[gi];
         g.idx++;
         if (g.idx < (int)g.vec->size()) // if not exhausted 
-            // push next prime of this group to the queue
+            // push next p of this group to the queue
             pq.push({(*g.vec)[g.idx], gi});
 
-        // Full verification: 10^(a^b mod (prime - 1)) == 1 (mod prime)
+        // Full verification: 10^(a^b mod (p - 1)) == 1 (mod p)
         // This could even be enhanced by the extra_work[] mechanism I tried earlier
         // full check would then only be necessary for 66 cases of A(p)
         // (the ones that are divisible by 2^10 or 3^10 )
-        if (mod_exp(10, mod_exp(a, b, prime - 1), prime) == 1) {
-            sum += prime;
-            if (++cnt == k) break;
+        if (mod_exp(10, mod_exp(a, b, p - 1), p) == 1) {
+            sum += p;
+            counter++;
+            if (counter == k) break;
         }
     }
     return sum;
