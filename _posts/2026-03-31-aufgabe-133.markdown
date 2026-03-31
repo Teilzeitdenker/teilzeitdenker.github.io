@@ -1,0 +1,140 @@
+---
+layout: post
+title:  "Project Euler+ #133: Repunit nonfactors"
+date:   2026-03-31
+categories: project-euler
+---
+
+Dies ist wohl die vorerst letzte in der Reihe der repunit-Aufgaben gewesen. Und da man schon so manches Programm zur Erkundung geschrieben und sich mit so einigen Eigenschaften und Formeln bezüglich dieser Zahlen auseinandergesetzt hatte, fiel diese Challenge zur Abwechslung ungewohnt "leicht" aus (auch wenn sie das Prädikat "Medium" trug). 
+
+Zwar waren die Grenzen gegenüber der [ursprünglichen Aufgabe][original] in der [HackerRank-Version][problem] mal wieder sportlich, aber machbar. Zumindest wenn man sich der puritanischen Auslegung widersetzte und nicht alles Benötigte während der Ausführungszeit berechnete, sondern ein wenig vorkalkulierte. Indem man nämlich die schöne Lösung von Aufgabe 132 nutzte, um sich wenigstens eine erneute Berechnung der \\( A(p) \\) (und das auch noch bis an die Grenze von 30 Millionen) zu sparen. 
+
+Denn es ist ja so: Für die Primzahlen \\( p \\), die eine repunit der Form \\( R(10^n) \\) teilen, muss ja 
+
+$$
+\mathrm{rad}(A(p)) \mid \mathrm{rad}(10^n) = 10 = 2 \cdot 5
+$$
+
+gelten, d.h. es sind genau die Primzahlen, für die \\( A(p) \\) die Form \\( 2^x5^y \\) mit \\( x, y \geq 0 \\) hat (siehe hierzu die mathematischen Ausführungen der letzten drei repunit-Aufgaben). Da uns nur Primzahlen kleiner als 30 Millionen interessieren und wir wissen, dass stets \\( A(p) < p \\) gilt, können wir sehen, dass \\( x < 25 \\) gelten muss (und \\( y < 11 \\)). Finden wir also die Primfaktoren von \\( R(10^{25}) \\), so sind diejenigen unter 30 Millionen bereits alle, die wir auch für höhere Potenzen \\( 10^n \\) dort vorfinden werden. Es können in diesem Bereich einfach keine mehr dazu kommen, da wir schon alle mit der obigen Form von \\( A(p) \\) gefunden haben. 
+
+Also schmeißen wir doch mal unsere Lösung zu Aufgabe 132 in eine Sandbox, stürzen uns mit Sieb und Schaufel hinterher, und backen einen frischen Sandkuchen nach folgendem Rezept daraus:
+1. PRIME_LIMIT gnadenlos auf 30 Millionen setzen
+2. Die Funktion sum_of_first_k_factors_fast() schreiben wir ein ganz klein wenig um zu einer Funktion find_first_k_factors_fast(), indem wir statt eine Summe auszurechnen einfach die einzelnen Primzahlen in einen result-Vektor pushen und den als return-Wert zurückgeben.
+3. Schreibe in main() alle gefundenen Werte aus dem result-Vektor auf stdout
+4. Als input.txt übergeben wir dem Programm nun eine Datei mit folgendem Inhalt (den Wert für k habe ich natürlich in Handarbeit per T&E ermittelt):
+
+{% highlight txt %}
+
+1
+10 25 77
+
+{% endhighlight %}
+
+Dies liefert uns alle repunit factors unter 30 Millionen, die wir in unser neues Programm als globale Variable übernehmen können (und die ich natürlich geflissentlich omitten werde). Nun besteht das ganze Problem nur noch daraus, die Summe aller Primzahlen minus den repunit factors unterhalb eines beliebigen Limits quasi in Überschallgeschwindigkeit abfragen zu können (bis zu 100'000 Tests sind ja angekündigt). Dazu habe ich einfach einen Vektor aus \\( \lbrace p, s \rbrace \\)-Paaren erstellt, wobei \\( s \\) die Summe der nonfactors \\(  \leq p \\) angibt. Das will nun alles ordentlich befüllt werden:
+
+
+{% highlight c++ %}
+
+typedef __int128 int128;
+typedef unsigned long long ull;
+typedef pair<ull, ull> pll;
+
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+const ull PRIME_LIMIT = 30'000'000;
+vector<bool> sieve;
+vector<pll> prime_sum_pairs;
+
+// can be calculated via rad(A(p)) | 2*5 
+// there are 77 relevant factors < PRIME_LIMIT
+vector<ull> rep_facs = { ... };
+
+
+//---------------------------------- Helper functions -------------------------------------------
+
+// tried it without binary_search in the rep_facs, it doesn't really take that long (only 77 elements)
+void fillSieveAndPairs() {
+    const int half = (PRIME_LIMIT >> 1) + 1;
+    sieve.resize(half, true);
+    prime_sum_pairs.reserve(1024*1024);
+    prime_sum_pairs.push_back({2, 2});
+    ull sum = 2;
+    sieve[0] = false;
+    for (int i = 1; 2 * i * i < half; ++i) {
+        if (sieve[i]) { // prime
+            int p = 2 * i + 1; // never forget, we use a half sieve with only odd entries!
+            // only add a pair to prime_sum_pairs if not a repunit factor
+            if (!binary_search(rep_facs.begin(), rep_facs.end(), (ull)p)) {
+                sum += p;
+                prime_sum_pairs.push_back({(ull)p, sum});
+            }
+            // enhanced by starting at p^2!!
+            int current = (p * p - 1) / 2; // recalculate the sieve index
+            while (current < half) {
+                sieve[current] = false;
+                current += p;
+            }
+        }
+    }
+    // sieve is completely initialized when sqrt(PRIME_LIMIT) is reached
+    // now have to feed the rest to the prime_sum_pairs
+    ull last_prime_found = prime_sum_pairs.back().first;
+    for (int i = (last_prime_found + 1) / 2; i < half; i++) {
+        if (sieve[i]) {
+            int p = 2 * i + 1; // only add an entry if not a repunit factor
+            if (!binary_search(rep_facs.begin(), rep_facs.end(), (ull)p)) {
+                sum += p;
+                prime_sum_pairs.push_back({(ull)p, sum});
+            }
+        }
+    }
+}
+
+{% endhighlight %}
+
+In main() verwenden wir wieder upper_bound(), damit der Vektor schnell durchsucht wird (nutzt intern binary_search()). Auf meiner Maschine dauerte die Erstellung des Vektors über 1 Sekunde (1,25 s etwa), so dass ich kurz zögerte, ob ich die Lösung überhaupt submitten soll. Aber tatsächlich hat sie alle Tests bestanden (ich weiß allerdings nicht, wie die Grenzen bei HackerRank überhaupt sind und ich glaube das weiß niemand so wirklich. Vielleicht sind es 2 Sekunden? Vielleicht ist die Infrastruktur "schneller"? CSES ist in dieser Hinsicht wirklich viel transparenter, da hat man nach dem Submitten ja auch noch Zugang zur gesamten Queue und sogar dem Code aller anderen Lösungen. Dafür ist es dort aber auch nicht so spannend, ob man es schafft!). 
+
+Ich lasse mal den Code zum Timing auskommentiert drinstehen:
+
+{% highlight c++ %}
+
+//---------------------------------- Main function ----------------------------------------------
+
+// using namespace chrono; // only used for timing
+auto main() -> int {
+    // auto start{ steady_clock::now() };
+
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    fillSieveAndPairs();
+
+    int T;
+    ull L;
+    cin >> T;
+    while (T--) {
+        cin >> L;
+        auto it = upper_bound(prime_sum_pairs.begin(), prime_sum_pairs.end(), (pll){L, 0});
+        if (it == prime_sum_pairs.begin()) { // no prime below here
+            cout << 0 << endl;
+            continue;
+        }
+        it--;
+        cout << it->second << endl;
+    }
+
+    // auto end{ steady_clock::now() };
+    // duration<double> t = duration_cast<duration<double>>(end - start);
+    // cout << "Time in seconds: " << t.count() << " s" << endl;
+
+    return 0;
+}
+
+{% endhighlight %}
+
+Seltsam, dass auch hier "nur" etwa 60 Leute alle Tests lösen konnten. Wahrscheinlich waren viele durch die anderen repunit-Aufgaben bereits traumatisiert und haben sich mit den 80 Punkten schnell aus dem Staub gemacht wie räudige Hunde mit der ergaunerten Bockwurst vom Teller des Hilfssheriffs. 
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler133/problem
+[original]: https://projecteuler.net/problem=133
+[forum]: https://projecteuler.net/thread=133
