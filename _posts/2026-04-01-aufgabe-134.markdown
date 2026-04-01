@@ -1,0 +1,250 @@
+---
+layout: post
+title:  "Project Euler+ #134: Prime pair connection"
+date:   2026-04-01
+categories: project-euler
+---
+
+Die Hauptproblematik in dieser Aufgabe war es, einen Primzahlsieb bis 1 Milliarde zu schreiben (oder irgendwo zu besorgen), der seine Arbeit innerhalb der vorgeschriebenen Zeit schafft. Normalerweise würde man zu solchen Zwecken wieder auf die [primesieve][primesieve]-Bibliothek von kimwalisch zurückgreifen, aber für HackerRank sollte das Ganze kompakt und handlich sein und der ganze Code in eine Datei passen, also nicht viel länger als ~100 Zeilen sein. 
+
+Vor Jahren (und ich weiß leider absolut nicht mehr, wo und wann und in welchem Zusammenhang) wurde ich eines kleinen Codeschnipsels habhaft, der als credit einen gewissen Min_25 angibt, dessen Identität im Netz ziemlich mysteriös und umstritten zu sein scheint (und das ist kein Aprilscherz, ich sehe gerade das Datum dieses Posts). Des Öfteren findet man imaginäre Wortwechsel in Code-Kommentaren wie z.B.
+
+{% highlight c++ %}
+
+// Min_25: Say my name
+// Dirichlet: You're heisenberg
+// Min_25: You're goddamn right
+
+{% endhighlight %}
+
+und es gibt einen Algorithmus, den man als Min_25-Sieb bezeichnet, der irgendwelche fiesen Präfix-Summen für multiplikative Funktionen berechnen kann, und nach ihm benannt ist, weil er wohl der erste war, der ihn vorgeschlagen hat. Ich bin mir also sicher, sein Name wird später in diesem Blog wieder auftauchen (multiplikative Funktionen und ihre Summen sind auf Projekt Euler extrem beliebt). 
+
+Zurück zu meinem Schnipsel: Es handelt sich um einen segmentierten Primzahlsieb, der einen primes-Vektor für Zahlen unter 1 Milliarde auf meiner Maschine in 0.5 Sekunden füllen kann. Er verwendet dazu Wheel-Faktorisierung, cachefreundliches blockweises Abstreichen, und einen pre-Array, der ein sich wiederholendes Muster für alle Primzahlen \\( \leq 17 \\) vorberechnet und dann in jeden Block erstmal reinkopiert, was zusätzlich enorm viele Operationen spart:
+
+{% highlight c++ %}
+
+//---------------------------------- Fast primesieve ----------------------------------------------
+
+// credit_to: min_25
+// takes 0.5s for n = 1e9
+vector<int> sieve(const int N, const int Q = 17, const int L = 1 << 15) {
+    static const int rs[] = { 1, 7, 11, 13, 17, 19, 23, 29 };
+    struct P {
+        P(int p) : p(p) {}
+        int p; int pos[8];
+    };
+    auto approx_prime_count = [](const int N) -> int {
+        return N > 60184 ? N / (log(N) - 1.1) : max(1., N / (log(N) - 1.11)) + 1;
+        };
+
+    const int v = sqrt(N), vv = sqrt(v);
+    vector<bool> isp(v + 1, true);
+    for (int i = 2; i <= vv; ++i) if (isp[i]) {
+        for (int j = i * i; j <= v; j += i) isp[j] = false;
+    }
+
+    const int rsize = approx_prime_count(N + 30);
+    vector<int> primes = { 2, 3, 5 }; int psize = 3;
+    primes.resize(rsize);
+
+    vector<P> sprimes; size_t pbeg = 0;
+    int prod = 1;
+    for (int p = 7; p <= v; ++p) {
+        if (!isp[p]) continue;
+        if (p <= Q) prod *= p, ++pbeg, primes[psize++] = p;
+        auto pp = P(p);
+        for (int t = 0; t < 8; ++t) {
+            int j = (p <= Q) ? p : p * p;
+            while (j % 30 != rs[t]) j += p << 1;
+            pp.pos[t] = j / 30;
+        }
+        sprimes.push_back(pp);
+    }
+
+    vector<unsigned char> pre(prod, 0xFF);
+    for (size_t pi = 0; pi < pbeg; ++pi) {
+        auto pp = sprimes[pi]; const int p = pp.p;
+        for (int t = 0; t < 8; ++t) {
+            const unsigned char m = ~(1 << t);
+            for (int i = pp.pos[t]; i < prod; i += p) pre[i] &= m;
+        }
+    }
+
+    const int block_size = (L + prod - 1) / prod * prod;
+    vector<unsigned char> block(block_size); unsigned char* pblock = block.data();
+    const int M = (N + 29) / 30;
+
+    for (int beg = 0; beg < M; beg += block_size, pblock -= block_size) {
+        int end = min(M, beg + block_size);
+        for (int i = beg; i < end; i += prod) {
+            copy(pre.begin(), pre.end(), pblock + i);
+        }
+        if (beg == 0) pblock[0] &= 0xFE;
+        for (size_t pi = pbeg; pi < sprimes.size(); ++pi) {
+            auto& pp = sprimes[pi];
+            const int p = pp.p;
+            for (int t = 0; t < 8; ++t) {
+                int i = pp.pos[t];
+                const unsigned char m = ~(1 << t);
+                for (; i < end; i += p) pblock[i] &= m;
+                pp.pos[t] = i;
+            }
+        }
+        for (int i = beg; i < end; ++i) {
+            for (int m = pblock[i]; m > 0; m &= m - 1) {
+                primes[psize++] = i * 30 + rs[__builtin_ctz(m)];
+            }
+        }
+    }
+    assert(psize <= rsize);
+    while (psize > 0 && primes[psize - 1] > N) --psize;
+    primes.resize(psize);
+    return primes;
+}
+
+{% endhighlight %}
+
+Es gibt immerhin 50'847'534 Primzahlen unter einer Milliarde (man verwende z.B. den Abschnitt Pi function auf [Andrew Brookers Webseite][n-th-prime-page]), unser primes-Vektor wird also als Riesenbaby geboren. 
+
+Jetzt müssen wir nur noch die eigentliche [Aufgabe][problem] lösen. Aber die war nicht besonders schwer. Wenn die Primzahl \\( p_1 \\) als letzte Ziffern der Zahl \\( n \\) erscheinen soll und gleichzeitig \\( p_2 \\) ein Teiler dieser Zahl \\( n \\) ist, dann muss es folglich eine Zahl \\( x \\) geben, für die
+
+$$
+n = x\cdot p_2 \equiv p_1 \pmod{m},
+$$
+
+wobei \\( m \\) die kleinste Zehnerpotenz \\( > p_1 \\) ist. Daraus kann man mit ein wenig modularer Arithmetik schnell \\( x \\) berechnen. Es ist obige Gleichung ja nur mit dem Inversen von \\( p_2 \\) modulo m zu multiplizieren (netterweise ist \\( p_2 \geq 7 \\) und damit auf jeden Fall teilerfremd zu \\( m \\), womit ein Inverses auch existiert) und man erhält
+
+$$
+x \equiv p_2^{-1} p_1 \pmod{m}.
+$$
+
+Das Schöne ist, statt hier wieder ein mod_inv() bemühen zu müssen, können wir das von Hand in eine positive Hochzahl verwandeln. Da die multiplikative Ordnung jeder Zahl modulo m ein Teiler der Eulerschen Phi-Funktion ist, gilt ja 
+
+$$
+p_2^{-1} \equiv p_2^{\varphi(m)-1} \pmod{m}
+$$
+
+und weil \\( m \\) eine Potenz von 10 ist, gilt \\( \varphi(m) = m \cdot \frac{1}{2} \cdot \frac{4}{5}  = \frac{2m}{5} \\). Insgesamt erhalten wir also, dass 
+
+$$
+n = \lbrace  p_2^{\varphi(m)-1} p_1 \pmod{m} \rbrace  \cdot p_2
+$$
+
+Da der Vorfaktor, wenn wir ihn so, wie wir ihn geschrieben haben, mit einem Programm berechnen, automatisch den kleinsten von allen möglichen ausspuckt (man bedenke, dass \\( x \\) nur modulo \\( m \\) festgelegt ist, also gibt es unendlich viele Zahlen \\( n \\) mit der gesuchten Eigenschaft, man muss nur Vielfache von \\( m \\) zu \\( x \\) dazuaddieren, um weitere zu erhalten), haben wir unser \\( S \\) aus der Aufgabenstellung gefunden. 
+
+Für jedes Primzahlpaar müssen wir also nur einmal modular exponentieren, dann modular multiplizieren und dann noch einmal normal multiplizieren, um \\( S \\) zu berechnen. Das sollte bei 10 Tests mit einem Intervall \\( [L, R] \\) von maximal 1 Million Durchmesser, also geschätzt etwa 50'000 Primzahlpaaren, locker hinhauen. Nehme einfach unser altes mod_exp() und schreibe damit ein get_S(), dessen Code ich mal auslasse:
+
+{% highlight c++ %}
+
+typedef unsigned long long ull;
+
+//---------------------------------- Helper functions -------------------------------------------
+
+ull mod_exp(int base, int exp, int mod)
+{
+    ull Res = 1; // except for variable exp, use 64-bit-integers to avoid overflow
+    ull Base = base;
+    ull Mod = mod;
+    while (exp > 0)
+    {
+        if (exp & 1) Res = (Res * Base) % Mod;
+        Base = (Base * Base) % Mod;
+        exp >>= 1;
+    }
+    return Res;
+}
+
+ull get_S(int p1, int p2, int m) {
+    // calculate x = p2^(phi(m) - 1) * p1 mod m and return S = x * p2
+    ...
+}
+
+{% endhighlight %}
+
+Nun bleibt nicht mehr viel zu tun. Den Sieb verwenden, um primes zu füllen (ich weiß, dass der C++ compiler shadowing für globale Variablen mit demselben Namen verwendet und daher eigentlich keine Verwechslungsgefahr für die primes-Variable in der sieve()-Funktion besteht, trotzdem nenne ich den globalen Vektor mal lieber in ps um), zum linken Rand der Range springen und dann die Paare entlanggehen, um get_S() zu verwenden und auf eine sum-Variable einzuzahlen. 
+
+Vorsicht ist aber bei den Größenordnungen geboten. Man sah schon an der [ursprünglichen Aufgabe][original], dass hier sehr große Summen entstehen, die Antwort ist bereits für \\( [L, R] = [5, 10^6] \\) größer als \\( 10^{16} \\). Also besser mit 128-bit-Integers ein wenig Luft nach oben lassen (bigint-Klasse ist aber überflüssig). Da __int128 (ich habe hier sogar die unsigned-Variante gewählt) eine type extension des g++-Compilers ist, kann man solche Zahlen nicht ohne zusätzliche Methoden über stdout ausgeben. Also passe ich gleich sowohl zum Einlesen als auch Schreiben meine zwei handgemachten Funktionen an (unter Windows muss man mit "-D WINDOWS" kompilieren, damit es funzt): 
+
+
+{% highlight c++ %}
+
+typedef unsigned __int128 int128;
+
+//---------------------------------- IO functions ----------------------------------------
+
+// Use "-D WINDOWS"  when compiling to do the job on WINDOWS
+#ifdef WINDOWS
+int getchar_unlocked() {return _getchar_nolock();}
+int putchar_unlocked(int c) {return _putchar_nolock(c);}
+#endif
+
+static inline int read() {
+    int res, ch;
+    while ((res = getchar_unlocked()) < '0') {}
+    res -= '0';
+    while ((ch = getchar_unlocked()) >= '0') res = (res << 3) + (res << 1) + (ch ^ 48);
+    return res;
+}
+
+static inline void write(int128 n) {
+    char s[40];
+    short i{0};
+    if (n == 0) { putchar_unlocked('0'); return; }
+    while (n) {
+        s[i++] = (n % 10) + '0';
+        n /= 10;
+    }
+    while (i--) putchar_unlocked(s[i]);
+}
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+const int PRIME_LIMIT = 1'000'000'000;
+vector<int> ps; // primes
+
+//---------------------------------- Main function ----------------------------------------------
+
+auto main() -> int {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    ps = sieve(PRIME_LIMIT);
+
+    int T;
+    T = read();
+    while (T--) {
+        int L, R;
+        L = read();
+        R = read();
+        // initialize prime pair and power of 10 (m)
+        int p1, p2, m = 10;
+        auto it = lower_bound(ps.begin(), ps.end(), L);
+        p1 = (*it);
+        it++;
+        p2 = (*it);
+        while (m < p1) m *= 10;
+        // sum all S in range
+        int128 sum = 0;
+        while (p1 <= R) {
+            sum += (int128)get_S(p1, p2, m);
+            p1 = p2;
+            it++;
+            p2 = (*it);
+            if (p1 > m) m *= 10; // adjust power of 10 if necessary
+        }
+        write(sum); putchar_unlocked('\n');
+    }
+    return 0;
+}
+
+{% endhighlight %}
+
+Mit diesen Werkzeugen an der Hand war das eine sehr angenehme Challenge. Fast schon ein bißchen zu leicht, man wird eben anspruchsvoll mit der Zeit. 
+
+Mhhh, warum ist es eigentlich immer so verdammt schwer, genau entlang dieses Grates zu wandeln, stets der Gefahr ausgesetzt, auf der einen Seite just in den Abgrund öder Langeweile oder aber auf der anderen in das gar finstere Tal hirnzermarternder Überforderung zu stürzen?
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler134/problem
+[original]: https://projecteuler.net/problem=134
+[forum]: https://projecteuler.net/thread=134
+[primesieve]: https://github.com/kimwalisch/primesieve
+[n-th-prime-page]: https://t5k.org/nthprime/index.php
