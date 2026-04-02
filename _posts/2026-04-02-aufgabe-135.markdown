@@ -1,0 +1,32 @@
+---
+layout: post
+title:  "Project Euler+ #135: Same differences"
+date:   2026-04-02
+categories: project-euler
+---
+
+Eine schöne [Aufgabe][problem], in der es vordergründig um arithmetische Progressionen, in Wirklichkeit aber um Teilbarkeit und spätestens in der Fortsetzung des Themas durch Aufgabe 136 einfach nur um das Zählen von Primzahlen geht (wenn man weiß, was man tut). 
+
+Im Vergleich zum [Original][original] sind bei HackerRank allerdings die Anzahlen der Lösungen für beliebige \\( n \\) gefragt, nicht nur die Anzahl der \\( n \\), die genau 10 Lösungen haben. Und die 
+
+
+
+{% highlight c++ %}
+
+
+
+{% endhighlight %}
+
+
+
+
+{% highlight c++ %}
+
+
+
+{% endhighlight %}
+
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler135/problem
+[original]: https://projecteuler.net/problem=135
+[forum]: https://projecteuler.net/thread=135
