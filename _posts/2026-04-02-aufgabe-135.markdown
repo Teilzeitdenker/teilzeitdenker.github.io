@@ -5,27 +5,53 @@ date:   2026-04-02
 categories: project-euler
 ---
 
-Eine schöne [Aufgabe][problem], in der es vordergründig um arithmetische Progressionen, in Wirklichkeit aber um Teilbarkeit und spätestens in der Fortsetzung des Themas durch Aufgabe 136 einfach nur um das Zählen von Primzahlen geht (wenn man weiß, was man tut). 
+Eine schöne [Aufgabe][problem], in der es vordergründig um arithmetische Progressionen, in Wirklichkeit aber um Teilbarkeit und spätestens ab der Fortsetzung des Themas in Aufgabe 136 einfach nur um das Zählen von Primzahlen geht (wenn man weiß, was man tut). 
 
-Im Vergleich zum [Original][original] sind bei HackerRank allerdings die Anzahlen der Lösungen für beliebige \\( n \\) gefragt, nicht nur die Anzahl der \\( n \\), die genau 10 Lösungen haben. Und die 
+Im Vergleich zum [Original][original] sind bei HackerRank allerdings die Anzahlen der Lösungen für _beliebige_ \\( n \\) gefragt, nicht nur die Anzahl der \\( n \\), die genau 10 Lösungen haben. Und die obere Grenze war mit 8 Millionen auch höher gesetzt. Ansonsten war es aber recht ähnlich. 
 
+Zum Mathematischen: Nimmt man in der Progression den mittleren Wert als Ausgangspunkt (das ist reine Geschmackssache, die Formeln und auch die Start- und Endwerte der späteren Iteration ändern sich dadurch aber) und setzt daher mit der Differenz \\( d \\) der Progression \\( z = y + d \\) und \\( x = y - d \\) (woraus, da ja \\( x \\) eine positive ganze Zahl sein soll \\( y > d \\) folgt), so erhält man nach ein wenig Algebra
 
+$$
+y \cdot (4d - y) = n.
+$$
+
+Man erkennt also, dass \\( y \\) ein Teiler von \\( n \\) sein muss. Nennen wir den anderen Teiler mal 
+
+$$
+k = 4d - y 
+$$
+
+Damit unsere Differenz \\( d = \frac{k + y}{4} \\) eine ganze Zahl ist, muss die Summe der beiden Teiler \\( k + y \equiv 0 \pmod{4} \\)  sein. Das ist schonmal ziemlich interessant, denn für die Teiler einer Zahl \\( n \\) kann man ja einige schöne Folgerungen ziehen, je nachdem, zu welcher Restklasse \\( n \\) gehört. 
+
+Ich greife hier zwar schon ein wenig auf die nächste Aufgabe vor, aber nehmen wir doch mal an, dass unser \\( n \equiv 1 \pmod{4} \\) ist. Dann müssen die beiden Teiler \\( k \\) und \\( y \\) nach den Multiplikationsregeln im Restklassenring entweder beide \\( \equiv 1 \pmod{4} \\) oder beide \\( \equiv 3 \pmod{4} \\) sein, was aber dazu führt, dass ihre Summe eben __nicht__ \\( \equiv 0 \mod{4} \\) ist (sondern 2), was aber bedeutet, dass für solche \\( n \\) keine Lösung unserer schönen Gleichung existieren __kann__. Ähnlich zeigt man dies für den Fall \\( n \equiv 2 \pmod{4} \\) (dies sei dem Leser überlassen), d.h. alle \\( n \\) __mit__ Lösungen sind entweder durch 4 teilbar oder \\( \equiv 3 \pmod{4} \\).
+
+Aber zurück zur aktuellen Aufgabe. Aus der Bedingung \\( y > d \\) folgt nach Einsetzen von \\( d = \frac{k + y}{4} \\), dass \\( k < 3y \\), der zweite Teiler ist also durch die Größe des ersten ein wenig beschränkt. Letztendlich muss man sich klar machen, dass jedes __zulässige__ Paar \\( \lbrace y, k \rbrace \\) zu einer Lösung unserer schönen Gleichung für das entsprechende \\( n = yk \\) führt. Und das ist auch schon der Schlüssel zur Lösung, denn wir müssen also nur alle diese zulässigen Paare durchgehen und dabei in einem Array (der Länge 8 Millionen) fleißig Buch führen, um eine vollständige Übersicht der Lösungsanzahlen für alle \\( n \\) im gefragten Bereich zu erhalten.
+
+Ich empfehle, zuerst über die \\( y \\) zu iterieren (man kann bei 2 anfangen, denn \\( y \\) ist ja der mittlere Wert der Progression und bei 8 Millionen aufhören, denn \\( k \\) könnte ja auch 1 sein). In der anschließenden Iteration über \\( k \\) muss man theoretisch bei 1 anfangen und spätestens bei \\( 3k - 1 \\) aufhören. Wenn aber schon vorher \\( yk \\) größer als 8 Millionen wird, kann man die zweite Schleife breaken. Dann muss man überprüfen, ob das Paar zulässig ist (oder man sorgt klug dafür, dass sich die gewählten \\( k \\) in der zweiten Schleife so an das \\( y \\) "anpassen", dass die Summe \\( y + k \\) immer durch 4 teilbar ist) und inkrementiert im günstigen Fall sols[n]. Ansonsten ist das Programm nur ein paar Zeilen lang, die Schleifen überlasse ich mal eurer Phantasie:
 
 {% highlight c++ %}
 
+const int LIMIT = 8000000;
+int sols[LIMIT + 1];
 
+int main() {
+    for (int y = 2; y <= LIMIT; y++) {
+        for (int k = ...; k <= 3*y - 1; ...) {
+            if (y*k > LIMIT) break;
+            ...
+        }
+    }
+    int T; cin >> T;
+    while (T--) {
+        int N; cin >> N;
+        cout << sols[N] << endl;
+    }
+    return 0;
+}
 
 {% endhighlight %}
 
-
-
-
-{% highlight c++ %}
-
-
-
-{% endhighlight %}
-
+Die letzte Aufgabe auf HackerRank, die mit einem derart kurzen Code lösbar war, ist lange her. Happs und weg!
 
 [problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler135/problem
 [original]: https://projecteuler.net/problem=135
