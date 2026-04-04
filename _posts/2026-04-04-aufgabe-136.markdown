@@ -7,7 +7,7 @@ categories: project-euler
 
 Zur Erinnerung: Wir hatten in der letzten Aufgabe herausgefunden, dass man für jedes Paar \\( (y, k) \\) von positiven ganzen Zahlen, das die Bedingungen \\( y + k \equiv 0 \pmod{4} \\) und \\( k < 3y \\) erfüllt, eine Lösung der Gleichung \\( x^2 - y^2 -z^2 = n \\) für \\( n = yk \\) erhält.
 
-Will man also ein Singleton-\\( n \\) finden, so muss man dafür "sorgen", dass es für dieses \\( n \\) nurmehr ein einziges solches __zulässiges__ Paar gibt. Insbesondere kann man ein \\( n \\) natürlich als Kandidat ausschließen, wenn man entweder beweisen kann, dass es __kein__ zulässiges Paar geben kann oder bereits mindestens __zwei__ zulässige Paare existieren. 
+Will man also ein \\( n \\) finden, für das es nur eine Lösung gibt (ein sogenanntes "singleton"), so muss man dafür sorgen, dass es für dieses \\( n \\) nurmehr ein einziges __zulässiges__ Paar \\( (y, k) \\) gibt. Insbesondere kann man ein \\( n \\) natürlich als Kandidat ausschließen, wenn man entweder beweisen kann, dass es __kein__ zulässiges Paar geben kann oder bereits mindestens __zwei__ zulässige Paare existieren. 
 
 Zur Vereinfachung der Schreibweise bei Restklassenbetrachtungen modulo 4, schreibe ich die Elemente des Ringes mal als 
 
@@ -21,24 +21,180 @@ $$
 y \equiv 2 \pmod{4} \quad \rightarrow \quad \overline{y} = \overline{2}
 $$
 
+Viel besser! Dann betrachten wir mal die unterschiedlichen Möglichkeiten für \\( \overline{n} \\). Wir hatten ja bereits im Blog-Post zur letzten Aufgabe gesehen, dass es für \\( \overline{n} \in \lbrace \overline{1}, \overline{2}  \rbrace \\) keine Lösungen der Gleichung gibt, also sind hier auch keine Singletons zu finden. Schauen wir uns die beiden restlichen Möglichkeiten getrennt an:
 
+1. Sei \\( \overline{n} = \overline{3} \\). Dann gibt es auf jeden Fall schonmal die Lösung mit \\( (y, k) = (n, 1) \\), denn \\( \overline{y} + \overline{k} = \overline{n} + \overline{1} = \overline{0} \\) und \\( k < 3y \\) passt sowieso. Es darf also keine weitere Lösung geben, wenn wir wollen, dass \\( n \\) ein Singleton ist. Gäbe es aber eine "echte" Zerlegung in Faktoren
+\\[ n = rs, \quad r, s > 1, \quad s \leq r, \\]
+dann wäre \\( (r, s) \\) ein weiteres zulässiges Paar. Dies kommt daher, dass wegen der Multiplikation im Restklassenring entweder \\( (\overline{r}, \overline{s}) = (\overline{1}, \overline{3}) \\) oder \\( (\overline{r}, \overline{s}) = (\overline{3}, \overline{1}) \\) gelten muss, aber diese erfüllen beide \\( \overline{r} + \overline{s} = \overline{0} \\). Damit gäbe es mindestens zwei Lösungen für \\( n \\). Damit folgt, dass es keine solche Zerlegung von \\( n \\) geben darf, \\( n \\) also eine Primzahl \\( p \equiv 3 \pmod{4} \\) sein muss und das Paar \\( (p, 1) \\) die einzige Lösung darstellt.
+2. Sei \\( \overline{n} = \overline{0} \\). Schreiben wir \\( n = yk \\), so muss nach der Multiplikation im Restklassenring entweder \\( (\overline{y}, \overline{k}) = (\overline{2}, \overline{2}) \\) oder \\( (\overline{y}, \overline{k}) = (\overline{0}, \overline{0}) \\) gelten (alle anderen Möglichkeiten würden zu keinen zulässigen Lösungen führen).
+    1. Sei \\( (\overline{y}, \overline{k}) = (\overline{2}, \overline{2}) \\). Dann muss \\( n = 4n^{\prime} \\) mit \\( n^{\prime} \\) ungerade gelten und es gibt bereits ein zulässiges Lösungspaar, nämlich \\( (2n^{\prime}, 2) \\) (man kann die beiden Bedingungen leicht nachprüfen, beachte, dass \\( n^{\prime} \\) ungerade ist). Zu bemerken ist vielleicht, dass jetzt das Paar \\( (n, 1) \\) __kein__ zulässiges Paar mehr ist, da \\( \overline{n} + \overline{1} = \overline{1} \\). Aber weiter mit unserem ungeraden \\( n^{\prime} \\). Könnte man dieses nun nämlich "echt" zerlegen in zwei Faktoren, also \\[ n^{\prime} = rs \quad \mathrm{mit} \; r, s \geq 3 \; \mathrm{ungerade}, \quad s \leq r \\] schreiben, dann gäbe es mindestens noch eine Lösung für \\( n \\), nämlich \\( (2r, 2s) \\) (das ist leicht zu überprüfen). Das bedeutet, dass \\( n^{\prime} \\) entweder eine ungerade Primzahl oder \\( = 1 \\) sein muss.
+    Insgesamt gilt in diesem Fall also, dass \\( n = 4p \\) mit \\( p = 1 \\) oder \\( p \\) prim und ungerade und das Paar \\( (2p, 2)\\) die einzige Lösung darstellt. \\
+    Beachte in diesem Zusammenhang, dass das "umgedrehte" Paar keine zulässige Lösung ist, da für \\( p \geq 3 \\) das Paar \\( (2, 2p) \\) die Bedingung \\( k < 3y \\) nicht erfüllt und dass alle anderen Faktorisierungen von \\( n \\), die möglich sind, nur zu Paaren führen, die die Modulo-Bedingung nicht erfüllen, da die Faktoren unterschiedliche "Parität" haben.
+    2. Sei \\( (\overline{y}, \overline{k}) = (\overline{0}, \overline{0}) \\). Dann muss \\( n = 16n^{\prime} \\) gelten (jetzt muss \\( n^{\prime} \\) nicht unbedingt ungerade sein) und es gibt eine zulässige Lösung, nämlich \\( (4n^{\prime}, 4) \\). Könnte man \\( n^{\prime} \\) "echt" zerlegen in \\[ n^{\prime} = rs \quad \mathrm{mit} \; r, s \geq 2, \quad s \leq r, \\] dann wäre auch \\( (4r, 4s) \\) ein zulässiges Lösungspaar für \\( n \\). Es muss also \\( n^{\prime} = 1 \\) oder eine Primzahl \\( p \\) sein. Hier muss man ein bißchen tiefer bohren, denn z.B. geht \\( p = 2 \\) nicht. In diesem Fall wäre \\( n = 16\cdot 2 = 32 \\) und hier gibt es die Lösung \\( (4, 8) \\) und auch die umgekehrte \\( (8, 4) \\) erfüllt die Bedingungen. Aber für alle anderen Primzahlen \\( p \geq 3 \\) funktioniert es wieder, also können wir diesem Fall mit der Aussage abschließen, dass \\( n = 16p \\) mit \\( p = 1 \\) oder \\( p \\) prim und ungerade sein muss und das Paar \\( (4p, 4) \\) die einzige Lösung darstellt.
+
+Diese Aussagen kann man auch einfach heuristisch überprüfen, indem man mit Hilfe der letzten Aufgabe den sols[]-Array zum Beispiel für alle \\( n < 100 \\) ausgeben lässt und sich die Singletons ansieht (das ist auch die Methode, die mich überhaupt auf diese Gesetzmäßigkeiten gebracht hat, es ist immer besser, man weiß, worauf man beim Beweisen hinaus will und dafür schaut man sich die auftretenden Muster und Strukturen am besten direkt an!). Alle ungeraden Singletons sind Primzahlen \\( \equiv 3 \pmod{4} \\) und alle geraden Singletons sind Vielfache von 4 oder 16, die nach dem Teilen ebenfalls Primzahlen ergeben, nun aber auch solche, die \\(  \equiv 1 \pmod{4} \\) sind. Stellt man nun die uniquen Lösungspaare für diese Fälle auf, so erkennt man, dass diese immer genau die oben gegebenen drei Formen annehmen, also hinten entweder eine 1, eine 2 oder eine 4 tragen. 
+
+Nun aber Schluß mit Mathematik, wir müssen schließlich auch noch ein Programm schreiben. Sehen wir uns doch mal die [Aufgabe][problem] an. Wie so oft bei HackerRank gibt es zwei Constraint-Bereiche, einen mit vielen Tests und einen mit großen Zahlen. Da ist es wieder klug, die Queries erstmal einzulesen (also sozusagen ein wenig offline zu arbeiten) und je nachdem, in welchem Bereich der Test liegt, die Lösung anzupassen. Der erste Bereich ist eher unanspruchsvoll, den hätten wir auch ohne unsere ganzen Primzahlüberlegungen geschafft. Wir reanimieren einfach unseren sols[]-Array aus der letzten Aufgabe, diesmal eben bis zu einem Limit von nur 6 Millionen. Um schnelles Abfragen der Anzahlen von Singletons in bestimmten Ranges zu erhalten, empfiehlt sich ein Präfixsummen-Array, den man gleich anschließend füllt. Hier der Code dafür, das bringt schonmal entspannte 50% der Punkte ein: 
 
 {% highlight c++ %}
 
 
+typedef unsigned long long ull;
+typedef vector<pair<ull, ull>> vpll;
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+// small LR
+const int LIMIT_low = 6'000'000;
+int sols[LIMIT_low + 1];
+int pre[LIMIT_low + 1];
+
+//---------------------------------- Helper functions (low LR)-------------------------------------------
+
+// for small L and R just use the sols-array with LIMIT_low and a prefix-sum-array
+void fillSols() {
+    for (int y = 2; y <= LIMIT_low; y++) {
+        for (int k = ...; k <= 3*y - 1; ...) { // omitted in problem 135, no sneaking!
+            if (y*k > LIMIT_low) break;
+            ...
+        }
+    }
+}
+
+void fillPre() {
+    for (int i = 1; i <= LIMIT_low; i++) {
+        pre[i] = pre[i - 1] + (sols[i] == 1);
+    }
+}
+
+int solve_lowLR(int L, int R) {
+    return pre[R] - pre[L - 1];
+}
+
+//---------------------------------- Main function ----------------------------------------------
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    // read in all tests and check if there are ranges outside LIMIT_low
+    bool big_LR = false;
+    int T;
+    cin >> T;
+    vpll queries(T);
+    for (int i = 0; i < T; i++) {
+        ull L, R;
+        cin >> L >> R;
+        if (R > (ull)LIMIT_low) big_LR = true;
+        queries[i] = {L, R};
+    }
+
+    if (!big_LR) { // gets 50% of the points (although it only solves 2 additional tests)
+        fillSols();
+        fillPre();
+        for (auto [L, R] : queries)
+            cout << solve_lowLR((int)L, (int)R) << endl;
+    } else { // solves the rest up to R = 10^12
+        primes = sieve(PRIME_LIMIT);
+        for (auto [L, R] : queries) {
+            cout << solve_bigLR(L, R) << endl;
+        }
+    }
+
+    return 0;
+}
 
 {% endhighlight %}
 
+Nun zum interessanten Teil. Man sieht im Listing schon, dass ich in main() für die hohen Ranges (also L und R bis zu 1 Billion) erstmal einen Primzahlsieb anschmeiße. Das ist der schnelle segmentierte Sieb, den ich schon in Aufgabe 134 gelistet habe, dort einfach nachschauen. Um nun die Primzahlen in den Bereichen \\( [L, R] \\) zu sieben, muss man einen sogenannten range_sieve schreiben. Dieser führt das Verfahren von Eratosthenes eben nur in einem bestimmten Bereich aus. Da wir maximal bis 1 Billion hoch müssen, brauchen wir zum Sieben nur die Primzahlen bis 1 Million, das ist also unser PRIME_LIMIT. 
 
+Diesen range_sieve brauchen wir nun zum Zählen von Primzahlen in drei verschiedenen Bereichen (die unseren drei Fällen für Singletons von oben entsprechen). 
+1. Der Bereich \\( [L, R] \\). Hier müssen wir alle Primzahlen \\( \equiv 3 \pmod{4} \\) zählen.
+2. Der Bereich \\( [ \mathrm{ceil}(\frac{L}{4}), \frac{R}{4} ] \\). Hier müssen wir alle ungeraden Primzahlen zählen und dürfen die 1 nicht vergessen, falls sie hier dabei ist.
+3. Der Bereich \\( [ \mathrm{ceil}(\frac{L}{16}), \frac{R}{16} ] \\). Zählen genau wie im Fall 2.
 
+Ich habe ein wenig gebraucht, bis mein range_sieve so funktionierte, wie ich das haben wollte. Gottseidank stand die [ursprüngliche Projekt-Euler-Aufgabe][original] zum Troubleshooting zur Verfügung. Zum Beispiel habe ich anfangs immer zu wenig Singletons gezählt, bis ich merkte, dass ich zum Teil die Primzahlen _selbst_ im range_sieve abgestrichen hatte. Außerdem kann man beim Durchgehen durch die sieves, wenn man zwischen sieve index und entsprechender Zahl hin- und hertransformiert, manchmal durcheinanderkommen. Ich liste mal den Code mit einigen Auslassungen (bei den Zählungen), es sollte kein Problem sein, die Lücken passend zu füllen:
 
 {% highlight c++ %}
 
+//---------------------------------- Fast primesieve ----------------------------------------------
 
+// credit_to: min_25
+// takes 0.5s for n = 1e9
+vector<int> sieve(const int N, const int Q = 17, const int L = 1 << 15) { ... } // see problem 134
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+// big LR
+const int PRIME_LIMIT = 1'000'000; // sqrt(10^12)
+vector<int> primes;
+vector<bool> range_sieve;
+
+//---------------------------------- Helper functions (big LR)-------------------------------------------
+
+// ceiling function of a fraction n/m of positive integers
+ull ceil(ull n, ull m) {
+    return (n + m - 1) / m;
+}
+
+// for big L and R use three sieves for the relevant ranges
+void fill_range_sieve(ull L, ull R) {
+    range_sieve.clear();
+    range_sieve.resize(R - L + 1, true);
+    // index 0 corresponds to L, index i to L + i, index R - L to R
+    for (auto p_int : primes) { // primes vector has only ints!
+        ull p = (ull)p_int;
+        if (p*p > R) break; // early termination
+        ull start = ceil(L, p) * p; // start at a multiple of p in the sieve range
+        if (start == p) start += p; // it could be the prime itself now! Don't check it off then!
+        start = max(start, p*p); // if p^2 is in the sieve range, you may start there
+        int i0 = (int)(start - L); // calculate index in the range sieve
+        for (int i = i0; i < (int)range_sieve.size(); i += p_int) // go back to ints now
+            range_sieve[i] = false;
+    }
+}
+
+int count_primes_3mod4_in_range(ull L, ull R) {
+    int sz = range_sieve.size();
+    assert((ull)sz == R - L + 1);
+    int cnt = 0;
+    int i0 =  ...  // start at an index that corresponds to a number == 3 mod 4
+    for ( ... ) if (range_sieve[i]) cnt++; // only go through these entries
+    return cnt;
+}
+
+int count_odd_primes_in_range(ull L, ull R) {
+    int sz = range_sieve.size();
+    assert((ull)sz == R - L + 1);
+    int cnt = 0;
+    int i0 = ...  // don't even look at the even entries
+    for ( ... ) if (range_sieve[i]) cnt++;
+    return cnt;
+}
+
+int solve_bigLR(ull L, ull R) {
+    int cnt = 0;
+    // first sieve is just this range
+    fill_range_sieve(L, R);
+    cnt += count_primes_3mod4_in_range(L, R);
+    // second sieve range
+    ull L1 = ceil(L, 4);
+    ull R1 = R/4;
+    fill_range_sieve(L1, R1);
+    cnt += count_odd_primes_in_range(L1, R1);
+    // third sieve range
+    ull L2 = ceil(L, 16);
+    ull R2 = R/16;
+    fill_range_sieve(L2, R2);
+    cnt += count_odd_primes_in_range(L2, R2);
+
+    return cnt;
+}
 
 {% endhighlight %}
 
+Immerhin noch Platz 59 bei dieser Aufgabe. War aber auch gar nicht so einfach. Jetzt bin ich das erste Mal unter die Top 100 in der Gesamtwertung gekommen und habe mein großes "Idol" Stefan Brumme (dessen Webseite mich vor etwa 5 Jahren überhaupt erst auf die Idee gebracht hat, so etwas auch mal zu machen) überholt. Schade, dass er aufgehört hat, diese Aufgaben weiterzulösen. Ich habe früher immer wieder gerne seine schöne Toolbox durchforstet, wenn ich bei irgendwelchen modulo-Inversen etc. hängenblieb. Vielleicht gestalte ich auch mal so eine Toolbox (aber eigentlich ist das Ganze hier ja eine einzige Toolbox, man muss eben nur wissen, wo man suchen muss, hehe!).
 
-[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/eulerXXX/problem
-[original]: https://projecteuler.net/problem=XXX
-[forum]: https://projecteuler.net/thread=XXX
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler136/problem
+[original]: https://projecteuler.net/problem=136
+[forum]: https://projecteuler.net/thread=136
