@@ -1,0 +1,44 @@
+---
+layout: post
+title:  "Project Euler+ #136: Singleton difference"
+date:   2026-04-04
+categories: project-euler
+---
+
+Zur Erinnerung: Wir hatten in der letzten Aufgabe herausgefunden, dass man für jedes Paar \\( (y, k) \\) von positiven ganzen Zahlen, das die Bedingungen \\( y + k \equiv 0 \pmod{4} \\) und \\( k < 3y \\) erfüllt, eine Lösung der Gleichung \\( x^2 - y^2 -z^2 = n \\) für \\( n = yk \\) erhält.
+
+Will man also ein Singleton-\\( n \\) finden, so muss man dafür "sorgen", dass es für dieses \\( n \\) nurmehr ein einziges solches __zulässiges__ Paar gibt. Insbesondere kann man ein \\( n \\) natürlich als Kandidat ausschließen, wenn man entweder beweisen kann, dass es __kein__ zulässiges Paar geben kann oder bereits mindestens __zwei__ zulässige Paare existieren. 
+
+Zur Vereinfachung der Schreibweise bei Restklassenbetrachtungen modulo 4, schreibe ich die Elemente des Ringes mal als 
+
+$$
+\mathbb{Z}/(4) = \lbrace \overline{0}, \overline{1}, \overline{2}, \overline{3} \rbrace 
+$$
+
+und versehe eine Variable, wenn ich sie modulo 4 betrachte, einfach mit einem Überstrich, also gehen die (meiner Meinung nach immer recht umständlichen) Äquivalenzrelationen in Gleichungen über, z.B.
+
+$$
+y \equiv 2 \pmod{4} \quad \rightarrow \quad \overline{y} = \overline{2}
+$$
+
+
+
+{% highlight c++ %}
+
+
+
+{% endhighlight %}
+
+
+
+
+{% highlight c++ %}
+
+
+
+{% endhighlight %}
+
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/eulerXXX/problem
+[original]: https://projecteuler.net/problem=XXX
+[forum]: https://projecteuler.net/thread=XXX

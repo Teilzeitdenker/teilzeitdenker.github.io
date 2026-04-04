@@ -31,7 +31,7 @@ Letztendlich muss man sich Folgendes klar machen: Jedes Paar \\( (y, k) \\) von 
 
 Ich empfehle, zuerst über die \\( y \\) zu iterieren (man kann bei 2 anfangen, denn \\( y \\) ist ja der mittlere Wert der Progression, und bei 8 Millionen aufhören, denn \\( k \\) könnte ja auch 1 sein). In der anschließenden Iteration über \\( k \\) muss man theoretisch bei 1 anfangen und spätestens bei \\( 3y - 1 \\) aufhören. Wenn aber schon vorher \\( yk \\) größer als 8 Millionen wird, kann man die zweite Schleife vorzeitig terminieren. 
 
-Dann muss man nur noch überprüfen, ob das Paar zulässig ist (oder man sorgt klug dafür, dass sich die gewählten \\( k \\) in der zweiten Schleife so an das \\( y \\) "anpassen", dass die Summe \\( y + k \\) immer durch 4 teilbar ist) und inkrementiert im positiven Fall den sols-array and der Stelle \\( n \\). Ansonsten ist das Programm nur ein paar Zeilen lang, die Schleifen überlasse ich mal eurer Phantasie:
+Dann muss man nur noch überprüfen, ob das Paar zulässig ist (oder man sorgt klug dafür, dass sich die gewählten \\( k \\) in der zweiten Schleife so an das \\( y \\) "anpassen", dass die Summe \\( y + k \\) immer durch 4 teilbar ist) und inkrementiert im positiven Fall den besagten Array an der Stelle \\( n \\). Ansonsten ist das Programm nur ein paar Zeilen lang, die Schleifen überlasse ich mal eurer Phantasie:
 
 {% highlight c++ %}
 
