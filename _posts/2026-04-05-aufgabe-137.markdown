@@ -1,0 +1,300 @@
+---
+layout: post
+title:  "Project Euler+ #137: Fibonacci golden nuggets"
+date:   2026-04-05
+categories: project-euler
+---
+
+So eine schöne Aufgabe, auf die hab' ich mich die ganze Zeit schon gefreut. Alleine der Titel: Da juckt es einen doch in den Fingern, da blitzen die Augen, ein wahrer Goldrausch greift um sich, __alle__ Nuggets, __ALLE__ möchte ich finden und nur für mich alleine haben. Also ran an die Schürfschüsseln, rein in die stürzenden Fluten ("Rekursion" kommt doch schließlich von _currere_), um aus dem schlackigen Zahlensand lauter schimmernde Funkelsteine herauszuwaschen!
+
+Betrachtet wird die erzeugende Funktion der Fibonacci-Zahlen, das ist die Potenzreihe mit den \\( F_n \\) als Koeffizienten, also 
+
+$$
+A_F(x) = \sum_{i = 0}^{\infty} F_i x^i,
+$$
+
+wobei ich auch im Folgenden immer \\( F_0 = 0 \\) setzen werde. Diese Reihe nimmt für bestimmte \\( x \\) ganzzahlige Werte an (in einer Tabelle waren einige Beispiele gegeben) und die Aufgabe ist nun: Finde den n-ten sogenannten "golden nugget" \\( g_n \\) unter den \\( A_F(x) \in \mathbb{Z} \\), für den \\( x \in \mathbb{Q} \\) ist. 
+
+Das erste Beispiel ist \\( x = \frac{1}{2} \\), für das \\( A_F(x) = 2 \\) als Ergebnis (und damit erstes Nugget \\( g_1 \\)) angegeben wird. Da stellt sich doch schonmal die Frage: Wie kann man das überhaupt ausrechnen bei einer unendlichen Reihe von Termen? Wir gehen im Folgenden mal so vor: 
+1. Finde die geschlossene Form der Potenzreihe
+2. Stelle eine Bedingung für ganzzahlige Reihenwerte auf, wenn \\( x \in \mathbb{Q} \\) ist
+3. Finde einen geschlossenen Ausdruck für den goldenen Nugget \\( g_n \\)
+4. Bestimme eine lineare Rekursionsformel für die \\( g_n \\)
+
+Den letzten Punkt braucht man eigentlich nicht wirklich (da hatte ich einfach Lust drauf), denn bei 3. kommt ein Ausdruck mit Fibonacci-Zahlen heraus, so dass es reichen würde, diese einfach sehr schnell berechnen zu können (wofür man ja auch Potenzen einer Rekursionsmatrix verwenden kann). 
+
+Warum schnell berechnen? Naja, in der [ursprünglichen Aufgabe][original] war nur der fünfzehnte golden nugget \\( g_{15} \\) gesucht, die [HackerRank-Version][problem] wirkte in dieser Hinsicht aber fast kriminell (zumindest auf den ersten Blick). \\( n \\) darf hier bis \\( 10^{18} \\) groß werden, allerdings mit der Einschränkung, dass man \\( g_n \\) nur modulo dem altbewährten \\( 10^9 + 7 \\) angeben musste.
+
+Zu 1.: Setzen wir die Rekursionsvorschrift der Fibonacci-Zahlen mal ein und rechnen
+
+$$
+\begin{align*}
+A_F(x) &= x + \sum_{i = 2}^{\infty} F_i x^i  = x + \sum_{i = 2}^{\infty} (F_{i - 1} + F_{i - 2}) x^i \\
+       &= x + x\cdot \sum_{i = 2}^{\infty} F_{i - 1}x^{i - 1}  + x^2\cdot \sum_{i = 2}^{\infty} F_{i - 2}x^{i - 2} \\
+       &= x + xA_F(x) + x^2A_F(x)
+\end{align*}
+$$
+
+Stellt man dies noch um und klammert \\( A_F(x) \\) aus, so erhält man die geschlossene Form
+
+$$
+A_F(x) = \frac{x}{1 - x - x^2}
+$$
+
+der erzeugenden Funktion der Fibonacci-Zahlen. Man kann sich durch Einsetzen der Beispiele für \\( x \\) aus der Tabelle in der Aufgabenstellung überzeugen, dass alles passt. 
+
+Zu 2.: Nehmen wir also an, dass \\( x = \frac{a}{b} \in \mathbb{Q} \\) mit \\( a, b \in \mathbb{N} \\) teilerfremd. Die Bedingung ist, dass beim Einsetzen in \\( A_F(x) \\) eine ganze Zahl herauskommt, nennen wir sie mal \\( g \in \mathbb{N} \\), unser **g**olden nugget: 
+
+$$
+A_F(\frac{a}{b}) = \frac{\frac{a}{b}}{1 - \frac{a}{b} - \left( \frac{a}{b} \right)^2} = g
+$$
+
+Erweitert man den Bruch mit \\( b^2 \\), so erhält man nach Umformen, dass
+
+$$
+g = \frac{-ab}{a^2 + ab - b^2} \in \mathbb{N}
+$$
+
+sein soll. Da wir \\( a, b \\) teilerfremd gewählt haben, sind auch die Zahlen \\( ab \\) und \\( a^2 + ab - b^2 \\) teilerfremd (man mache einen Widerspruchsbeweis, indem man einen gemeinsamen Teiler \\( d \\) annimmt und behandele die beiden Fälle \\( d \mid a \\) und \\( d \mid b \\) getrennt). Dann muss aber für den Nenner
+
+$$ 
+a^2 + ab - b^2 = - 1 \tag{*}
+$$
+
+gelten und der Nugget berechnet sich in diesem Fall zu \\( g = ab \\).
+
+Zu 3.: Hier lohnt es sich nun, wenn man mal eine Algebra I-Vorlesung gehört hat und die quadratische Form auf der linken Seite von \\( (\*) \\) als Norm \\( N(z) \\) auf einem quadratischen Zahlkörper erkennt. In unserem Fall finden wir uns natürlich im ["goldenen Körper"][golden-field] \\( K = \mathbb{Q}(\sqrt{5}) \\) wieder, wobei wir für alle Elemente die Basis \\( (1, \varphi ) \\) mit dem "goldenen Schnitt" \\( \varphi = \frac{1 + \sqrt{5}}{2} \\) verwenden wollen. Für ein beliebiges Element \\( z = a + b\varphi \in K \\) gilt nämlich: 
+
+$$
+N(z) = z\sigma(z) = (a + b\varphi)(a + b\overline{\varphi}) = a^2 + ab(\varphi + \overline{\varphi}) 
++ b^2 (\varphi \overline{\varphi}) = a^2 + ab \cdot\mathrm{tr}(\varphi) + b^2N(\varphi) = a^2 + ab - b^2
+$$
+
+Dabei beizeichnet \\( \sigma(z) \\) die Konjugation (alle Vorzeichen von \\( \sqrt{5} \\) drehen sich um) und \\( \mathrm{tr}(z) \\) ist die Spur in \\( K \\). Man sieht schon: Die Norm von \\( \varphi \\) ist gleich -1, das heißt \\( a = 0 \\) und \\( b = 1 \\) führt schonmal zu einer (wenn auch trivialen) Lösung von \\( (\*) \\). Das entsprechende Nugget nennen wir \\( g_0 = 0 \\). 
+
+Da wir wollen, dass \\( a, b \in \mathbb{N} \\) sind, rechnen wir eigentlich im Ring \\( \mathcal{O}_K = \mathbb{Z}[\varphi] \subset \mathbb{Q}(\sqrt{5}) \\). Für diese reell-quadratischen Ganzheitsringe ist bekannt, dass es eine sogenannte Grundeinheit \\( \varepsilon \\) gibt, aus der man alle anderen Elemente der Einheitengruppe als \\( \pm\varepsilon^k \\) mit \\( k \in \mathbb{Z} \\)  gewinnen kann. 
+
+Für unser \\( \mathcal{O}_K \\) ist die Grundeinheit genau der goldene Schnitt \\( \varphi \\) und dieser hat ja netterweise die Norm \\( N(\varphi) = - 1 \\) (als kleine Bemerkung möchte ich hier anführen, dass es nicht immer so einfach ist, die Grundeinheit eines solchen Zahlkörpers \\( \mathbb{Q}(\sqrt{d}) \\) zu finden. Zum Beispiel ist die Grundeinheit für \\( d = 13 \\) \\( \varepsilon = \frac{1}{2}(3 + \sqrt{13}) \\) und für \\( d = 94 \\) irrerweise \\( \varepsilon = 2143295 + 221064\sqrt{94} \\)). 
+
+Wollen wir also alle Lösungen von \\( (\*) \\) aufschreiben, so müssen wir genau die ungeraden Potenzen von \\( \varphi \\) verwenden (die geraden Potenzen hätten ja die Norm +1). Alle unsere gesuchten Lösungen sind also gegeben durch 
+
+$$
+a_n + b_n \varphi = \varphi^{2n + 1}.
+$$
+
+Nun müssen wir nur noch die Potenzen von \\( \varphi \\) in unserer Ganzheitsbasis \\( (1, \varphi ) \\) darstellen können. Dies kann man tun, indem man wiederholt die Gleichung \\( \varphi^2 = \varphi + 1 \\) anwendet und schlussendlich erkennt, dass sich
+
+$$
+\varphi^n = F_{n - 1} + F_n\varphi
+$$
+
+mit den Fibonacci-Zahlen schreiben lässt und damit 
+
+$$
+a_n + b_n \varphi = F_{2n} + F_{2n + 1}\varphi, 
+$$
+
+also letztendlich \\( a_n = F_{2n} \\), \\( b_n = F_{2n + 1} \\). Also haben wir eine geschlossene Formel für unsere golden nuggets gefunden: 
+
+$$
+g_n = a_nb_n = F_{2n}F_{2n +1}.
+$$
+
+Zu 4.: Obwohl wir damit eigentlich fertig wären (Fibonacci-Zahlen kann man auch sehr schnell berechnen), sollte es doch möglich sein, eine Rekursionsformel direkt für diese \\( g_n \\) zu basteln (die "goldene" Rekursionsformel sozusagen). Am besten eine Formel, in der keine Konstanten vorkommen (also eine homogene lineare Rekursionsformel), damit man die entsprechende Rekursionsmatrix zum schnellen Ausrechnen der \\( g_n \\) für sehr große \\( n \\) mit modularer Monster-Power hochpotenzieren kann. 
+
+Leider ist unser \\( g_n \\) als Folge gar nicht so schön wie es zunächst aussieht, denn es ist ja ein __Produkt__ zweier Fibonacci-Folgen. 
+
+Wie war das nochmal gleich? Die Rekursion für die Fibonacci-Folge lässt sich ja am Minimalpolynom für \\( \varphi \\) ablesen. Es gilt: 
+
+$$
+\varphi^2 = \varphi + 1
+$$
+
+Also gilt für die Folge \\( F_n \\), dass 
+
+$$
+F_n = F_{n - 1} + F_{n - 2}
+$$
+
+Schauen wir uns die Folge der geraden Einträge, also \\( a_n = F_{2n} \\) an und wollen eine Rekursion dafür bestimmen, müssen wir also nur das Minimalpolynom von \\( \varphi^2 \\) finden und die Rekursion ablesen. Es gilt mit \\( s = \varphi^2 \\)
+
+$$
+s^2 = \varphi^4 = \varphi^2 \varphi^2 = (\varphi + 1)(\varphi + 1) = s + 2\varphi + 1 = s + 2(\varphi + 1) - 1 = s + 2s - 1 = 3s - 1,
+$$
+
+also erfüllt die Folge \\( a_n = F_{2n} \\) die Rekursion 
+
+$$
+a_n = 3a_{n - 1} - a_{n - 2}
+$$
+
+Genau dieselbe Rekursion befolgt damit natürlich auch die Folge \\( b_n = F_{2n + 1} \\). Unsere golden nuggets \\( g_n = a_nb_n \\) kann man also als Produkt zweier Folgen mit derselben Rekursionsgleichung schreiben, das ist doch schonmal recht vielversprechend. 
+
+Schritt 1: Setzen wir die beiden Rekursionen doch mal ein und schauen, was passiert:
+
+$$
+\begin{align*}
+g_n &= a_n b_n = (3a_{n-1} - a_{n-2})(3b_{n-1} - b_{n-2}) \\
+    &= 9a_{n-1}b_{n-1} - 3a_{n-1}b_{n-2} - 3a_{n-2}b_{n-1} + a_{n-2}b_{n-2} \\
+    &= 9g_{n-1} - 3(a_{n-1}b_{n-2} + a_{n-2}b_{n-1}) + g_{n-2}
+\end{align*}
+$$
+
+Es taucht ein "Kreuzterm" \\( u_n := a_n b_{n-1} + a_{n-1}b_n \\) auf, den wir nicht direkt loswerden. Also merken wir uns erstmal:
+
+$$
+g_n = 9g_{n-1} - 3u_{n-1} + g_{n-2} \tag{I}
+$$
+
+Schritt 2: Bestimmen wir eine Rekursion für den Kreuzterm \\( u_n \\):
+
+$$
+\begin{align*}
+u_n &= a_n b_{n-1} + a_{n-1}b_n \\
+    &= (3a_{n-1} - a_{n-2})b_{n-1} + a_{n-1}(3b_{n-1} - b_{n-2}) \\
+    &= 3a_{n-1}b_{n-1} - a_{n-2}b_{n-1} + 3a_{n-1}b_{n-1} - a_{n-1}b_{n-2} \\
+    &= 6g_{n-1} - (a_{n-1}b_{n-2} + a_{n-2}b_{n-1}) \\
+    &= 6g_{n-1} - u_{n-1}
+\end{align*}
+$$
+
+Also:
+
+$$
+u_n = 6g_{n-1} - u_{n-1} \tag{II}
+$$
+
+Schritt 3: Nun eliminieren wir \\( u \\). Aus \\( \mathrm{(I)} \\) können wir \\( u_{n-1} \\) ausdrücken:
+
+$$
+u_{n-1} = \frac{9g_{n-1} + g_{n-2} - g_n}{3}
+$$
+
+und analog mit \\( n \to n-1 \\):
+
+$$
+u_{n-2} = \frac{9g_{n-2} + g_{n-3} - g_{n-1}}{3}
+$$
+
+Einsetzen in \\( \mathrm{(II)} \\) (für \\( n - 1 \\), also \\( u_{n-1} = 6g_{n-2} - u_{n-2} \\)):
+
+$$
+\frac{9g_{n-1} + g_{n-2} - g_n}{3} = 6g_{n-2} - \frac{9g_{n-2} + g_{n-3} - g_{n-1}}{3}
+$$
+
+Beide Seiten mal 3:
+
+$$
+9g_{n-1} + g_{n-2} - g_n = 18g_{n-2} - 9g_{n-2} - g_{n-3} + g_{n-1}
+$$
+
+Umstellen liefert die gesuchte homogene Rekursion:
+
+$$
+\boxed{g_n = 8g_{n-1} - 8g_{n-2} + g_{n-3}}
+$$
+
+mit \\( g_0 = 0 \\), \\( g_1 = 2 \\) und \\( g_2 = 15 \\). 
+
+All dies führt uns zu folgendem Programm mit einer \\( 3 \times 3 \\)-Rekursionsmatrix, deren Potenzen wir sicherheitshalber schonmal für alle \\( 2^i \\) mit  \\( 0 \leq i \leq 59 \\) vorberechnen (und in pw[] speichern), um dann in fast_pow() nur noch zu schauen, an welchen Bitstellen unser gegebenes \\( n \\) Einsen hat. In calc_res() berechne ich das Endergebnis gleich innerhalb der Matrix-Klasse, indem ich die letzte Zeile mit dem Vektor \\( (g_2, g_1, g_0)^T \\) multipliziere (das habe ich mir irgendwie so angewöhnt). Ansonsten überlasse ich nur noch die Definition der Rekursionsmatrix eurer Phantasie. Falls das unbekannt sein sollte, einfach mal bei den Fibonacci-Zahlen überlegen, wie die Matrix dort ausschaut und warum. Die Aufgaben 114, 116 und 117 waren bei HackerRank auch nur mit solcherlei Tricks zu bewältigen:
+
+{% highlight c++ %}
+
+using ll = long long;
+
+constexpr ll MOD = 1'000'000'007;
+constexpr int SZ = 3;
+constexpr int MAX_BIT = 60; // 2^60 > 10^18
+
+struct Matrix {
+    // use arrays to avoid any heap allocations
+    array<array<ll, SZ>, SZ> mat{};
+
+    // set single entry (will turn -8 into MOD - 8)
+    void set_entry(int i, int j, ll val) {
+        mat[i][j] = (val % MOD + MOD) % MOD;
+    }
+
+    // calculate g_n by taking last row times (15, 2, 0)
+    ll calc_res() const {
+        return (mat[2][0]*15 + mat[2][1]*2) % MOD;
+    }
+
+    // matrix multiplication
+    Matrix operator*(const Matrix& other) const {
+        Matrix res;
+        for (int i = 0; i < SZ; i++) {
+            for (int k = 0; k < SZ; k++) {
+                if (mat[i][k] == 0) continue;
+                for (int j = 0; j < SZ; j++) {
+                    res.mat[i][j] = (res.mat[i][j] + mat[i][k] * other.mat[k][j]) % MOD;
+                }
+            }
+        }
+        return res;
+    }
+
+    static Matrix identity() {
+        Matrix res;
+        for (int i = 0; i < SZ; i++)
+            res.mat[i][i] = 1;
+        return res;
+    }
+};
+
+// precomputed matrix powers: pw[i] = A^(2^i)
+Matrix pw[MAX_BIT];
+
+void precompute(const Matrix& A) {
+    pw[0] = A;
+    for (int i = 1; i < MAX_BIT; i++)
+        pw[i] = pw[i-1] * pw[i-1];
+}
+
+// multiply only the precomputed matrices for set bits of exp
+Matrix fast_pow(ll exp) {
+    Matrix res = Matrix::identity();
+    for (int i = 0; exp > 0; i++, exp >>= 1) {
+        if (exp & 1)
+            res = res * pw[i];
+    }
+    return res;
+}
+
+Matrix recursion_matrix() {
+    Matrix A;
+    // recurrence values in first row
+    ...
+    // other rows
+    ...
+    return A;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    precompute(recursion_matrix());
+
+    int T;
+    cin >> T;
+    while (T--) {
+        ll n;
+        cin >> n;
+        cout << fast_pow(n).calc_res() << '\n';
+    }
+
+    // check original problem with 15th golden nugget
+    // cout << ... % MOD << '\n';
+    
+    return 0;
+}
+
+{% endhighlight %}
+
+Herrlich, ich weiß noch genau, dass ich, als ich damals (also irgendwann im Sommer 2021) diese Aufgabe im Original gemacht habe, richtig Spaß hatte und mir gewünscht habe, irgendwann wieder in einen solchen Genuß kommen zu dürfen. Und tatsächlich ist das jetzt schon so lange her, dass es fast nochmal so viel Fun war, meine ganze Rechenwut an den vielen intensiven Einzelheiten dieser vielschichtigen Aufgabe auszulassen und viele alte Weisheiten aus meiner Uni-Zeit wiederzubeleben. Um ein Haar hätte ich meine alten Algebra-Sachen wieder aus dem Keller geholt, um nochmal in den herrlichen Erinnerungen an die Übungsblättern und Tutorien-Aufgaben meines genialen Professors H.-J. Schneider (und seiner Assistenten) zu schwelgen, bei dem ich letztlich auch meine Diplomarbeit geschrieben habe. Mei, war des wiada schee! 
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler137/problem
+[original]: https://projecteuler.net/problem=137
+[forum]: https://projecteuler.net/thread=137
+[golden-field]: https://en.wikipedia.org/wiki/Golden_field
