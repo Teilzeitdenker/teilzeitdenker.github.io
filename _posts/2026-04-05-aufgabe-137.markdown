@@ -13,7 +13,7 @@ $$
 A_F(x) = \sum_{i = 0}^{\infty} F_i x^i,
 $$
 
-wobei ich auch im Folgenden immer \\( F_0 = 0 \\) setzen werde. Diese Reihe nimmt für bestimmte \\( x \\) ganzzahlige Werte an (in einer Tabelle waren einige Beispiele gegeben) und die Aufgabe ist nun: Finde den n-ten sogenannten "golden nugget" \\( g_n \\) unter den \\( A_F(x) \in \mathbb{Z} \\), für den \\( x \in \mathbb{Q} \\) ist. 
+wobei ich auch im Folgenden immer \\( F_0 = 0 \\) setzen werde. Diese Reihe nimmt für bestimmte \\( x \\) ganzzahlige Werte an (in einer Tabelle waren einige Beispiele gegeben) und die Aufgabe ist nun: Finde den n-ten sogenannten "golden nugget" \\( g_n \\) unter den \\( A_F(x) \in \mathbb{N} \\), für den \\( x \in \mathbb{Q} \\) ist. 
 
 Das erste Beispiel ist \\( x = \frac{1}{2} \\), für das \\( A_F(x) = 2 \\) als Ergebnis (und damit erstes Nugget \\( g_1 \\)) angegeben wird. Da stellt sich doch schonmal die Frage: Wie kann man das überhaupt ausrechnen bei einer unendlichen Reihe von Termen? Wir gehen im Folgenden mal so vor: 
 1. Finde die geschlossene Form der Potenzreihe
@@ -43,7 +43,7 @@ $$
 
 der erzeugenden Funktion der Fibonacci-Zahlen. Man kann sich durch Einsetzen der Beispiele für \\( x \\) aus der Tabelle in der Aufgabenstellung überzeugen, dass alles passt. 
 
-Zu 2.: Nehmen wir also an, dass \\( x = \frac{a}{b} \in \mathbb{Q} \\) mit \\( a, b \in \mathbb{N} \\) teilerfremd. Die Bedingung ist, dass beim Einsetzen in \\( A_F(x) \\) eine ganze Zahl herauskommt, nennen wir sie mal \\( g \in \mathbb{N} \\), unser **g**olden nugget: 
+Zu 2.: Nehmen wir also an, dass \\( x = \frac{a}{b} \in \mathbb{Q} \\) mit \\( a, b \in \mathbb{N} \\) teilerfremd. Die Bedingung ist, dass beim Einsetzen in \\( A_F(x) \\) eine positive ganze Zahl herauskommt, nennen wir sie mal \\( g \in \mathbb{N} \\), unser **g**olden nugget: 
 
 $$
 A_F(\frac{a}{b}) = \frac{\frac{a}{b}}{1 - \frac{a}{b} - \left( \frac{a}{b} \right)^2} = g
@@ -72,17 +72,17 @@ $$
 
 Dabei beizeichnet \\( \sigma(z) \\) die Konjugation (alle Vorzeichen von \\( \sqrt{5} \\) drehen sich um) und \\( \mathrm{tr}(z) \\) ist die Spur in \\( K \\). Man sieht schon: Die Norm von \\( \varphi \\) ist gleich -1, das heißt \\( a = 0 \\) und \\( b = 1 \\) führt schonmal zu einer (wenn auch trivialen) Lösung von \\( (\*) \\). Das entsprechende Nugget nennen wir \\( g_0 = 0 \\). 
 
-Da wir wollen, dass \\( a, b \in \mathbb{N} \\) sind, rechnen wir eigentlich im Ring \\( \mathcal{O}_K = \mathbb{Z}[\varphi] \subset \mathbb{Q}(\sqrt{5}) \\). Für diese reell-quadratischen Ganzheitsringe ist bekannt, dass es eine sogenannte Grundeinheit \\( \varepsilon \\) gibt, aus der man alle anderen Elemente der Einheitengruppe als \\( \pm\varepsilon^k \\) mit \\( k \in \mathbb{Z} \\)  gewinnen kann. 
+Man muss sich nun folgendes klarmachen: Jedes Lösungspaar \\( (a, b) \\) für \\( (\*) \\) entspricht einem Element \\( a + b\varphi \\) im Ring der ganzen Zahlen \\( \mathcal{O}_K = \mathbb{Z}[\varphi] \subset \mathbb{Q}(\sqrt{5}) \\) mit der Norm \\( -1 \\). Es ist ein Fakt, dass die Elemente der Norm \\( \pm 1 \\) genau die Einheiten \\( \mathcal{O}_K^{\times} \\) sind.  Für alle reell-quadratischen Ganzheitsringe ist außerdem bekannt, dass es eine sogenannte Grundeinheit \\( \varepsilon \\) gibt, aus der man alle anderen Elemente der Einheitengruppe als \\( \pm\varepsilon^k \\) mit \\( k \in \mathbb{Z} \\)  gewinnen kann. 
 
-Für unser \\( \mathcal{O}_K \\) ist die Grundeinheit genau der goldene Schnitt \\( \varphi \\) und dieser hat ja netterweise die Norm \\( N(\varphi) = - 1 \\) (als kleine Bemerkung möchte ich hier anführen, dass es nicht immer so einfach ist, die Grundeinheit eines solchen Zahlkörpers \\( \mathbb{Q}(\sqrt{d}) \\) zu finden. Zum Beispiel ist die Grundeinheit für \\( d = 13 \\) \\( \varepsilon = \frac{1}{2}(3 + \sqrt{13}) \\) und für \\( d = 94 \\) irrerweise \\( \varepsilon = 2143295 + 221064\sqrt{94} \\)). 
+Für unseren Ring ist die Grundeinheit genau der goldene Schnitt \\( \varphi \\) und dieser hat ja netterweise die Norm \\( N(\varphi) = - 1 \\) (als kleine Bemerkung möchte ich hier anführen, dass es nicht immer so einfach ist, die Grundeinheit eines Ganzheitsringes \\( \mathcal{O}_{\mathbb{Q}(\sqrt{d})} \\) zu finden. Zum Beispiel ist die Grundeinheit für \\( d = 13 \\) \\( \varepsilon = \frac{1}{2}(3 + \sqrt{13}) \\) und für \\( d = 94 \\) irrerweise \\( \varepsilon = 2143295 + 221064\sqrt{94} \\)). 
 
-Wollen wir also alle Lösungen von \\( (\*) \\) aufschreiben, so müssen wir genau die ungeraden Potenzen von \\( \varphi \\) verwenden (die geraden Potenzen hätten ja die Norm +1). Alle unsere gesuchten Lösungen sind also gegeben durch 
+Wollen wir also alle Lösungen von \\( (\*) \\) aufschreiben, so müssen wir genau die ungeraden Potenzen von \\( \varphi \\) verwenden (die geraden Potenzen hätten ja die Norm +1). Alle unsere gesuchten Lösungen \\( (a_n, b_n) \\) sind also gegeben durch 
 
 $$
 a_n + b_n \varphi = \varphi^{2n + 1}.
 $$
 
-Nun müssen wir nur noch die Potenzen von \\( \varphi \\) in unserer Ganzheitsbasis \\( (1, \varphi ) \\) darstellen können. Dies kann man tun, indem man wiederholt die Gleichung \\( \varphi^2 = \varphi + 1 \\) anwendet und schlussendlich erkennt, dass sich
+Nun müssen wir nur noch die Potenzen von \\( \varphi \\) in unserer Ganzheitsbasis \\( (1, \varphi ) \\) darstellen, um \\( a_n \\) und \\( b_n \\) ablesen zu können. Dies kann man tun, indem man wiederholt die Gleichung \\( \varphi^2 = \varphi + 1 \\) anwendet und schlussendlich erkennt, dass sich
 
 $$
 \varphi^n = F_{n - 1} + F_n\varphi
@@ -99,6 +99,9 @@ also letztendlich \\( a_n = F_{2n} \\), \\( b_n = F_{2n + 1} \\). Also haben wir
 $$
 g_n = a_nb_n = F_{2n}F_{2n +1}.
 $$
+
+_Bemerkung:_ Wie einem aufmerksamen Leser nicht entgangen sein dürfte, habe ich mich nicht um die Ausdrücke \\( -\varphi^k \\), \\( \varphi^{-k} \\) und \\( -\varphi^{-k} \\) mit \\( k > 0 \\) gekümmert, die ja auch alles Einheiten sind, von denen die Hälfte ebenfalls die Norm \\( -1 \\) haben wird. Das liegt daran, dass diese Ausdrücke entweder keine _neuen_ Lösungen liefern (dies gilt für das Minuszeichen, denn \\( (-a, -b) \\) führt auf dasselbe nugget wie \\( (a. b) \\)) oder zu negativen Nuggets führen, die wir ja nicht betrachten. Nehmen wir als Beispiel mal die Potenzen von \\( \varphi^{-1} = -\overline{\varphi} = - 1 + \varphi \\). Wie man leicht nachrechnet, hat \\( \varphi^{-1} \\) die Norm -1, aber das ist in diesem Fall gar nicht so gut, denn die Vorzeichen von \\( a \\) und \\( b \\) sind ja hier verschieden und so erhält man für \\( g \\) eine negative Zahl. Hier wäre es also richtig, die _geraden_ Potenzen zu betrachten, die die Norm 1 haben. Tut man dies (ich spare mir die Ausführungen), so erhält man genau dieselben golden nuggets 2, 15, etc. wie eben. Ähnliches passiert in den anderen Fällen. Deshalb habe ich mich gleich ganz oben auf positive \\( a, b \in \mathbb{N} \\) beschränkt.
+
 
 Zu 4.: Obwohl wir damit eigentlich fertig wären (Fibonacci-Zahlen kann man auch sehr schnell berechnen), sollte es doch möglich sein, eine Rekursionsformel direkt für diese \\( g_n \\) zu basteln (die "goldene" Rekursionsformel sozusagen). Am besten eine Formel, in der keine Konstanten vorkommen (also eine homogene lineare Rekursionsformel), damit man die entsprechende Rekursionsmatrix zum schnellen Ausrechnen der \\( g_n \\) für sehr große \\( n \\) mit modularer Monster-Power hochpotenzieren kann. 
 
@@ -292,7 +295,7 @@ int main() {
 
 {% endhighlight %}
 
-Herrlich, ich weiß noch genau, dass ich, als ich damals (also irgendwann im Sommer 2021) diese Aufgabe im Original gemacht habe, richtig Spaß hatte und mir gewünscht habe, irgendwann wieder in einen solchen Genuß kommen zu dürfen. Und tatsächlich ist das jetzt schon so lange her, dass es fast nochmal so viel Fun war, meine ganze Rechenwut an den vielen intensiven Einzelheiten dieser vielschichtigen Aufgabe auszulassen und viele alte Weisheiten aus meiner Uni-Zeit wiederzubeleben. Um ein Haar hätte ich meine alten Algebra-Sachen wieder aus dem Keller geholt, um nochmal in den herrlichen Erinnerungen an die Übungsblättern und Tutorien-Aufgaben meines genialen Professors H.-J. Schneider (und seiner Assistenten) zu schwelgen, bei dem ich letztlich auch meine Diplomarbeit geschrieben habe. Mei, war des wiada schee! 
+Herrlich, ich weiß noch genau, dass ich, als ich damals (also irgendwann im Sommer 2021) diese Aufgabe im Original gemacht habe, richtig Spaß hatte und mir gewünscht habe, irgendwann wieder in einen solchen Genuß kommen zu dürfen. Und tatsächlich ist das jetzt schon so lange her, dass es fast nochmal so viel Fun war, meine ganze Rechenwut an den vielen intensiven Einzelheiten dieser vielschichtigen Aufgabe auszulassen und viele alte Weisheiten aus meiner Uni-Zeit wiederzubeleben. Um ein Haar hätte ich meine alten Algebra-Sachen wieder aus dem Keller geholt, um nochmal in den herrlichen Erinnerungen an die Übungsblätter und Tutorien-Aufgaben meines genialen Lehrmeisters H.-J. Schneider (und seiner Assistenten) zu schwelgen, bei dem ich letztlich auch meine Diplomarbeit über verzopfte Hopfalgebren (immer wieder ein Zungenbrecher!) geschrieben habe. Mei, war des ois schee! 
 
 [problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler137/problem
 [original]: https://projecteuler.net/problem=137
