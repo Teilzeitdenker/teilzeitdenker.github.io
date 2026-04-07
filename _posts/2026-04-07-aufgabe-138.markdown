@@ -27,7 +27,7 @@ $$
 x^2 - 5L^2 = - 1. \tag{*}
 $$
 
-Statt gleich mit den iterativen Lösungsformeln draufzuschießen, gehen wir hier ein bißchen systematischer vor, um einen schönen geschlossenen Ausdruck für die Lösungen zu finden (letztendlich bilden diese algebraischen Überlegungen ja auch den Hintergrund für die Funktionsweise des Lösungsalgorithmus für Pell'sche Gleichungen). Wir haben ja gesehen, dass wir in der letzten Aufgabe ganz gut damit gefahren sind, uns zu überlegen, wie man eine solche Gleichung als Norm über einem reell-quadratischen Zahlkörper betrachten kann. Und da ist natürlich wieder, der "goldene Körper" \\( K = \mathbb{Q}(\sqrt{5}) \\), den wir schon kennengelernt haben. Nur müssen wir die Elemente nun bezüglich der Basis \\( (1, \sqrt{5}) \\) darstellen, denn für \\( z = x + L\sqrt{5} \in K \\) gilt:
+Statt gleich mit den iterativen Lösungsformeln draufzuschießen, gehen wir hier ein bißchen systematischer vor, um einen schönen geschlossenen Ausdruck für die Lösungen zu finden (letztendlich bilden diese algebraischen Überlegungen ja auch den Hintergrund für die Funktionsweise des Lösungsalgorithmus für Pell'sche Gleichungen). Wir haben ja gesehen, dass wir in der letzten Aufgabe ganz gut damit gefahren sind, uns zu überlegen, wie man eine solche Gleichung als Norm über einem reell-quadratischen Zahlkörper betrachten kann. Und da ist er natürlich wieder, der "goldene Körper" \\( K = \mathbb{Q}(\sqrt{5}) \\), den wir schon kennengelernt haben. Nur müssen wir die Elemente nun bezüglich der Basis \\( (1, \sqrt{5}) \\) darstellen, denn für \\( z = x + L\sqrt{5} \in K \\) gilt:
 
 $$
 N(z) = (x + L\sqrt{5}) (x - L\sqrt{5}) = x^2 - 5L^2

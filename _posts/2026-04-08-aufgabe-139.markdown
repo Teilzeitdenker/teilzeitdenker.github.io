@@ -1,0 +1,28 @@
+---
+layout: post
+title:  "Project Euler+ #139: Pythagorean tiles"
+date:   2026-04-08
+categories: project-euler
+---
+
+
+
+{% highlight c++ %}
+
+
+
+{% endhighlight %}
+
+
+
+
+{% highlight c++ %}
+
+
+
+{% endhighlight %}
+
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler139/problem
+[original]: https://projecteuler.net/problem=139
+[forum]: https://projecteuler.net/thread=139
