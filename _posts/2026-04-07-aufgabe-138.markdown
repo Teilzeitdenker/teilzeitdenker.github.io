@@ -1,0 +1,193 @@
+---
+layout: post
+title:  "Project Euler+ #138: Special isosceles triangles"
+date:   2026-04-07
+categories: project-euler
+---
+
+Auf den ersten Blick sieht das nach einer geometrischen [Aufgabe][problem] aus, letztendlich geht es aber wieder um das Lösen einer Pell'schen Gleichung (bzw. einer Normgleichung im goldenen Körper) und dem Finden einer passenden Rekursion (diesmal aber für die Summe der gefundenen Lösungen). 
+
+Fangen wir mal mit der Herleitung der Normgleichung an. Sei die Basis des Dreiecks \\( b = 2k \\), dann gilt im rechtwinkligen Teildreieck mit Pythagoras \\( L^2 = k^2 + h^2 \\) und da \\( h \\) und \\( L \\) ganze Zahlen sind muss auch \\( k \in \mathbb{N} \\), insbesondere die Basis \\( b \\) eine gerade Zahl sein.
+
+Wir wollen, dass die Höhe \\( h = b \pm 1 = 2k \pm 1 \\) ist. Einsetzen liefert zunächst
+
+$$
+L^2 = k^2 + (2k \pm 1)^2 = 5k^2 \pm 4k + 1
+$$
+
+und nach Multiplikation der Gleichung mit 5 kann man umformen zu
+
+$$
+5L^2 = 25k^2 \pm 20k + 5 = (5k \pm 2)^2 + 1 = x^2 + 1,
+$$
+
+wobei wir \\( x = 5k \pm 2 \\) gesetzt haben (da \\( k \geq 1 \\) muss \\( x \geq 3 \\) gelten). Dies stellen wir um zur Pell'schen Gleichung 
+
+$$
+x^2 - 5L^2 = - 1. \tag{*}
+$$
+
+Statt gleich mit den iterativen Lösungsformeln draufzuschießen, gehen wir hier ein bißchen systematischer vor, um einen schönen geschlossenen Ausdruck für die Lösungen zu finden (letztendlich bilden diese algebraischen Überlegungen ja auch den Hintergrund für die Funktionsweise des Lösungsalgorithmus für Pell'sche Gleichungen). Wir haben ja gesehen, dass wir in der letzten Aufgabe ganz gut damit gefahren sind, uns zu überlegen, wie man eine solche Gleichung als Norm über einem reell-quadratischen Zahlkörper betrachten kann. Und da ist natürlich wieder, der "goldene Körper" \\( K = \mathbb{Q}(\sqrt{5}) \\), den wir schon kennengelernt haben. Nur müssen wir die Elemente nun bezüglich der Basis \\( (1, \sqrt{5}) \\) darstellen, denn für \\( z = x + L\sqrt{5} \in K \\) gilt:
+
+$$
+N(z) = (x + L\sqrt{5}) (x - L\sqrt{5}) = x^2 - 5L^2
+$$
+
+Wie wir bereits wissen (siehe die Ausführungen zu #137), sind alle Elemente der Norm \\( -1 \\) Einheiten des Ringes der goldenen Zahlen \\( \mathcal{O}_K = \mathbb{Z}[\varphi] \subset K \\) mit dem goldenen Schnitt \\( \varphi = \frac{1 + \sqrt{5}}{2} \\). Dieser goldene Schnitt stellt auch eine Grundeinheit des Ringes dar, das heißt alle Einheiten lassen sich als Potenzen \\( \pm \varphi^i, i \in \mathbb{Z} \\) schreiben. 
+
+Na dann testen wir doch mal ein paar Potenzen durch. Übrigens: Aus ähnlichen Gründen wie in der letzten Aufgabe, reicht es hier, nur die positiven Potenzen \\( i \in \mathbb{N} \\) zu betrachten, alle anderen führen auf zum Teil negative Koeffizienten und wir wollen ja, dass \\( x, L \in \mathbb{N} \\).
+
+Unsere Grundeinheit erfüllt \\( N(\varphi) = -1 \\), das ist schonmal gut. Schreiben wir allerdings \\( \varphi \\) in die Basis \\( (1, \sqrt{5}) \\) um, so gilt:
+
+$$
+x + L\sqrt{5} = \varphi \quad \Rightarrow \quad x = L = \frac{1}{2}
+$$
+
+also leider keine ganzzahlige Lösung. \\( \varphi^2 \\) können wir uns sparen, denn \\( N(\varphi^2) = (-1)^2 = +1 \\) und das wollen wir nicht. Wie sieht es mit der dritten Potenz aus? Es gilt
+
+$$
+\varphi^3 = F_2 + F_3\varphi = 1 + 2\varphi = 1 + 1 + \sqrt{5} = 2 + \sqrt{5},
+$$
+
+wobei wir \\( \varphi^n = F_{n - 1} + F_{n}\varphi \\) aus der letzten Aufgabe verwendet haben. Damit haben wir unsere erste algebraische Lösung gefunden, nämlich \\( x = 2 \\) und \\( L = 1 \\). Allerdings hatten wir oben ja gesehen, dass \\( x \\) mindestens 3 sein muss, damit unser Dreieck auch eine nichttriviale Basis \\( b > 0 \\) hat, es ist also leider keine geometrische Lösung unseres Problems, aber wir sind auf der richtigen Spur. 
+
+Gehen wir doch mal systematisch vor (wir können ja nicht alle Potenzen einzeln bearbeiten) und rechnen unser \\( \varphi^n \\) ganz allgemein in die Basis \\( (1, \sqrt{5}) \\) um. Das liefert
+
+$$
+\varphi^n = F_{n-1} + F_n\varphi = (F_{n - 1} + \frac{F_n}{2}) + \frac{F_n}{2}\sqrt{5}.
+$$
+
+Man erkennt daraus, dass die Fibonacci-Zahl \\( F_n \\) gerade sein muss, damit die Koeffizienten \\( x \\) und \\( L \\) ganze Zahlen sind. Dies gilt nur für die Folge \\( F_{3n} \\), denn die Folgenglieder sind immer 
+
+$$
+\mathrm{ungerade}, \mathrm{ungerade}, \mathrm{gerade}, \mathrm{ungerade}, \mathrm{ungerade}, \mathrm{gerade}, \dots
+$$
+
+Also müssen wir uns nur \\( \varphi^{3n} \\) ansehen. 
+Da aber die Norm \\( -1 \\) sein muss, kommen Potenzen mit geradem Index nicht in Frage und wir landen bei der Folge \\( \varphi^{3(2n + 1)} = \varphi^{6n + 3} \\) mit \\( n \in \mathbb{N} \\), denn für \\( n = 0 \\) haben wir ja gesehen, dass die Lösung geometrisch nichts taugt. 
+
+Damit können wir alle für uns interessanten Lösungen der Gleichung \\( (\*) \\) schön aufschreiben. Diese sind:
+
+$$
+x_n = F_{6n + 2} + \frac{1}{2}F_{6n + 3}, \quad L_n = \frac{1}{2}F_{6n + 3}, \quad n \in \mathbb{N}
+$$
+
+Man kontrolliert leicht nach, dass \\( (x_1, L_1) = (38, 17) \\) (woraus \\( k_1 = 8 \\), also \\( b_1 = 16 \\) folgt) und \\( (x_2, L_2) = (682, 305) \\) (woraus \\( k_2 = 136 \\), also \\( b_2 = 272 \\) folgt), was genau die Beispiele aus der Aufgabenstellung reproduziert. 
+
+In diesem Zusammenhang fragte ich mich, ob nicht die Bedingung, dass \\( x = 5k \pm 2 \\) sein muss, also \\( x \pm 2 \equiv 0 \pmod{5} \\) ein Hindernis sein könnte und manche der Lösungen dadurch wertlos würden, dass \\( k \notin \mathbb{N} \\) wird (das kann natürlich nicht sein, denn wegen dem Pythagoras oben können wir ja \\( k^2 = L^2 - h^2 \\) schreiben und da für unsere Lösungen die rechte Seite ganzzahlig ist, muss \\( k \\) ganzzahlig oder irrational sein, aber sicher kein Bruch mit Fünfteln). 
+
+Aus Interesse, wie dies algebraisch garantiert wird, habe ich mir (und das hat auch ein bißchen Spaß gemacht) den Ausdruck \\( x =  F_{n - 1} + \frac{1}{2}F_{n} \\) modulo 5 angeschaut. Dazu habe ich für die ersten 25 Folgenglieder immer
+
+$$
+\overline{x} = \overline{F}_{n - 1} + \overline{2}^{-1}\cdot\overline{F}_{n} = \overline{F}_{n - 1} + \overline{3}\cdot\overline{F}_{n}
+$$
+
+ausgerechnet und geschaut, wann \\( \overline{2} \\) oder \\( \overline{3} \\) herauskommt. Es stellt sich heraus, dass die Fibonacci-Zahlen modulo 5 zyklisch mit der Periode 20 sind, sie lesen sich dann 
+
+$$
+\overline{F}_n = \overline{1}, \overline{1}, \overline{2}, \overline{3}, \overline{0}, \overline{3}, \overline{3}, \overline{1}, \overline{4}, \overline{0}, \overline{4}, \overline{4}, \overline{3}, \overline{2}, \overline{0}, \overline{2}, \overline{2}, \overline{4}, \overline{1}, \overline{0},
+\overline{1}, \overline{1}, \overline{2}, \cdots
+$$
+
+
+Beruhigenderweise stellt sich heraus, dass "Paare" von aufeinanderfolgenden Fibonacci-Zahlen die Bedingung immer abwechselnd erfüllen und nicht erfüllen. Bei unseren Lösungen (die ja 6 Paare, also ein Vielfaches von 2, auseinanderliegen) passt also alles und es kann immer ein ganzzahliges \\( k \\) berechnet werden (wie wir ja schon vermutet hatten)!
+
+Wir sind aber noch nicht ganz fertig. Damit wir mit dem Programmieren anfangen können, brauchen wir noch eine Rekursionsgleichung, also eigentlich zwei, denn wenn wir die Rekursion für die \\( L_n \\) aufgestellt haben, brauchen wir danach noch eine für die \\( S_n = \sum_{i = 1}^{n} L_i \\), denn die werden ja abgefragt. 
+
+Da \\( L_n \propto F_{6n + 3} \\) erfüllen sie dieselbe Rekursion wie \\( F_{6n} \\) und diese erfüllen wiederum dieselbe Rekursion wie \\( \varphi^6 \\). Wie bekommen wir das Minimalpolynom von \\( s = \varphi^6 \\)? Mal sehen: 
+
+$$
+s^2 = \varphi^{12} = F_{11} + F_{12}\varphi = 89 + 144\varphi, \quad s = \varphi^6 = 5 + 8\varphi
+$$
+
+und damit \\( s^2 = 18s - 1 \\). Daraus können wir die Rekursion für unsere \\( L_n \\) ablesen:
+
+$$
+L_n = 18L_{n - 1} - L_{n - 2}
+$$
+
+Kommen wir zu den Summen. Dazu ersetzen wir in der Gleichung \\( L_i = S_i - S_{i - 1} \\), also 
+
+$$
+S_n - S_{n - 1} = 18(S_{n - 1} - S_{n - 2}) - (S_{n - 2} - S_{n - 3}).
+$$
+
+Umstellen liefert 
+
+$$
+\boxed{S_n = 19 S_{n - 1} - 19 S_{n - 2} + S_{n - 3}}
+$$
+
+mit den drei Anfangswerten \\( S_1 = 17 \\), \\( S_2 = S_1 + \frac{1}{2}F_{15} = 17 + 305 = 322 \\) und \\( S_3 = S_2 + \frac{1}{2}F_{21}  = 322 + 5473 = 5795 \\).
+
+Das Programm kann fast vollständig aus der letzten Aufgabe übernommen werden (ich lasse die entsprechenden Funktionen hier aus). Es sind nur die Definition von calc_res() in der Matrix-Klasse und natürlich die Definition der Rekursionsmatrix anzupassen. Vielleicht muss man auch ein wenig mit der Potenz \\( n \\) aufpassen, also vom input eins abziehen, damit es richtig wird. Das Gefummel überlasse ich euch!
+
+{% highlight c++ %}
+
+using ll = long long;
+
+constexpr ll MOD = 1'000'000'007;
+constexpr int SZ = 3;
+constexpr int MAX_BIT = 60; // 2^60 > 10^18
+
+struct Matrix {
+    array<array<ll, SZ>, SZ> mat{};
+
+    // set single entry
+    void set_entry(int i, int j, ll val) { ...  } // see problem 137
+
+    // calculate S_n by taking last row times (5795, 322, 17)
+    ll calc_res() const {
+        return (mat[2][0] * 5795 % MOD + mat[2][1] * 322 % MOD + mat[2][2] * 17 % MOD) % MOD;
+    }
+
+    // matrix multiplication
+    Matrix operator*(const Matrix& other) const { ... }
+
+    static Matrix identity() { ... }
+};
+
+// precomputed matrix powers: pw[i] = A^(2^i)
+Matrix pw[MAX_BIT];
+
+void precompute(const Matrix& A) { ... }
+
+// multiply only the precomputed matrices for set bits of exp
+Matrix fast_pow(ll exp) { ... }
+
+Matrix recursion_matrix() {
+    Matrix A;
+    // recurrence values in first row
+    ...
+    // rest is always the same
+    for (int i{1}; i < SZ; i++)
+        A.set_entry(i, i - 1, 1);
+    return A;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    precompute(recursion_matrix());
+
+    int T;
+    cin >> T;
+    while (T--) {
+        ll n;
+        cin >> n;
+        // recurrence starts at n = 1, so have to subtract 1 in the matrix exponent
+        cout << ... << '\n';
+    }
+    // check original problem with S_12
+    // cout << ... % MOD << '\n';
+    return 0;
+}
+
+{% endhighlight %}
+
+Bin ja mal gespannt, wie viele Aufgaben mit irgendwelchen Fibonacci-Reihen als Lösungen jetzt noch kommen. Ich habe jedenfalls "modified golden nuggets" als Titel gesehen, da freu' ich mich schon wie ein Schnitzel!
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler138/problem
+[original]: https://projecteuler.net/problem=138
+[forum]: https://projecteuler.net/thread=138
