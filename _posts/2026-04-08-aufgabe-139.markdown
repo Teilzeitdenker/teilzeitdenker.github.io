@@ -56,15 +56,17 @@ $$
 N(z) = z\cdot\sigma(z) = (x + y\varepsilon)(x + y\overline{\varepsilon}) = x^2 + xy(\varepsilon + \overline{\varepsilon}) + y^2(\varepsilon\overline{\varepsilon}) = x^2 + xy\cdot \mathrm{tr}(\varepsilon) + y^2N(\varepsilon) = x^2 + 2xy - y^2
 $$
 
-Das ist genau der Ausdruck, den wir wollen. Wir suchen nun Elemente der Norm \\( \pm 1 \\). Dies müssen wieder Einheiten des Ringes der ganzen Zahlen \\( \mathcal{O}_K = \mathbb{Z}[\varepsilon] \subset K \\) sein, der praktischerweise genau \\( \varepsilon \\) als Grundeinheit hat. Betrachten wir wegen \\( y > x > 0 \\) wieder nur die positiven Potenzen der Grundeinheit. 
+Das ist genau der Ausdruck, den wir wollen. Wir suchen nun Elemente der Norm \\( \pm 1 \\). Dies müssen wieder Einheiten des Ringes der ganzen Zahlen \\( \mathcal{O}_K = \mathbb{Z}[\varepsilon] \subset K \\) sein, der praktischerweise genau \\( \varepsilon \\) als Grundeinheit hat. Wegen \\( y > x > 0 \\) betrachten wir wieder nur die positiven Potenzen der Grundeinheit (so wie in den letzten Aufgaben). Anders als dort müssen wir diesmal keine Potenzen von vornherein ausschließen, weil ihre Norm das falsche Vorzeichen hätte, denn beide Vorzeichen sind erlaubt.
 
-Die erste algebraische Lösung wäre natürlich \\( \varepsilon \\) selbst, aber da sind die Koeffizienten \\( x = 0 \\) und \\( y = 1 \\), also können wir die nicht für ein pythagoräisches Tripel verwenden. Die erste passende Lösung ist \\( \varepsilon^2 = 1 + 2\sqrt{2} + 2 = 1 + 2(1 + \sqrt{2}) = 1 + 2\varepsilon \\), also \\( x = 1, \; y = 2 \\). Diese führt auf das Beispieltripel \\( (3, 4, 5) \\) aus der Aufgabenstellung. 
+Die ersten algebraischen Lösungen wären natürlich \\( z = 1 \\) und  \\( z = \varepsilon \\), aber da sind die Koeffizienten \\( (x, y) = (1, 0) \\) bzw. \\( (x, y) = (0, 1) \\), also können wir die nicht für ein pythagoräisches Tripel verwenden. Die erste passende Lösung ist \\( \varepsilon^2 = 1 + 2\sqrt{2} + 2 = 1 + 2(1 + \sqrt{2}) = 1 + 2\varepsilon \\), also \\( x = 1, \; y = 2 \\). Diese führt auf das Beispieltripel \\( (3, 4, 5) \\) aus der Aufgabenstellung. 
 
 Genau wie im Fall des goldenen Schnitts \\( \varphi \in \mathbb{Q}(\sqrt{5}) \\) mit seinen Potenzen und ihrer Darstellung mit Fibonacci-Zahlen als Koeffizienten, gilt auch hier für beliebiges \\( n \in \mathbb{N} \\):
 
 $$
 \varepsilon^n = E_{n - 1} + E_n\varepsilon
 $$
+
+_Bemerkung_: Das ist nicht immer so, die beiden Ganzheitsringe \\( \mathbb{Z}[\varphi] \subset \mathbb{Q}(\sqrt{5}) \\) und \\( \mathbb{Z}[\varepsilon] \subset \mathbb{Q}(\sqrt{2}) \\) sind da vorteilhafte Ausnahmen unter den reell-quadratischen Zahlkörpern. Die beiden Koeffizientenreihen in den Potenzen der Grundeinheit, nennen wir sie mal \\( A_n \\) und \\( B_n \\) erfüllen zwar immer dieselbe Rekursionsvorschrift (denn die rührt vom Minimalpolynom der Grundeinheit her), haben aber im Allgemeinen so geformte Startwerte \\( A_0 = 1, B_0 = 0, A_1 \\) und \\( B_1 \\) (wobei sich die beiden letzteren aus der Koeffizientenzerlegung der Grundeinheit ergeben), dass sich im Verlauf der Folgen komplett __andere__ Zahlen ergeben, also \\( A_{n} \neq B_{n - 1} \\). Die Rekursionen und Koeffizienten in unseren beiden bisher betrachteten Spezialfällen sind aber netterweise genau so "gemacht", dass sich hier in beiden Folgen __dieselben__ Zahlen, aber eben um einen Index verzögert, ergeben.
 
 Da das Minimalpolynom für \\( \varepsilon \\) wie oben gerechnet \\( \varepsilon^2 = 2\varepsilon + 1 \\) lautet, können wir ablesen, dass die \\( E_n \\) die Rekursionsgleichung
 
@@ -80,10 +82,10 @@ $$
 
 Netterweise erfüllen diese immer die Voraussetzungen für primitive Tripel, denn die \\( E_n \\) sind abwechselnd gerade und ungerade (also folgt \\( x_n \not\equiv y_n \pmod{2} \\)) und aufeinanderfolgende Folgenglieder sind teilerfremd (man führe einen Induktionsbeweis mit Hilfe der Rekursionsgleichung). 
 
-In unserer [Aufgabe][problem] war folgendes Problem zu lösen: Für ein gegebenes \\( P \\) sollte die Anzahl von Tripeln bestimmt werden, deren zugehöriger Dreiecksumfang kleiner als \\( P \\) ist. Dabei war im [Original][original] \\( P = 10^8 \\) und auf HackerRank \\( 1 \leq P \leq 10^{18} \\) und bis zu einhunderttausend Tests pro case. Das bedeutet, wir müssen alle primitiven Lösungen \\( (x_n, y_n) \\) mit \\( n \leq N_{\mathrm{max}} \\) bestimmen, die zu einem Umfang 
+In unserer [Aufgabe][problem] war folgendes Problem zu lösen: Für ein gegebenes \\( P \\) sollte die Anzahl von Tripeln mit der Eigenschaft \\( (b - a) \mid c \\) bestimmt werden, deren zugehöriger Dreiecksumfang kleiner als \\( P \\) ist. Dabei war im [Original][original] \\( P = 10^8 \\) und auf HackerRank \\( 1 \leq P \leq 10^{18} \\) und bis zu einhunderttausend Tests pro case. Das bedeutet, wir müssen alle primitiven Lösungen \\( (x_n, y_n) \\) mit \\( n \leq N_{\mathrm{max}} \\) bestimmen, die zu einem Umfang 
 
 $$
-p_n = a_n + b_n + c_n = 2y_n^2 + 2x_ny_n = 2y_n(x_n + y_n) = 2E_n(E_{n - 1} + E_n) < 10^{18}
+p_n = a_n + b_n + c_n = 2y_n^2 + 2x_ny_n = 2y_n(x_n + y_n) = 2E_n(E_{n - 1} + E_n) < P
 $$
 
 des zugehörigen Dreicks führen und dann für jeden Test die Summe 
@@ -92,7 +94,7 @@ $$
 \sum_{n = 2}^{N_{\mathrm{max}}} \mathrm{floor}(\frac{P - 1}{p_n})
 $$
 
-berechnen, um alle passenden Tripel zu berücksichtigen. Aber wie groß muss \\( N_{\mathrm{max}} \\) sein? Ab welchem \\( n \\) überschreitet der Umfang des zugehörigen Dreiecks denn \\( 10^{18} \\)? Hierzu kann man entweder mit Hilfe der Rekursion anfangen zu rechnen (es ist nicht ganz so weit) oder man macht sich folgende sogenannte Binetdarstellung der Folgenglieder mit Hilfe von \\( \varepsilon \\) zunutze:
+berechnen, um alle passenden Tripel zu berücksichtigen. Aber wie groß muss \\( N_{\mathrm{max}} \\) sein? Ab welchem \\( n \\) überschreitet der Umfang des zugehörigen Dreiecks denn \\( P_{\mathrm{max}} =  10^{18} \\)? Hierzu kann man entweder mit Hilfe der Rekursion anfangen zu rechnen (es ist nicht ganz so weit) oder man macht sich folgende sogenannte Binetdarstellung der Folgenglieder mit Hilfe von \\( \varepsilon \\) zunutze:
 
 $$
 E_n = \frac{\varepsilon^n - \overline{\varepsilon}^n}{2\sqrt{2}}. 
@@ -149,7 +151,7 @@ int main() {
         cout << count << endl;
     }
     // check original problem with P = 10^8
-    // cout << 10057761 << '\n';
+    // cout << ... << '\n';
     return 0;
 }
 
