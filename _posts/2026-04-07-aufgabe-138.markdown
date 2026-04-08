@@ -5,7 +5,7 @@ date:   2026-04-07
 categories: project-euler
 ---
 
-Auf den ersten Blick sieht das nach einer geometrischen [Aufgabe][problem] aus, letztendlich geht es aber wieder um das Lösen einer Pell'schen Gleichung (bzw. einer Normgleichung im goldenen Körper) und dem Finden einer passenden Rekursion (diesmal aber für die Summe der gefundenen Lösungen). 
+Auf den ersten Blick sieht das nach einer geometrischen [Aufgabe][problem] aus, letztendlich geht es aber wieder um das Lösen einer Pell'schen Gleichung (bzw. einer Normgleichung im goldenen Körper) und dem Finden einer passenden Rekursion (diesmal aber für die __Summe__ der gefundenen Lösungen). 
 
 Fangen wir mal mit der Herleitung der Normgleichung an. Sei die Basis des Dreiecks \\( b = 2k \\), dann gilt im rechtwinkligen Teildreieck mit Pythagoras \\( L^2 = k^2 + h^2 \\) und da \\( h \\) und \\( L \\) ganze Zahlen sind muss auch \\( k \in \mathbb{N} \\), insbesondere die Basis \\( b \\) eine gerade Zahl sein.
 

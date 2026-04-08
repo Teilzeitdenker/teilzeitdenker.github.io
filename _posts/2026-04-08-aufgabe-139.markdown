@@ -5,23 +5,157 @@ date:   2026-04-08
 categories: project-euler
 ---
 
+[Diesmal][problem] ging es um pythagoräische Tripel und ihre Eigenschaften. Wir suchen Fälle, in denen das Tripel \\( (a, b, c) \\) mit \\( a^2 + b^2 = c^2 \\) die Eigenschaft hat, dass \\( (b - a) \mid c \\). Das was in der Mitte übrigbleibt, wenn man die vier Dreiecke in ein Quadrat mit Seitenlänge \\( c \\) so anordnet, wie es in der Aufgabenstellung beschrieben ist, ist immer genau ein Quadrat mit Seitenlänge \\( \lvert b - a \rvert \\), denn
 
+$$
+(b - a)^2 = b^2 - 2ab + a^2 = c^2 - 2ab = c^2 - 4A_{\Delta}.
+$$
+
+Schauen wir uns doch wie üblich erstmal die primitiven pythagoräischen Tripel (bei denen \\( \mathrm{gcd}(a, b, c) = 1 \\) gilt) an. Die kann man mit Hilfe zweier Zahlen \\( x, y \in \mathbb{N}, \; y > x \geq 1 \\) parametrisieren durch die Ausdrücke 
+
+$$
+\begin{align*}
+a &= y^2 - x^2 \\
+b &= 2 x y \\
+c &= x^2 + y^2.
+\end{align*}
+$$
+
+Hierbei ist allerdings zu beachten, dass \\( x, y \\) teilerfremd sein und außerdem unterschiedliche Parität haben müssen, also \\( x \not\equiv y \pmod{2} \\). Unsere Teilbarkeitsbedingung wird dadurch zu 
+
+$$
+b - a = 2xy - y^2 + x^2 = x^2 + 2xy - y^2 \mid x^2 + y^2 = c
+$$
+
+Wenn wir zeigen könnten, dass die beiden Ausdrücke in \\( x \\) und \\( y \\) teilerfremd sind, müsste \\( (b - a) = \pm 1 \\) sein und wir hätten wieder eine schöne quadratische Form, deren Betrag 1 sein muss, also ein Normproblem in irgendeinem quadratischen Zahlkörper. 
+
+Zeigen wir doch mal Folgendes: Seien \\( r, s \in \mathbb{Z} \\) teilerfremd und \\( r \not\equiv s \pmod{2} \\). Dann gilt \\( \mathrm{gcd}(r + s, r - s) = 1 \\).
+
+_Beweis_: Sei \\( d > 1 \\) mit \\( d \mid (r + s) \\) und \\( d \mid (r - s) \\). Beide geteilten Zahlen sind ungerade, daher muss auch \\( d \\) ungerade sein. Nun muss \\( d \\) auch Summe und Differenz der beiden Zahlen teilen, also \\( d \mid 2r \\) und \\( d \mid 2s \\), woraus aber wegen \\( d \\) ungerade \\( d \mid r \\) und \\( d \mid s \\), also ein Widerspruch zur Teilerfremdheit von \\( r \\) und \\( s \\) folgt. 
+
+Diesen Satz wenden wir jetzt zweimal an. Erstens folgt für unsere Zahlen \\( x \\) und \\( y \\), dass \\( \mathrm{gcd}(x + y, x - y) = 1 \\). Betrachten wir nun die beiden Zahlen \\( r = x(x + y) \\) und \\( s = y(x - y) \\). Die in diesen Zahlen auftretenden Faktoren sind alle paarweise teilerfremd, daher gilt auch \\( \mathrm{gcd}(r, s) = 1 \\). Außerdem ist \\( r \not\equiv s \pmod{2} \\), denn \\( x + y \equiv x - y \equiv 1 \pmod{2} \\). Nach unserem Satz sind dann aber auch Summe und Differenz von \\( r \\) und \\( s \\) teilerfremd, es gilt aber genau (denn so waren sie natürlich hinkonstruiert) 
+
+$$
+\begin{align*}
+r + s &= x(x + y) + y(x - y) = x^2 + 2xy - y^2 = b - a \\
+r - s &= x(x + y) - y(x - y) = x^2 + y^2 = c
+\end{align*}
+$$
+
+Damit landen wir für primitive Tripel wieder bei einer schönen Normgleichung, die wir lösen müssen, nämlich
+
+$$
+x^2 + 2xy - y^2 = \pm 1 \tag{*}
+$$
+
+_Bemerkung_: Der Fall nicht-primitiver Tripel lässt sich auf ihr zugrundeliegendes primitives Tripel zurückführen, denn sei \\( k > 1 \\) und \\( (ka, kb, kc) \\) ein nicht-primitives Tripel, so folgt aus \\( (kb - ka) \mid kc \\) immer \\( (b - a) \mid c \\) für das primitive Tripel. Wir müssen beim Abzählen der Lösungen also darauf achten, dass wir den gegebenen maximalen Umfang des Dreiecks durch den Umfang unseres primitiven Dreiecks teilen, um sozusagen \\( k_{\mathrm{max}} \\) zur Anzahl der Lösungen zu addieren und damit auch alle möglichen nicht-primitiven Lösungen, die auf diesem primitiven Tripel aufbauen, zu berücksichtigen!
+
+Nun zu unserer Normgleichung \\( (\*) \\). Sei \\( K = \mathbb{Q}(\sqrt{2}) \\) der quadratische Zerfällungskörper des Polynoms \\( X^2 - 2 \in \mathbb{Z}[X] \\). Wählen wir als Basis dieses Körpers mal \\( (1, \varepsilon) \\) mit \\( \varepsilon = 1 + \sqrt{2} \\), dann gilt für die Norm eines Elements \\( z = x + y\varepsilon \in K \\):
+
+$$
+N(z) = z\cdot\sigma(z) = (x + y\varepsilon)(x + y\overline{\varepsilon}) = x^2 + xy(\varepsilon + \overline{\varepsilon}) + y^2(\varepsilon\overline{\varepsilon}) = x^2 + xy\cdot \mathrm{tr}(\varepsilon) + y^2N(\varepsilon) = x^2 + 2xy - y^2
+$$
+
+Das ist genau der Ausdruck, den wir wollen. Wir suchen nun Elemente der Norm \\( \pm 1 \\). Dies müssen wieder Einheiten des Ringes der ganzen Zahlen \\( \mathcal{O}_K = \mathbb{Z}[\varepsilon] \subset K \\) sein, der praktischerweise genau \\( \varepsilon \\) als Grundeinheit hat. Betrachten wir wegen \\( y > x > 0 \\) wieder nur die positiven Potenzen der Grundeinheit. 
+
+Die erste algebraische Lösung wäre natürlich \\( \varepsilon \\) selbst, aber da sind die Koeffizienten \\( x = 0 \\) und \\( y = 1 \\), also können wir die nicht für ein pythagoräisches Tripel verwenden. Die erste passende Lösung ist \\( \varepsilon^2 = 1 + 2\sqrt{2} + 2 = 1 + 2(1 + \sqrt{2}) = 1 + 2\varepsilon \\), also \\( x = 1, \; y = 2 \\). Diese führt auf das Beispieltripel \\( (3, 4, 5) \\) aus der Aufgabenstellung. 
+
+Genau wie im Fall des goldenen Schnitts \\( \varphi \in \mathbb{Q}(\sqrt{5}) \\) mit seinen Potenzen und ihrer Darstellung mit Fibonacci-Zahlen als Koeffizienten, gilt auch hier für beliebiges \\( n \in \mathbb{N} \\):
+
+$$
+\varepsilon^n = E_{n - 1} + E_n\varepsilon
+$$
+
+Da das Minimalpolynom für \\( \varepsilon \\) wie oben gerechnet \\( \varepsilon^2 = 2\varepsilon + 1 \\) lautet, können wir ablesen, dass die \\( E_n \\) die Rekursionsgleichung
+
+$$
+E_{n} = 2E_{n - 1} + E_{n - 2}
+$$
+
+mit \\( E_0 = 0 \\) und \\( E_1 = 1 \\) erfüllen. Wir können also ablesen, dass unsere pythagoräischen Tripel-Parameter \\( x \\) und \\( y \\) explizit folgende Form haben müssen: 
+
+$$
+x_n = E_{n - 1}, \quad y_n = E_n, \quad \mathrm{wobei}\; n \geq 2
+$$
+
+Netterweise erfüllen diese immer die Voraussetzungen für primitive Tripel, denn die \\( E_n \\) sind abwechselnd gerade und ungerade (also folgt \\( x_n \not\equiv y_n \pmod{2} \\)) und aufeinanderfolgende Folgenglieder sind teilerfremd (man führe einen Induktionsbeweis mit Hilfe der Rekursionsgleichung). 
+
+In unserer [Aufgabe][problem] war folgendes Problem zu lösen: Für ein gegebenes \\( P \\) sollte die Anzahl von Tripeln bestimmt werden, deren zugehöriger Dreiecksumfang kleiner als \\( P \\) ist. Dabei war im [Original][original] \\( P = 10^8 \\) und auf HackerRank \\( 1 \leq P \leq 10^{18} \\) und bis zu einhunderttausend Tests pro case. Das bedeutet, wir müssen alle primitiven Lösungen \\( (x_n, y_n) \\) mit \\( n \leq N_{\mathrm{max}} \\) bestimmen, die zu einem Umfang 
+
+$$
+p_n = a_n + b_n + c_n = 2y_n^2 + 2x_ny_n = 2y_n(x_n + y_n) = 2E_n(E_{n - 1} + E_n) < 10^{18}
+$$
+
+des zugehörigen Dreicks führen und dann für jeden Test die Summe 
+
+$$
+\sum_{n = 2}^{N_{\mathrm{max}}} \mathrm{floor}(\frac{P - 1}{p_n})
+$$
+
+berechnen, um alle passenden Tripel zu berücksichtigen. Aber wie groß muss \\( N_{\mathrm{max}} \\) sein? Ab welchem \\( n \\) überschreitet der Umfang des zugehörigen Dreiecks denn \\( 10^{18} \\)? Hierzu kann man entweder mit Hilfe der Rekursion anfangen zu rechnen (es ist nicht ganz so weit) oder man macht sich folgende sogenannte Binetdarstellung der Folgenglieder mit Hilfe von \\( \varepsilon \\) zunutze:
+
+$$
+E_n = \frac{\varepsilon^n - \overline{\varepsilon}^n}{2\sqrt{2}}. 
+$$
+
+Da \\( \overline{\varepsilon} < 1 \\) spielt der zweite Term in der Differenz für große \\( n \\) keine Rolle und man erhält annähernd
+
+$$ 
+E_n \approx \frac{(1 + \sqrt{2})^n}{2\sqrt{2}} \approx \frac{2.414^n}{2.828} 
+$$
+
+Setzt man diese Näherung für \\( n = 25 \\) in die Umfangsberechnung ein, so ergibt sich, dass 
+
+$$
+p_{25} \approx 2\cdot 1.3\cdot 10^9 (5.4\cdot 10^8 + 1.3 \cdot 10^9) \approx 4.8\cdot 10^{18}, 
+$$
+
+es reicht also dicke, wenn wir \\( N_{\mathrm{max}} = 24 \\) wählen. Hier das darauf maßgeschneiderte und zur Abwechslung mal wieder ziemlich kurze Programm (natürlich mit Auslassungen):
 
 {% highlight c++ %}
 
+using ull = unsigned long long;
 
+const int SZ = 25;
+ull E[SZ];
+ull p[SZ];
+
+void fill_solutions_and_perimeters() {
+    E[0] = 0;
+    E[1] = 1;
+    for (int i = 2; i < SZ; i++) {
+        E[i] =  ...
+        p[i] =  ...
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    fill_solutions_and_perimeters();
+
+    int T;
+    cin >> T;
+    while (T--) {
+        ull P;
+        cin >> P;
+        ull count = 0;
+        for (int i = 2; i < SZ; i++) {
+            if (p[i] >= P) break;
+            // add number of all pythagorean triples (also non-primitive ones)
+            count += ...
+        }
+        cout << count << endl;
+    }
+    // check original problem with P = 10^8
+    // cout << 10057761 << '\n';
+    return 0;
+}
 
 {% endhighlight %}
 
-
-
-
-{% highlight c++ %}
-
-
-
-{% endhighlight %}
-
+So, jetzt kommen endlich die "modified nuggets" dran, das hab' ich mir aber auch wirklich verdient!
 
 [problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler139/problem
 [original]: https://projecteuler.net/problem=139
