@@ -1,0 +1,252 @@
+---
+layout: post
+title:  "Project Euler+ #140: Modified Fibonacci golden nuggets"
+date:   2026-04-09
+categories: project-euler
+---
+
+Ja, das ist doch eine hübsche Aufgabe. Dachte ich. Und kreuzfidel machte ich mich ans Werk. Natürlich alles recht ähnlich zu #137, aber das ließ der Titel ja bereits vermuten. Fast ein bißchen langweilig. Von wegen! Wenn ich es schaffe, berichte ich am Ende ausführlich, was hier alles noch durchbewiesen werden musste, bevor ich mich schlußendlich mit meiner Lösung zufrieden gab.
+
+ Betrachtet wird die erzeugende Funktion der "Gibonacci"-Zahlen (das ist natürlich Quatsch, aber sie erfüllen dieselbe Rekursion), also die Potenzreihe 
+
+$$
+A_G(x) = \sum_{i = 1}^{\infty} G_i x^i,
+$$
+
+wobei im Unterschied zu den Fibonacci-Zahlen \\( G_1 = 1 \\) und \\( G_2 = 4 \\) gesetzt wird (was es nicht alles auslöst, wenn man einen Startwert ein bißchen schief rückt!). Die Aufgabenstellung war auch ein klein wenig anders: Finde die Summe der zugehörigen "golden nuggets" \\( g_n \\) im Bereich \\( n \in [L, R] \\) für gegebene Grenzen \\( L \leq R \\).
+
+Das erste Beispiel war \\( x = \frac{2}{5} \\) (hätte ich da mal genauer hingeschaut!), für das \\( A_G(x) = 2 \\) wird. Also dachte ich: Gehen wir doch wieder genauso vor wie beim letzten Nugget-Schürfen: 
+1. Finde die geschlossene Form der Potenzreihe
+2. Stelle eine Bedingung für ganzzahlige Reihenwerte auf, wenn \\( x \in \mathbb{Q} \\) ist
+3. Finde einen geschlossenen Ausdruck für die nuggets
+4. Bestimme lineare Rekursionsformeln für die nuggets selbst und dann für die Summen der nuggets
+
+Die Unterschiede bei den Größenordnungen zwischen dem [Original][original] (hier war nur die Summe der ersten dreißig nuggets gefragt) und der [HackerRank-Version][problem] waren wiederum eklatant. Mit der Angabe \\( L \leq R \leq 10^{18} \\) hieß das, dass wir die Summen der nuggets (natürlich modulo \\( 10^9 + 7 \\)) extrem schnell berechnen können mussten, am Besten also wieder mit der bewährten Power-Matrix-Methode.
+
+Zu 1.: Ähnlich zu Aufgabe 137 findet man für die Gibonacci-Zahlen die geschlossene Form
+
+$$
+A_G(x) = \frac{x + 3x^2}{1 - x - x^2}
+$$
+
+Man kann sich durch Einsetzen der Beispiele für \\( x \\) aus der Tabelle in der Aufgabenstellung überzeugen, dass alles passt. 
+
+Zu 2.: Nehmen wir an, dass \\( x = \frac{a}{b} \in \mathbb{Q} \\) mit teilerfremden \\( a, b \in \mathbb{Z} \\) (nicht unbedingt positiv!). Die Bedingung ist, dass beim __Einsetzen__ in \\( A_G(x) \\) eine positive ganze Zahl herauskommt, nennen wir sie wieder \\( g \in \mathbb{N} \\), unser **g**olden nugget: 
+
+$$
+A_G(\frac{a}{b}) = \frac{\frac{a}{b} + 3 \left( \frac{a}{b} \right)^2}{1 - \frac{a}{b} - \left( \frac{a}{b} \right)^2} = g
+$$
+
+Erweitert man den Bruch mit \\( b^2 \\), so erhält man nach Umformen, dass
+
+$$
+g = \frac{ab + 3a^2}{-(a^2 + ab - b^2)} \in \mathbb{N}
+$$
+
+sein soll. Da wir \\( a, b \\) teilerfremd gewählt haben, habe ich mir an dieser Stelle einfach gedacht, dass dann auch die Zahlen \\( ab + 3a^2 \\) und \\( a^2 + ab - b^2 \\) teilerfremd sein müssen und einfach mal weitergerechnet, um zu schauen, ob ich damit die ersten paar Nuggets wiederfinde, die ich damals 2021 ausgerechnet hatte. Denn wenn sie teilerfremd wären (und das sind sie leider nicht immer, das verhindert aber lustigerweise __nicht__, dass man auf diesem Wege alle Lösungen findet!), würde ja wieder eine schöne Normgleichung folgen, nämlich
+
+$$ 
+a^2 + ab - b^2 = - 1 \tag{*}
+$$
+
+und der Nugget berechnete sich in diesem Fall zu 
+
+$$
+g = ab + 3a^2. 
+$$
+
+Wir machen mal weiter so und wenn ich am Ende noch Lust habe weiterzuTeXen, diskutiere ich vielleicht noch, was an der Teilerfremdheit falsch ist und wieso das gar nichts ausmacht (aber es ist ziemlich kompliziert bzw. ich verfüge nicht über die mathematische Weisheit oder den nötigen Durchblick, um die tieferen Gründe zu erkennen).
+
+Zu 3.: Gehen wir wieder in den ["goldenen Körper"][golden-field] \\( K = \mathbb{Q}(\sqrt{5}) \\), wobei wir für alle Elemente die Basis \\( (1, \varphi ) \\) mit dem "goldenen Schnitt" \\( \varphi = \frac{1 + \sqrt{5}}{2} \\) verwenden. Für ein beliebiges Element \\( z = a + b\varphi \in K \\) hatten wir ja bereits in #137 gesehen, dass 
+
+$$
+N(z) = z\sigma(z) = a^2 + ab - b^2
+$$
+
+Dabei beizeichnet \\( \sigma(z) \\) die Konjugation auf \\( K \\). Man sieht: Die Norm von \\( \varphi \\) ist gleich -1, das heißt \\( a = 0 \\) und \\( b = 1 \\) würde zu einer Lösung von \\( (\*) \\) führen, wenn das entsprechende Nugget nicht null wäre. 
+
+Wieder macht man sich klar: Jedes Lösungspaar \\( (a, b) \\) für \\( (\*) \\) entspricht einem Element \\( a + b\varphi \\) im Ring der ganzen Zahlen \\( \mathcal{O}_K = \mathbb{Z}[\varphi] \subset \mathbb{Q}(\sqrt{5}) \\) mit der Norm \\( -1 \\). Elemente der Norm \\( \pm 1 \\) sind genau die Einheiten \\( \mathcal{O}_K^{\times} \\) und diese kann man alle durch die Grundeinheit \\( \varphi \\) als \\( \pm\varphi^k \\) mit \\( k \in \mathbb{Z} \\) darstellen. 
+
+Wollen wir alle Lösungen von \\( (\*) \\) aufschreiben, so müssen wir die ungeraden Potenzen von \\( \varphi \\) verwenden (die geraden Potenzen hätten ja die Norm +1). Das haben wir aber in #137 schonmal durchexerziert. Man erhält wegen 
+
+$$
+\varphi^{2n + 1} = F_{2n} + F_{2n + 1}\varphi
+$$
+
+die Koeffizienten \\( a_n = F_{2n} \\) und \\( b_n = F_{2n + 1} \\) und damit 
+
+$$
+g_n = a_nb_n = F_{2n}F_{2n +1} + 3F_{2n}^2.
+$$
+
+Wenn man das mal für \\( n = 1 \\) und \\( n = 2 \\) ausrechnet, erhält man aber nur 
+
+$$
+\begin{align*}
+g_1 &= 1\cdot 2 + 3\cdot 1^2 = 5 \\
+g_2 &= 3\cdot 5 + 3\cdot 3^2 = 42
+\end{align*}
+$$
+
+und dann werden die Nuggets immer größer. Der allererste Nugget, also \\( g = 2 \\), und danach jeder zweite, also die Werte \\( g = 21, 152, 1050, \dots \\) fehlen aber. Gottseidank fiel mir hier meine Bemerkung aus Aufgabe #137 ein, dass nämlich auch die negativen Potenzen von \\( \varphi \\) Lösungen liefern können. Also schauen wir uns die mal an. Da \\( (-a, -b) \\) ja dieselben Nuggets liefert wie \\( (a, b) \\) reicht es, wenn wir uns dabei auf die Potenzen von \\( \overline{\varphi} \\) beschränken (denn \\( \varphi^{-1} = - \overline{\varphi} \\)). Da \\( \overline{\varphi} \\) dasselbe Minimalpolynom hat wie \\( \varphi \\) gilt:
+
+$$
+\overline{\varphi}^n = F_{n-1} + F_n\overline{\varphi} = F_{n-1} + F_n(1 - \varphi) = F_{n + 1} - F_n\varphi
+$$
+
+Wir benötigen nur die ungeraden Potenzen \\( \overline{\varphi}^{2n - 1} \\) mit \\( n \geq 1 \\), da die geraden wieder die falsche Norm haben, also werden die Koeffizienten zu \\( a_n = F_{2n} \\) und \\( b_n = - F_{2n - 1} \\) und damit die entsprechenden Nuggets zu 
+
+$$
+\overline{g}_n = a_nb_n = - F_{2n}F_{2n - 1} + 3F_{2n}^2.
+$$
+
+Da der hintere Term den ersten negativen überkompensiert werden die ehemals noch negativen Nuggets (siehe Bemerkung in #137) für die Potenzen von \\( \overline{\varphi} \\) hier zu zulässigen positiven Nuggets und wir bekommen eine komplette zusätzliche Nugget-Familie. Rechnen wir nach für die niedrigsten \\( n \\):
+
+$$
+\begin{align*}
+\overline{g}_1 &= -1\cdot 1 + 3\cdot 1^2 = 2 \\
+\overline{g}_2 &= -3\cdot 2 + 3\cdot 3^2 = 21 \\
+\overline{g}_2 &= -8\cdot 5 + 3\cdot 8^2 = 152
+\end{align*}
+$$
+
+Genial! Die seltsame Struktur in der Anordnung unserer Nuggets (2, 5, 21, 42, 152, 296, usw.) ist damit klar. Es handelt sich um intermittierende Werte aus zwei unterschiedlichen Familien! Es kommt immer erst ein Vertreter der Familie \\( \overline{g} \\) und dann der mit dem entsprechenden Index aus der Familie \\( g \\) (das hatte mich damals vor 5 Jahren so verwundert). Also weiter im Text!
+
+Zu 4.: Der Rest wird einfach. Beide Familien lassen sich nämlich wieder als Produkte zweier Fibonacci-Folgen darstellen und die hatten wir in #137 schon durchgesprochen. Schreibe also 
+
+$$
+\begin{align*}
+g_n &= F_{2n}(3F_{2n} + F_{2n + 1}) \\
+\overline{g}_n &= F_{2n}(3F_{2n} - F_{2n - 1})
+\end{align*}
+$$
+
+Beide Nugget-Familien sind das Produkt aus zwei Faktoren, die jeweils die Rekursion
+
+$$
+a_n = 3a_{n - 1} - a_{n - 2}
+$$
+
+erfüllen (man beachte, dass auch Linearkombinationen von Folgen mit gleicher Rekursionsvorschrift wieder dieser Rekursion gehorchen) und wir hatten gezeigt, dass dann für die Produktfolge die Rekursion
+
+$$
+g_n = 8g_{n-1} - 8g_{n-2} + g_{n-3}
+$$
+
+gilt (natürlich genauso für \\( \overline{g} \\)). Sei nun \\( S_n = \sum_{i = 1}^n g_i \\). Dann gilt:
+
+$$
+g_n = S_n - S_{n - 1}
+$$
+
+und Einsetzen liefert eine Rekursion für \\( S_n \\):
+
+$$
+\boxed{S_n = 9S_{n-1} - 16S_{n - 2} + 9 S_{n-3} - S_{n -4}}
+$$
+
+Diese gilt natürlich genauso auch für \\( \overline{S}_n \\). Wir müssen noch die Startwerte für die beiden Folgen angeben und dann können wir anfangen zu programmieren! Es gilt: 
+
+$$
+\begin{align*}
+S_0 &= 0, \quad S_1 = 5, \quad S_2 = 47, \quad S_3 = 343 \\
+\overline{S}_0 &= 0, \quad \overline{S}_1 = 2, \quad \overline{S}_2 = 23, \quad \overline{S}_3 = 175
+\end{align*}
+$$
+
+Jetzt brauchen wir schon eine \\( 4 \times 4 \\)-Rekursionsmatrix, deren Potenzen wir wie immer vorberechnen (und in pw[] speichern), um dann in fast_pow() nur noch zu schauen, an welchen Bitstellen unser gegebenes \\( n \\) Einsen hat. In calc_res_s() und calc_res_s_bar() berechne ich die Ergebnisse gleich innerhalb der Matrix-Klasse. Beim Aufsummieren der goldenen Nuggets bis zu einem gegebenen index ist darauf zu achten, dass wir die Berechnung mit \\( n = \mathrm{floor}(\frac{\mathrm{index}}{2}) \\) zur Hälfte auf \\( S_n \\) und zur Hälfte auf die gestrichene Folge aufteilen. Im Zweifelsfall, also wenn index ungerade ist, muss man \\( \overline{S}_{n + 1} \\) nehmen, denn in einem Paar von Nuggets ist ja \\( \overline{g} \\) immer der kleinere Wert. Hier das Programm mit Auslassungen:
+
+{% highlight c++ %}
+
+using ll = long long;
+
+constexpr ll MOD = 1'000'000'007;
+constexpr int SZ = 4;
+constexpr int MAX_BIT = 60; // 2^60 > 10^18
+
+struct Matrix {
+    array<array<ll, SZ>, SZ> mat{};
+
+    // set single entry
+    ...
+
+    // calculate S_bar_n by taking last row times (175, 23, 2, 0)
+    ll calc_res_s_bar() const {
+        return (mat[3][0]*175 + mat[3][1]*23 + mat[3][2]*2) % MOD;
+    }
+
+    // calculate S_n by taking last row times (343, 47, 5, 0)
+    ll calc_res_s() const {
+        return (mat[3][0]*343 + mat[3][1]*47 + mat[3][2]*5) % MOD;
+    }
+
+    // matrix multiplication
+    ...
+    // identity matrix
+    ...
+};
+
+// precomputed matrix powers: pw[i] = A^(2^i)
+Matrix pw[MAX_BIT];
+
+void precompute(const Matrix& A) { ... }
+
+// multiply only the precomputed matrices for set bits of exp
+Matrix fast_pow(ll exp) { ... }
+
+Matrix recursion_matrix() {
+    Matrix A;
+    // recurrence values in first row
+    ...
+    // rest is always the same
+    for (int i{1}; i < SZ; i++)
+        A.set_entry(i, i - 1, 1);
+    return A;
+}
+
+ll sum_of_golden_nuggets(ll max_index) {
+    if (max_index == 0) return 0;
+    if (max_index == 1) return 2;
+    ll n = max_index / 2;
+    Matrix An = fast_pow(n);
+    // calculate S_n
+    ll sum = An.calc_res_s();
+    // if max_index is odd, have to increment power by 1 for the S_bar-sequence
+    // such that n + (n + 1) = max_index and sum_(i = 1)^(max_index) g_i = S_n + S_bar_(n + 1)
+    if (max_index % 2 == 1)
+        An = An * pw[0];
+    // calculate S_bar_n and add it
+    sum += An.calc_res_s_bar();
+    return sum % MOD;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    precompute(recursion_matrix());
+
+    int T;
+    cin >> T;
+    while (T--) {
+        ll L, R;
+        cin >> L >> R;
+        // use sum_of_golden_nuggets() here
+        ll res = (... + MOD) % MOD;
+        cout << res << '\n';
+    }
+    // check original problem with sum of first 30 golden nuggets by taking L = 1 and R = 30
+    // cout << ... % MOD << '\n';
+    return 0;
+}
+
+{% endhighlight %}
+
+Boah, das war jetzt so viel zu schreiben, dass ich gar nicht mehr allzu ausschweifend erklären mag, was ich noch alles über die Lösungen herausgefunden habe. Eine kleine Anmerkung vielleicht zur Teilerfremdheit von \\( u = a^2 + ab - b^2 \\) und \\( v = ab + 3a^2 \\). Hätte man nur mal den ersten golden nugget angeschaut (da war \\( g = 2 \\) für \\( x = \frac{2}{5} \\)), hätte man ja \\( (a, b) = (2, 5) \\) ablesen und mal einsetzen können. Es kommt heraus, dass \\( u = 4 + 10 - 25 = -11 \\) (das ist schonmal sowas von nicht \\( \pm 1 \\)) und \\( v = 10 + 12 = 22 \\) sind, also überhaupt nicht teilerfremd. Die Hypothese war also __falsch__! Warum zum Teufel habe ich die Aufgabe dann trotzdem lösen können? Wo ist der Zusammenhang zwischen den Lösungen \\( (1, -1) \\), die aus \\( \overline{\varphi} \\) entsprang und diesem ominösen \\( (2, 5) \\)? Beide erzeugen dasselbe Nugget \\( \overline{g}_1 \\), haben aber unterschiedliche Normen, nämlich -1 und -11! Ich war zuerst ziemlich ratlos. Wenn ich irgendwann dazu komme, beschreibe ich hier vielleicht noch ausführlicher, was ich herausgefunden habe. Beide Nugget-Familien werden nämlich auch noch von Elementen mit der Norm -11 erzeugt, ähnlich wie bei Aufgabe #137 werden alle Lösungen also gedoppelt. Das liegt natürlich an der erzeugenden Funktion \\( A_G(x) \\). Setzt man sie gleich einem \\( g \in \mathbb{N} \\), erhält man ein quadratisches Polynom in \\( x \\), es gibt also __zwei__ rationale Lösungen \\( x_1 = \frac{a_1}{b_1} \\) und \\( x_2 = \frac{a_2}{b_2} \\) und für diese kann man mit Hilfe von Vieta und einigen Überlegungen in \\( \mathcal{O}_K \\) zeigen, dass die eine Lösung immer zu einem Element \\( z_1 \in \mathcal{O}_K \\) der Norm -1 gehört, die andere aber zu einem Element \\( z_2 \\) mit Norm -11! Schon heftig, aber der Zufall wollte es, dass ich aus diesem Grund völlig unbeschadet aus der Sache rauskam und erst hier beim Aufschreiben bemerkte, wie viel "Glück" ich gehabt hatte. 
+
+Naja, das Glück des Tüchtigen eben! (\* Platzhalter für ganz viele smirky Smilies \*) 
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler140/problem
+[original]: https://projecteuler.net/problem=140
+[forum]: https://projecteuler.net/thread=140
+[golden-field]: https://en.wikipedia.org/wiki/Golden_field
