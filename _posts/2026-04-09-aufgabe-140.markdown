@@ -13,7 +13,7 @@ $$
 A_G(x) = \sum_{i = 1}^{\infty} G_i x^i,
 $$
 
-wobei im Unterschied zu den Fibonacci-Zahlen \\( G_1 = 1 \\) und \\( G_2 = 4 \\) gesetzt wird (was es nicht alles auslöst, wenn man einen Startwert ein bißchen schief rückt!). Die Aufgabenstellung war auch ein klein wenig anders: Finde die Summe der zugehörigen "golden nuggets" \\( g_n \\) im Bereich \\( n \in [L, R] \\) für gegebene Grenzen \\( L \leq R \\).
+wobei im Unterschied zu den Fibonacci-Zahlen \\( G_1 = 1 \\) und \\( G_2 = 4 \\) gesetzt wird (was es nicht alles auslöst, wenn man einen Startwert ein bißchen schief rückt!). Die Aufgabenstellung war auch ein klein wenig anders: Finde die __Summe__ der zugehörigen "golden nuggets" \\( g_n \\) im Bereich \\( n \in [L, R] \\) für gegebene Grenzen \\( L \leq R \\).
 
 Das erste Beispiel war \\( x = \frac{2}{5} \\) (hätte ich da mal genauer hingeschaut!), für das \\( A_G(x) = 2 \\) wird. Also dachte ich: Gehen wir doch wieder genauso vor wie beim letzten Nugget-Schürfen: 
 1. Finde die geschlossene Form der Potenzreihe
@@ -76,7 +76,7 @@ $$
 die Koeffizienten \\( a_n = F_{2n} \\) und \\( b_n = F_{2n + 1} \\) und damit 
 
 $$
-g_n = a_nb_n = F_{2n}F_{2n +1} + 3F_{2n}^2.
+g_n = a_nb_n + 3a_n^2 = F_{2n}F_{2n +1} + 3F_{2n}^2.
 $$
 
 Wenn man das mal für \\( n = 1 \\) und \\( n = 2 \\) ausrechnet, erhält man aber nur 
@@ -97,10 +97,10 @@ $$
 Wir benötigen nur die ungeraden Potenzen \\( \overline{\varphi}^{2n - 1} \\) mit \\( n \geq 1 \\), da die geraden wieder die falsche Norm haben, also werden die Koeffizienten zu \\( a_n = F_{2n} \\) und \\( b_n = - F_{2n - 1} \\) und damit die entsprechenden Nuggets zu 
 
 $$
-\overline{g}_n = a_nb_n = - F_{2n}F_{2n - 1} + 3F_{2n}^2.
+\overline{g}_n = a_nb_n + 3a_n^2 = - F_{2n}F_{2n - 1} + 3F_{2n}^2.
 $$
 
-Da der hintere Term den ersten negativen überkompensiert werden die ehemals noch negativen Nuggets (siehe Bemerkung in #137) für die Potenzen von \\( \overline{\varphi} \\) hier zu zulässigen positiven Nuggets und wir bekommen eine komplette zusätzliche Nugget-Familie. Rechnen wir nach für die niedrigsten \\( n \\):
+Da der hintere Term (dreimal das Quadrat der Fibonacci-Zahlen) den ersten negativen überkompensiert, werden die ehemals noch negativen Nuggets (siehe Bemerkung in #137) für die Potenzen von \\( \overline{\varphi} \\) hier zu __zulässigen__ positiven Nuggets und wir bekommen eine komplette zusätzliche Nugget-Familie. Rechnen wir nach für die niedrigsten \\( n \\):
 
 $$
 \begin{align*}
@@ -242,7 +242,29 @@ int main() {
 
 {% endhighlight %}
 
-Boah, das war jetzt so viel zu schreiben, dass ich gar nicht mehr allzu ausschweifend erklären mag, was ich noch alles über die Lösungen herausgefunden habe. Eine kleine Anmerkung vielleicht zur Teilerfremdheit von \\( u = a^2 + ab - b^2 \\) und \\( v = ab + 3a^2 \\). Hätte man nur mal den ersten golden nugget angeschaut (da war \\( g = 2 \\) für \\( x = \frac{2}{5} \\)), hätte man ja \\( (a, b) = (2, 5) \\) ablesen und mal einsetzen können. Es kommt heraus, dass \\( u = 4 + 10 - 25 = -11 \\) (das ist schonmal sowas von nicht \\( \pm 1 \\)) und \\( v = 10 + 12 = 22 \\) sind, also überhaupt nicht teilerfremd. Die Hypothese war also __falsch__! Warum zum Teufel habe ich die Aufgabe dann trotzdem lösen können? Wo ist der Zusammenhang zwischen den Lösungen \\( (1, -1) \\), die aus \\( \overline{\varphi} \\) entsprang und diesem ominösen \\( (2, 5) \\)? Beide erzeugen dasselbe Nugget \\( \overline{g}_1 \\), haben aber unterschiedliche Normen, nämlich -1 und -11! Ich war zuerst ziemlich ratlos. Wenn ich irgendwann dazu komme, beschreibe ich hier vielleicht noch ausführlicher, was ich herausgefunden habe. Beide Nugget-Familien werden nämlich auch noch von Elementen mit der Norm -11 erzeugt, ähnlich wie bei Aufgabe #137 werden alle Lösungen also gedoppelt. Das liegt natürlich an der erzeugenden Funktion \\( A_G(x) \\). Setzt man sie gleich einem \\( g \in \mathbb{N} \\), erhält man ein quadratisches Polynom in \\( x \\), es gibt also __zwei__ rationale Lösungen \\( x_1 = \frac{a_1}{b_1} \\) und \\( x_2 = \frac{a_2}{b_2} \\) und für diese kann man mit Hilfe von Vieta und einigen Überlegungen in \\( \mathcal{O}_K \\) zeigen, dass die eine Lösung immer zu einem Element \\( z_1 \in \mathcal{O}_K \\) der Norm -1 gehört, die andere aber zu einem Element \\( z_2 \\) mit Norm -11! Schon heftig, aber der Zufall wollte es, dass ich aus diesem Grund völlig unbeschadet aus der Sache rauskam und erst hier beim Aufschreiben bemerkte, wie viel "Glück" ich gehabt hatte. 
+Boah, das war jetzt so viel zu schreiben, dass ich gar nicht mehr allzu ausschweifend erklären mag, was ich noch alles über die Lösungen herausgefunden habe. Eine kleine Anmerkung vielleicht zur Teilerfremdheit von \\( u = a^2 + ab - b^2 \\) und \\( v = ab + 3a^2 \\). Hätte man nur mal den ersten golden nugget angeschaut (da war \\( g = 2 \\) für \\( x = \frac{2}{5} \\)), hätte man ja \\( (a, b) = (2, 5) \\) ablesen und mal einsetzen können. Es kommt heraus, dass \\( u = 4 + 10 - 25 = -11 \\) (das ist schonmal sowas von nicht \\( \pm 1 \\)) und \\( v = 10 + 12 = 22 \\) sind, also überhaupt nicht teilerfremd. Die Hypothese war also __falsch__! Warum zum Teufel habe ich die Aufgabe dann trotzdem lösen können? Wo ist der Zusammenhang zwischen der Lösung \\( (1, -1) \\), die aus \\( \overline{\varphi} \\) entsprang und bei mir das nugget \\( \overline{g}_1  = 2 \\) erzeugte, und diesem ominösen \\( (2, 5) \\) mit der Norm -11, das "auf einmal" auftaucht (eigentlich stand es ja in der Aufgabenstellung, hat mich also schon die ganze Zeit angegrinst) und meine Kreise stört? 
+
+Ich war zuerst ziemlich ratlos. Wenn ich irgendwann dazu komme, beschreibe ich hier vielleicht noch ausführlicher, was ich nach langem Überlegen herausgefunden habe. Beide Nugget-Familien werden nämlich auch noch von Elementen mit der Norm -11 erzeugt, ähnlich wie bei Aufgabe #137 werden alle Lösungen also gedoppelt. Das liegt natürlich an der erzeugenden Funktion \\( A_G(x) \\). Setzt man sie gleich einem \\( g \in \mathbb{N} \\) erhält man ein quadratisches Polynom in \\( x \\), es gibt also immer __zwei__ rationale Lösungen \\( x_1 = \frac{a_1}{b_1} \\) und \\( x_2 = \frac{a_2}{b_2} \\) und für diese kann man mit Hilfe von Vieta und einigen Überlegungen in \\( \mathcal{O}_K \\) zeigen, dass die eine Lösung immer zu einem Element \\( z_1 \in \mathcal{O}_K \\) der Norm -1 gehört, die andere aber zu einem Element \\( z_2 \\) mit Norm -11! Außerdem liefert einem die Rechnung den Transformationsfaktor zwischen diesen beiden Lösungen, es gilt nämlich immer
+
+$$
+z_2 = -(3 + 2\varphi)z_1^{-1}.
+$$
+
+So wird z.B. aus meinem \\( z_1 = \overline{\varphi} = 1 - \varphi \\) mit \\( z_1^{-1} = -\varphi \\) tatsächlich das ominöse
+
+$$
+z_2 = -(3 + 2\varphi)(- \varphi) = 3\varphi + 2\varphi^2 = 3\varphi + 2(1 + \varphi) = 2 + 5\varphi.
+$$
+
+Witzigerweise entsteht dadurch auch eine "Spiegellösung" mit Norm -11 für unsere "einfachen" \\( g_n \\). Wendet man die Transformation auf \\( z_1 = \varphi^3 \\) an (das ja zum ersten nugget \\( g_1 = 5 \\) in der \\( g \\)-Familie führt), so ergibt sich wegen \\( z_1^{-1} = - \overline{\varphi}^3 = -3 + 2\varphi \\) die vorher völlig im Dunklen gelegene Lösung
+
+$$
+z_2 = (3 + 2 \varphi)(-3 + 2\varphi) = -9 + 4(1 + \varphi) = -5 + 4\varphi.
+$$
+
+Es gilt also \\( A_G(-\frac{5}{4}) = 5 \\) und \\( N(z_2) = -11 \\).
+
+Schon heftig, aber der Zufall wollte es, dass ich trotz meines groben Schnitzers völlig unbeschadet aus der Sache rauskam und erst hier beim Aufschreiben bemerkte, wie viel "Glück" ich gehabt hatte. 
 
 Naja, das Glück des Tüchtigen eben! (\* Platzhalter für ganz viele smirky Smilies \*) 
 
