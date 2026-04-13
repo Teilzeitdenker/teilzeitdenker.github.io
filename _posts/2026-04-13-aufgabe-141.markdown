@@ -1,0 +1,266 @@
+---
+layout: post
+title:  "Project Euler+ #141: Investigating progressive numbers, n, which are also square"
+date:   2026-04-13
+categories: project-euler
+---
+
+Sehen wir uns mal das Setup an. Wir suchen "progressive" Zahlen, das sind Zahlen \\( n \in \mathbb{N} \\), für die ein \\( d < n, \; d \not\mid n \\) existiert, so dass die Zahlen \\( (r, q, d) \\) in der "euklidischen" Zerlegung \\( n = dq + r \\) mit Rest \\( r < d \\) eine geometrische Folge bilden. Dabei war ausdrücklich nicht vorgegeben, welche Zahl die kleinste sein muss, auf jeden Fall kann man \\( q \\) und \\( d \\) aber so wählen, dass \\( q < d \\) gilt (zur Not halt vertauschen). Also ist o.B.d.A. (oder auf "englisch": w.l.o.g, hehe!) immer \\( d \\) die größte der drei Zahlen. 
+
+In der [ursprünglichen Aufgabe][original] war die Summe aller progressiven \\( n < 10^{12} = L \\) gesucht, die gleichzeitig Quadratzahlen sind. In der [HackerRank-Version][problem] war noch ein zusätzlicher Kniff dabei. Außer dem Limit \\( L \leq 10^{11} \\) wurde für jeden der bis zu 40'000 Tests auch noch ein \\( K \leq 10^6 \\) gegeben, das angab, wie weit eine progressive Zahl davon "entfernt" sein durfte, eine Quadratzahl zu sein. 
+
+Zunächst war ich von den Grenzen für \\( L, K \\) etwas überrascht. Erstens war untypischerweise das Limit bei HackerRank niedriger als im Original. Das erklärte sich aber dadurch, dass man viel mehr progressive Zahlen betrachten muss, weil ja \\( K \\) eingeführt wurde (letztendlich ergibt sich, dass es in diesem Bereich etwa 2,4 Millionen progressive Zahlen gibt. Bei einer Steigerung um den Faktor 10 kämen wir da in einen Bereich, in dem die Ausführung des Programms weit über 1-2 Sekunden betragen würde). 
+
+Ich überlegte dann, ob überhaupt progressive Zahlen aus der Betrachtung herausfallen würden, weil sie einfach "zu weit" von der nächsten Quadratzahl entfernt sind. Also überlegte ich zunächst, wie groß der maximale Abstand zwischen zwei Quadratzahlen \\( \leq 10^{11} \\) ist.
+
+Wegen \\( (x + 1)^2 - x^2 = 2x + 1 \\) gilt mit \\( x < \sqrt{10^{11}} \approx 316227 \\), dass der maximale Abstand zur nächsten Quadratzahl \\( k_{\mathrm{max}} = 316228 \\) beträgt. Das wunderte mich, denn es war ja in der Aufgabenstellung \\( K \leq 10^6 \\). Vielleicht wurde hier tatsächlich vergessen, auch die Grenzen für \\( K \\) noch anzupassen?
+
+Egal. Auf jeden Fall können wir alle \\( K \geq k_{\mathrm{max}} \\) wie \\( k_{\mathrm{max}} \\) selbst behandeln. Die Idee ist nun Folgende:
+
+1. Erzeuge alle progressiven Zahlen \\( \leq 10^{11} \\) und speichere sie (natürlich aufsteigend sortiert und ohne Duplikate) in einem Vektor progNums
+2. Verwende einen offline-Algorithmus und sortiere die Tests aufsteigend nach \\( L \\)
+3. Fülle einen binary indexed tree (BIT), dessen index der Entfernung zur nächsten Quadratzahl entspricht, mit Zahlen aus progNums bis zum aktuellen \\( L \\) auf
+4. Beantworte den aktuellen Test durch Abfragen des BIT bis zum gegebenen \\( K \\), das liefert die Summe aller gefragten progNums
+
+Kopieren wir also mal ein paar Strukturen aus den Aufgaben #124 und #127 für die test cases und den BIT und definieren die nötigen globalen Variablen:
+
+
+{% highlight c++ %}
+
+using ui = unsigned int;
+using ull = unsigned long long;
+using vull = vector<ull>;
+
+//---------------------------------- Helper structs --------------------------------------------
+
+struct TestCase {
+    ull L;
+    int K;
+    int idx;
+    bool operator<(const TestCase& other) const {
+        return L < other.L;
+    }
+};
+
+struct BIT {
+    int size;
+    vector<ull> bit; // index 0 not used
+    BIT(int n) : size(n), bit(n + 1) {}
+    
+    void update(int x, ull v) {
+            x++;
+            for (; x <= size; x += x & -x) bit[x] += v;
+    }
+    // sum of values in [0,b]
+    ull query(int b) {
+        b++;
+        ull res = 0;
+        for (; b > 0; b -= b & -b) res += bit[b];
+        return res;
+    }
+};
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+const ull N_MAX = 100'000'000'000;
+// const int K_MAX = 1'000'000; // not needed any more
+const int ROOT_MAX = 316'228;
+BIT bit(ROOT_MAX + 1); // since index 0 is not used, vector in BIT must have ROOT_MAX + 2 entries!
+vull progNums;
+int sz; // size of progressive numbers vector
+
+{% endhighlight %}
+
+Die Struktur von main() ist auch schon klar. Es bleiben später also nur noch die Funktionen fillProgNums() und fillTreeUpTo() mit Leben zu füllen, damit wir das Programm starten können:
+
+{% highlight c++ %}
+
+//---------------------------------- MAIN function ----------------------------------------------
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int T;
+    cin >> T;
+    // Sort input and use offline approach
+    vector<TestCase> testCases;
+    for (int idx = 0; idx < T; idx++) {
+        ull L;
+        int K;
+        cin >> K >> L;
+        if (K > ROOT_MAX) K = ROOT_MAX; // 70% of BIT not needed because of this line
+        testCases.push_back({L, K, idx});
+    }
+    sort(testCases.begin(), testCases.end());
+
+    // prepare
+    fillProgNums();
+    vull res(T);
+    int curr_idx = 0; // index in progNums
+
+    for (int t = 0; t < T; t++) {
+        TestCase tc = testCases[t];
+        fillTreeUpTo(tc.L, curr_idx);
+        res[tc.idx] = bit.query(tc.K); // write to results vector at corresponding test index
+    }
+    // output
+    for (int t = 0; t < T; t++) cout << res[t] << endl;
+
+    // extra info
+    // cout << "Number of progressive numbers found: " << sz << endl;
+    // altogether 2404594 progressive numbers, a proportion of 0.0024% with N_MAX = 10^11
+
+    return 0;
+}
+
+{% endhighlight %}
+
+Bevor wir uns um das Finden von progressiven Zahlen kümmern, fangen wir erst mit der etwas unkomplizierteren Aufgabe an, den BIT von Limit zu Limit aufzufüllen. Dazu müssen wir für die nächste progressive Zahl immer ihren Abstand zur nächsten Quadratzahl berechnen, und dann den BIT an der entsprechenden \\( k \\)-Stelle updaten. Um möglichst schnell die ganzzahlige Wurzel aus einem ull zu ziehen, habe ich eine rekursive Methode isqrt(), die ich ursprünglich für die (meines Erachtens extrem zu empfehlende) [Exercism-Seite][exercism] in C# geschrieben hatte, für C++ adaptiert. Diese benötigt einen seed, der vom 2er-Logarithmus der Zahl abhängt:
+
+{% highlight c++ %}
+
+//---------------------------------- Helper functions -------------------------------------------
+
+ull seed(ull x) {
+    // calculate floor(log2(x)) by subtracting number of starting zeros in bit repr. of x
+    ui lg2 = x ? 63u - __builtin_clzll(x) : 0;
+    // we seed the number with x_0 = 2^(floor(log2(x))/2 + 1)
+    return 1ULL << ((lg2 >> 1) + 1);
+}
+
+// Heron's method (also known as the Babylonian method) to find the integer square root
+ull isqrt(ull x, ull sd) { // use the seed()-function for first seed!
+    ull nxt = (sd + x/sd) >> 1;
+    if (nxt >= sd) return sd;
+    return isqrt(x, nxt);
+}
+
+void fillTreeUpTo(ull L_nxt, int& i) { // takes i by reference!
+    while (i < sz && progNums[i] < L_nxt) {
+        ull pr = progNums[i];
+        ull root = isqrt(pr, seed(pr));
+        // ROOT_MAX = 316'227 is far lower than K_MAX = 1 million
+        // k will always be within the range [0, ROOT_MAX + 1]
+        // -> need less space for the BIT
+        int k = (int)min(pr - root*root, (root + 1)*(root + 1) - pr);
+        bit.update(k, pr);
+        i++;
+    }
+}
+
+{% endhighlight %}
+
+Wenn man sich traut, kann man übrigens auch einfach die Zeile  
+
+{% highlight c++ %}
+
+ull root = isqrt(pr, seed(pr));
+
+{% endhighlight %}
+
+durch das Verwenden von reinen Bibliotheks-Funktionen für doubles ersetzen, also
+
+{% highlight c++ %}
+
+ull root = (ull)floor(sqrt(pr));
+
+{% endhighlight %}
+
+schreiben. Dann spart man sich den ganzen Sums und es geht auch durch den Judge! Ich hatte bloss "Angst", dass durch das Casten zu double (zur Sicherheit hätte ich dann evtl. explizit auf long double gecastet) ein Rundungsfehler reinkommt, den ich dann wieder durch das Addieren irgendeines 
+
+{% highlight c++ %}
+
+const long double ERR = 1e-7;
+
+{% endhighlight %}
+
+innerhalb der floor()-Funktion korrigieren muss. Und da ich die besagte Aufgabe mit dem Heron-Verfahren ohnehin gerade auf Exercism gemacht hatte, hab' ich mir gedacht: "Das ist doch mal ein echter Use-Case!"
+
+So! Damit haben wir bis auf die Mathematik eigentlich alles vorbereitet. Um herauszufinden, wie wir fillProgNums() schreiben müssen, schauen wir uns das Tripel \\( (r, q, d) \\) mit unserer progressiven Zahl \\( n = qd + r \\) nochmal genauer als geometrische Folge an. Wir müssen zwei Fälle unterscheiden, nämlich \\( r < q \\) und \\( q < r \\).
+
+1. Sei \\( r < q \\). Sei außerdem \\( \frac{a}{b} \\) mit \\( a, b \\) teilerfremd der Faktor der geometrischen Folge, d.h. es gilt: 
+
+    $$
+    \begin{align*}
+    q &= \frac{a}{b}r \\
+    d &= \left( \frac{a}{b} \right)^2 r
+    \end{align*}
+    $$
+
+    Damit \\( d \\) ganz ist, muss \\( b^2 \mid r \\) gelten, also \\( r = cb^2 \\) für irgendeinen Faktor \\( c \geq 1 \\). Wir erhalten einen Ausdruck in \\( a, b, c \\) für die progressiven Zahlen \\( n \\):
+
+    $$
+    \begin{align*}
+    q &= \frac{a}{b}cb^2 = abc \\
+    d &= \left( \frac{a}{b} \right)^2 cb^2 = a^2c \\
+    n &= qd + r = a^3bc^2 + b^2c.
+    \end{align*}
+    $$
+
+    Dabei sind noch \\( b < a \\) (denn der Faktor \\( \frac{a}{b} \\) muss größer 1 sein) und \\( \mathrm{gcd}(a, b) = 1 \\) zu beachten. Die Iterationen über \\( a, b \\) und \\( c \\) kann man in genau dieser Reihenfolge ausführen. Wenn das zugehörige \\( n \\) zu groß wird, breaken wir! 
+
+2. Sei \\( q < r \\) und \\( \frac{a}{b} \\) wie in 1. Nun gilt stattdessen
+
+    $$
+    \begin{align*}
+    r &= \frac{a}{b}q \\
+    d &= \left( \frac{a}{b} \right)^2 q
+    \end{align*}
+    $$
+
+    Damit \\( d \\) ganz ist, muss nun \\( b^2 \mid q \\) gelten, also \\( q = cb^2 \\) und damit ähnlich wie oben
+
+    $$
+    \begin{align*}
+    r &= abc \\
+    d &= a^2c \\
+    n &= qd + r = a^2b^2c^2 + abc = abc(abc + 1).
+    \end{align*}
+    $$
+
+    Setzen wir also \\( f = abc \\) (da einzig \\( a > b \\) gelten muss, ist \\( f \geq 2 \\) beliebig), so ergeben sich als progressive Zahlen daraus 
+
+    $$
+    n = f(f + 1), \; f \geq 2
+    $$
+
+Diese Informationen reichen aus, um mit fillProgNums() das Programm zu vervollständigen. Man muss den erhaltenen Vektor aber noch sortieren und deduplizieren, denn es könnte sein (und ist auch so!), dass manche progressive Zahlen mehrere Tripel erlauben und durch unseren Algorithmus daher mehrfach eingefügt werden. Das letzte Listing (diesmal mit Auslassungen):
+
+{% highlight c++ %}
+
+//---------------------------------- Helper functions -------------------------------------------
+
+void fillProgNums() {
+    // r < q < d
+    for (ull a = 2; ... < N_MAX; a++) { // minimal values of b and c are 1
+        ull a3 = a*a*a;
+        for (ull b = 1; b < a; b++) {
+            ull b2 = b*b;
+            if ( ... >= N_MAX) break; // minimal value of c is 1
+            if (__gcd(a, b) > 1) continue; // builtin gcd() (use g++ only)
+            for (ull c = 1;; c++) {
+                ull n = ...;
+                if (n >= N_MAX) break;
+                progNums.push_back(n);
+            }
+        }
+    }
+    // q < r < d
+    for (ull abc = 2; abc*(abc + 1) < N_MAX; abc++) // push the right numbers to progNums
+        ...
+
+    // sort and get rid of duplicates
+    sort(progNums.begin(), progNums.end());
+    progNums.resize(unique(progNums.begin(), progNums.end()) - progNums.begin());
+    sz = (int)progNums.size(); // for use in fillTreeUpTo and in extra info
+}
+
+{% endhighlight %}
+
+Ich denke, die Luft wird langsam dünner. Das Leaderboard ist nicht mal drei Seiten lang hier und es gab nur etwa 50 Leute, die überhaupt Punkte erhalten haben. Je weiter man vordringt, umso weniger Löser gibt es, selbst wenn einem die Aufgaben gar nicht mehr so schwer erscheinen. Aber wahrscheinlich ist der gesunde Menschenverstand in diesem Stadium bereits getrübt und man wird sozusagen ein wenig "betriebsblind", wenn man schon so viele von diesen algorithmischen Aufgaben gelöst hat. Da geh ich doch mal ein bißchen raus an die frische Luft! 
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler141/problem
+[original]: https://projecteuler.net/problem=141
+[forum]: https://projecteuler.net/thread=141
+[exercism]: https://exercism.org/
