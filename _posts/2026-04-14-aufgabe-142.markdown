@@ -1,0 +1,60 @@
+---
+layout: post
+title:  "Project Euler+ #142: Perfect Square Collection"
+date:   2026-04-14
+categories: project-euler
+---
+
+Ok, ich geb's zu, die [Aufgabe][problem] habe ich "gehackt" (aber das entspricht ja den Erwartungen der Webseite, die den Contest hostet). Denn es gab dermaßen viele Posts mit Lösungstripeln im [Forum][forum], dass ich beschloß, erst mal zu versuchen, mir die Erzeugung der _primitiven_ pythagoräischen Tripel, dann _aller_ Tripel, dann deren Einsortierung in irgendeine Map-Struktur, um später wie in einem Memory-Spiel Fälle wiederaufdecken zu können, für die die Hypotenusenlänge einer Kathetenlänge entspricht, worauf dann ganz viele weitere Überprüfungen stattfinden müssen, einfach komplett zu ersparen. 
+
+Das hat für die ersten Tests auch ratzfatz geklappt. Man muss dazu nur verwenden, dass für jede Lösung \\( (x, y, z) \\) natürlich auch das Tripel \\( (k^2x, k^2y, k^2z) \\) mit \\( k \in \mathbb{N} \\) eine Lösung bildet. Nutzt man das für das kleinste Lösungstripel aus der [Original-Aufgabe][original], erhält man bereits über 1'500 Lösungen mit \\( x \leq 10^{12} \\). Also wer soll da widerstehen, das sind die ersten 6 Tests quasi geschenkt!
+
+In diesem Zusammenhang fand ich das Beispiel auf HackerRank auch cool. Die Zahl \\( x \\) war dort mit Absicht dermaßen groß gewählt, nämlich \\( x = 472226642633 \\), dass bereits \\( 4x \geq 10^{12} \\) galt, man dieses Lösungstripel also nicht verwenden konnte, um sich mehr Lösungen zu "erschleichen". Fand ich witzig, denn wenn man die Aufgabe das erste Mal durchliest, findet man das Beispiel mit diesen riesigen Zahlen erstmal extrem seltsam. Es zeigt sich aber auch hier: Wenn man etwas seltsam findet, verbirgt sich dahinter oft ein interessanter Grund, dessen Aufdeckung lohnenswert ist! 
+
+Allerdings sträubte sich der achte Test anfangs unbarmherzig mit Wrong Answers. Also habe ich nochmal überlegt und herausgefunden, dass man den Tripeln aus dem Forum insoweit nicht vertrauen konnte, dass sie nicht linear unabhängig bezüglich dieser Gewinnungsmethode von Lösungen sind (was die Erzeuger ja auch nie behauptet hatten). Und bei so großen Zahlen sieht man jetzt auch nicht unbedingt, dass die eine das 4-fache oder 9-fache der anderen ist. Merke: \\( 4\cdot 733025 = 2932100 \\). Daher muss man sich noch kurz einen Mechanismus zur Entfernung von Duplikaten ausdenken (oder einfach in die Sandbox spielen gehen, bis keine Duplikate mehr auftauchen), was aber nicht schwer ist. 
+
+Und so reichen tatsächlich ganze 6 verhältnismäßig "kleine" Lösungstripel (also mit \\( x + y + z < 10^7 \\)) aus, um alle Tests auf HackerRank zu bestehen (wenn man die richtigen nimmt). Die entsprechenden Zahlen lasse ich natürlich weg, sonst wär's ja komplett Banane:
+
+{% highlight c++ %}
+
+using namespace std;
+
+using ull = unsigned long long;
+using vll = vector<ull>;
+
+// 6 mysterious numbers in each vector
+vll x = { ... }; 
+vll y = { ... };
+vll z = { ... };
+
+const ull X_MAX = 1'000'000'000'000;
+
+int main() {
+    int N;
+    cin >> N;
+    int cnt = 0;
+    for (int i = 0; i < (int)x.size(); i++) {
+        ull k = 1;
+        while (k*k*x[i] < X_MAX && cnt < N) {
+            ull k2 = k*k;
+            cout << k2*x[i]<< " " << k2*y[i] << " " << k2*z[i] << endl;
+            cnt++;
+            k++;
+        }
+        if (cnt == N) break;
+    }
+    return 0;
+}
+
+{% endhighlight %}
+
+Das wars! Zu mehr Hingabe konnte ich mich hier einfach nicht aufraffen. Ich erinnere mich, in meinem ersten Post mal etwas Passendes geschrieben zu haben. Ich zitiere (mich selbst, hihi): 
+
+> Schon klar, dass es jedem selbst überlassen ist, ob er "Lösungen nachschaut" und   damit das eigene Lernerlebnis torpediert, aber leider ist es ja so, dass vernünftige Menschen mit effizient arbeitenden Gehirnen dazu neigen, sich die Arbeit grundsätzlich erleichtern zu wollen, auch wenn das auf lange Sicht den Niedergang ihrer eigentlichen Intelligenz und damit den Untergang des Abendlandes verursachen mag. 
+> - *H.-E. Ro., [Ritt auf der Rasierklinge]({% post_url 2026-02-07-ritt-auf-der-rasierklinge %})*
+
+Hach ja, seufz. Wie wahr, wie wahr.
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler142/problem
+[original]: https://projecteuler.net/problem=142
+[forum]: https://projecteuler.net/thread=142
