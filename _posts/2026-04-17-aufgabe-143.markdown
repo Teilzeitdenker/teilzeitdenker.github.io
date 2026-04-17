@@ -1,0 +1,162 @@
+---
+layout: post
+title:  "Project Euler+ #143: Investigating the Torricelli point of a triangle"
+date:   2026-04-17
+categories: project-euler
+---
+
+Das war ein recht anspruchsvolles [Problem][problem], muss ich sagen. Gottseidank habe ich Zugang zum Forum der [ursprünglichen Aufgabe][original], denn dort gibt es ein schönes PDF zum Herunterladen, in dem eigentlich alle mathematischen Zusammenhänge erläutert werden, die man braucht, um ein ausreichend effizientes Programm zu schreiben. Daher werde ich mir sparen, hier weitere Formeln aufzuschreiben, das ist ja bereits alles geTeXt. 
+
+Man musste nur ein wenig aufpassen, denn die HackerRank-Version fragte nach ganz anderem Output als das Original. So sollte man hier die ganzzahligen Tripel \\( (a, b, c) \\) mit \\( a \leq b \leq c \\) für jedes Toricelli-Dreieck geordnet ausgeben, während dort noch die unterschiedlichen (distinct!) \\( r + p + q \\) aufsummiert werden mussten. Definieren wir also mal ein struct für unsere Lösungs-Tripel (das uns später auch in anderer Weise dienlich sein kann): 
+
+{% highlight c++ %}
+
+using ull = unsigned long long;
+using ui = unsigned int;
+using vll = vector<ull>;
+
+//---------------------------------- Helper structs --------------------------------------------
+
+struct Solution {
+    ull a, b, c;
+    // sort ascendingly on initialization
+    Solution(ull a_, ull b_, ull c_) : a(a_), b(b_), c(c_) { sort(); }
+    void sort() {
+        if (a > b) swap(a, b);
+        if (b > c) swap(b, c);
+        if (a > b) swap(a, b);
+    }
+    // needed for sorting a vector of solutions 
+    bool operator<(const Solution& other) const { 
+        // tuples will be lexicographically sorted, so use std::tie here
+        return tie(a, b, c) < tie(other.a, other.b, other.c);
+    }
+    // output
+    void print() {
+        cout << a << " " << b << " " << c << endl;
+    }
+};
+
+{% endhighlight %}
+
+Im Folgenden werden wir genauso vorgehen, wie es im PDF beschrieben ist. Weil das maximale \\( N \\) bei HackerRank jedoch etwa 3mal so hoch angesetzt war (\\( 4\cdot 10^5 \\) statt nur \\( 1,2 \cdot 10^5 \\)), müssen wir schauen, dass wir alles so effizient wie möglich gestalten und jegliche überflüssige "Arbeit" vermeiden (insbesondere immer so früh wie möglich die Schleifen breaken!). 
+
+Außerdem wollen wir für die inneren Schenkel festlegen, dass immer \\( r \leq p \leq q \\) gelten soll. Das bedeutet dann aber auch, dass (anders als in der Abbildung zur Aufgabe) meine inneren Dreiecke von den Seitentripeln \\( (r, p, a), (r, q, b) \\) und \\( (p, q, c) \\) begrenzt werden. Arbeiten wir uns mal vom kleinsten direkt zum größten Dreieck vor: 
+
+1. Erstelle alle primitiven Tripel \\( (r, p, a) \\) von ganzzahligen Seiten eines 120°-Dreiecks (verläuft analog zu den primitiven pythagoräischen Tripeln, aber mit etwas anderen Formeln)
+2. Erzeuge nun ALLE Tripel (mit Hilfe eines Faktors \\( k \\)) und sortiere die entstehenden Schenkellängen (legs) in eine Map-Struktur ein (die längste Seite \\( a \\) schmeißen wir weg), wobei wir den kürzeren Schenkel \\( r \\) als Key verwenden wollen und ein Vektor aus möglichen Schenkellängen \\( p \\) den zugehörigen Value darstellt
+3. Gehe diese Map nun nach Keys durch. Sortiere jeden Vektor erstmal aufsteigend, dedupliziere ihn, und untersuche dann die darin enthaltenen Schenkellängen paarweise darauf, ob sie zusammen wieder als Schenkellängen in einem 120°-Dreieck \\( (p, q, c) \\) durchgehen würden (dazu muss man den Kosinussatz verwenden und überprüfen, ob eine Quadratzahl herauskommt) 
+4. Falls ja haben wir eine zulässige Lösung \\( (r, p, q) \\) gefunden. Um die alte Projekt-Euler-Aufgabe zu lösen, fügen wir sie mal in ein Set ein. Praktisch ist, dass wir für dieses Set von \\( (r, p, q) \\)-Tripeln einfach das obige struct wiederverwenden können. 
+5. Rechne für jedes Tripel mit Hilfe des Kosinussatzes die Zahlen \\( (a, b, c) \\) aus und füge sie in einen Lösungsvektor ein
+6. Sortiere die Lösungen und schreibe alle Elemente auf stdout
+
+Die ersten zwei Schritte sind in der Funktion fillMapOfLegs() zusammengefasst. Die Schritte 3 bis 5 in der Funktion getSolutions(). Da wir bereits in Aufgabe 141 ganzzahlige Wurzeln gezogen haben, recyceln wir die entsprechenden Funktionen hier. Allerdings erweitern wir sie mit der Funktion isSquare(). Hier der Code mit Auslassungen (und Hinweisen in den Kommentaren): 
+
+{% highlight c++ %}
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+const ull N_MAX = 400'000;
+const ull N_MAX_ROOT = 631;
+map<ull, vll> mapOfLegs; // use the smaller leg as key here
+vector<Solution> sols; // for the "real" solutions (a, b, c)
+set<Solution> rpqs; // for solving the original problem
+
+//---------------------------------- Helper functions -------------------------------------------
+
+ull seed(ull x) { ... } // see problem 141
+ull isqrt(ull x, ull sd) { ... } // see problem 141
+
+// don't throw away the integer square, so return a pair
+pair<bool, ull> isSquare(ull x) {
+    ull iroot = isqrt(x, seed(x));
+    return {iroot*iroot == x, iroot};
+}
+
+void fillMapOfLegs() {
+    for (ull v = 1; v <= N_MAX_ROOT; v++) {
+        for (ull u = v + 1; u <= N_MAX_ROOT; u++) {
+            if (u*(u + 2*v) > N_MAX) break;
+            ull r = ... ; // read PDF
+            ull p = ... ;
+            if (p < r) swap(r, p); //  r <= p <= q
+            // generate all triples from this primitive one, sort legs into mapOfLegs
+            for (ull k = 1; k*(p + r) < N_MAX; k++) {
+                mapOfLegs[k*p].push_back(k*r);
+            }
+        }
+    }
+}
+
+void getSolutions(ull N) {
+    for (auto [r, vec] : mapOfLegs) {
+        if (vec.size() == 1) continue; // no pairs
+        sort(vec.begin(), vec.end());
+        vec.erase(unique(vec.begin(), vec.end()), vec.end());
+        for (int i = 0; i < (int)vec.size(); i++) {
+            for (int j = i + 1; j < (int)vec.size(); j++) {
+                ull p = vec[i];
+                ull q = vec[j];
+                if (r + p + q > N) break;
+                // check if we have a square
+                ull q2 = q*q;
+                ull p2 = p*p;
+                ull c2 = ... ; // read PDF
+                auto [is_sq, c] = isSquare(c2);
+                if (is_sq) {
+                    // needed for solving the original
+                    rpqs.insert(Solution(r, p, q));
+                    ull r2 = r*r;
+                    ull a2 = ... ; // smallest, so use r and p
+                    ull b2 = ... ; // middle, so use r and q
+                    sols.push_back(Solution(isqrt(a2, seed(a2)), isqrt(b2, seed(b2)), c));
+                }
+            }
+        }
+    }
+}
+
+// use rpqs to solve original problem
+ull solve_original() { 
+    set<ull> seen;
+    ull sum = 0;
+    for (auto sol : rpqs) {
+        ull new_sum = sol.a + sol.b + sol.c;
+        // no duplicates of sums allowed
+        if ( ... ) continue;
+        seen.insert(new_sum);
+        sum += new_sum;
+    }
+    return sum;
+}
+
+//---------------------------------- MAIN function ----------------------------------------------
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    // initialize
+    fillMapOfLegs();
+    // read input
+    ull N;
+    cin >> N;
+    // find triples of (a, b, c) with r + p + q <= N
+    getSolutions(N);
+    // sort and output (step 6)
+    sort(sols.begin(), sols.end());
+    for (auto sol : sols) sol.print();
+
+    // original
+    // ull sum = solve_original();
+    // cout << "Sum of all distinct r + p + q of all solutions: " << sum << endl;
+
+    return 0;
+}
+
+{% endhighlight %}
+
+Als Lückenfüller ganz nett. War ein rechtes Gebastel, aber jetzt, wo es fertig ist, bin ich eigentlich ganz zufrieden!
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler143/problem
+[original]: https://projecteuler.net/problem=143
+[forum]: https://projecteuler.net/thread=143
