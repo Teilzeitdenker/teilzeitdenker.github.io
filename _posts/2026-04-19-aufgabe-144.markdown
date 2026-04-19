@@ -1,0 +1,208 @@
+---
+layout: post
+title:  "Project Euler+ #144: Investigating multiple reflections of a laser beam"
+date:   2026-04-19
+categories: project-euler
+---
+
+Zack, Themenwechsel! Analytische Geometrie vom Feinsten, so mag ich das. Plötzlich beschäftigen wir uns statt mit Fibonacci-Zahlen oder primitiven pythagoräischen Tripeln mit Reflexionen eines Laserstrahls in einer elliptischen Weißzelle. 
+
+Im [Original][original] waren die Ellipsengleichung und der erste Reflexionspunkt komplett fest, bei der [HackerRank-Version][problem] durften die Konstanten \\( (a, b, c) \\) der Ellipse in einem bestimmten Bereich variieren und die Startpunkte des Strahls waren bis auf "kommt durchs Loch rein" und "erster Punkt liegt auf der Ellipse" auch halbwegs beliebig. Zusätzlich waren bis zu 100 Tests pro case angekündigt. 
+
+Im Grunde ist es ja so: Sobald wir wissen, aus welcher Richtung \\( \vec{d} \\) der Strahl kommt und an welchem Punkt \\( P \\) der Ellipse er "einschlägt", können wir mit dem Reflexionsgesetz den weiteren Verlauf des Strahls \\( \vec{r} \\) und daraus auch den nächsten Reflexionspunkt \\( P^{\prime} \\) bestimmen. Wir brauchen für jeden Iterationsschritt also genau ein solches Paar \\( (\vec{d}, P) \\). 
+
+Schauen wir uns zunächst die Reflexion des Laserstrahls an der gekrümmten inneren Oberfläche der Zelle ganz schematisch an:
+
+<p style="text-align:center;">
+<img src="/assets/images/reflection.svg" alt="Reflexion eines Laserstrahls an einer konkaven Oberfläche" style="max-width:450px; width:100%;">
+</p>
+
+Dabei bezeichnet \\( \vec{n} \\) den Normalenvektor zur Ellipsenkurve im Punkt \\( P \\), der quasi die Richtung der Spiegelachse vorgibt. Mit ein wenig analytischer Geometrie lässt sich leicht errechnen, dass gilt (mit dem Operator \\( \circ \\) wird das Skalarprodukt von Vektoren bezeichnet):
+
+$$
+\vec{r} = \vec{d} - 2\frac{( \vec{d} \circ \vec{n} )}{ \lvert \vec{n} \rvert^2 }\; \vec{n}
+$$
+
+Als ein Normalenvektor zur Ellipsenkurve mit der Gleichung \\( ax^2 + by^2 = c \\) im Punkt \\( P(x_P \mid y_P) \\) kann dabei
+
+$$
+\vec{n} = \begin{pmatrix} ax_P \\ by_P \end{pmatrix}
+$$
+
+gewählt werden (er muss ja nicht normiert sein). Damit ist die Reflexion schon geschafft! Um den nächsten Iterationsschritt ausführen zu können, müssen wir uns also nur noch darum kümmern, den Schnittpunkt \\( P^{\prime} \\) mit der Ellipsenkurve zu finden, auf den wir treffen, wenn wir dem Laserstrahl entlang \\( \vec{r} \\) folgen. Schauen wir uns dazu die Gerade \\( g \\) mit Aufpunkt \\( P \\) und Richtungsvektor \\( \vec{r} \\) an, also
+
+$$
+g: \quad \vec{X} = \vec{P} + \lambda\vec{r}, \quad \lambda \in \mathbb{R}
+$$
+
+Der allgemeinen Geradenpunkt \\( \vec{X} \\) soll auf der Ellipse liegen, also müssen seine Koordinaten die Ellipsengleichung erfüllen. Entsprechend eingesetzt erhalten wir eine quadratische Gleichung für \\( \lambda \\), denn es gibt ja zwei Schnittpunkte. Den einen kennen wir schon, das ist \\( P \\) mit \\( \lambda = 0 \\). 
+
+Rechnet man das auf Papier komplett aus (ich erspare mir hier die Details) und verwendet dabei, dass \\( ax_P^2 + by_P^2 - c = 0 \\), weil \\( P \\) auf der Ellipse liegt, so erhält man für das zu \\( P^{\prime} \\) gehörige \\( \lambda \\) den Ausdruck
+
+$$
+\lambda = \frac{-2 (\vec{n}\circ \vec{r})}{\mathrm{esq}(\vec{r})},
+$$
+
+wobei das elliptische Betragsquadrat von \\( \vec{r} = (r_x, r_y)^T \\) mit der Formel 
+
+$$
+\mathrm{esq}(\vec{r}) = ar_x^2 + br_y^2
+$$
+
+zu berechnen ist. Mit diesem \\( \lambda \\) erhalten wir den Ortsvektor unseres nächsten Schnittpunkts zu 
+
+$$
+\vec{P}^{\prime} = \vec{P} + \lambda \vec{r}.
+$$
+
+und sind damit gerüstet für einen weiteren Iterationsschritt mit dem Paar \\( (\vec{r}, P^{\prime}) \\).
+
+Bevor man seinen Count für die Anzahl der nötigen Reflexionen um eins erhöht, sollte man noch kurz überprüfen, ob dieser neue Schnittpunkt \\( P^{\prime} \\) nicht im Loch an der oberen Spitze liegt, denn dann würde der Laserstrahl die Zelle verlassen und wir wären fertig. Dazu überprüft man, ob die neuen Koordinaten \\( y_{P^{\prime}} > 0 \\) (Loch ist nur im oberen Teil) und \\( -0.01 \leq x_{P^{\prime}} \leq 0.01 \\) erfüllen und breakt, falls dem so ist. 
+
+Nun zum Code! Wie immer bei dieser Art von Aufgaben lohnt es sich, ein paar structs anzulegen, die entsprechende geometrische Objekte verkörpern und dazu passende Methoden bündeln können.
+Ich entschied mich für ein Vektor-, ein Punkt- und ein Ellipsen-struct. Vektoren kann man addieren, mit einer Konstante multiplizieren, es gibt ein Skalarprodukt und ein Betragsquadrat. 
+
+Zu einem Punkt kann man immerhin einen Vektor addieren und den Richtungsvektor zu einem weiteren Punkt berechnen. 
+
+Am vielseitigsten ist eigentlich die Ellipse, denn hier kann man den Normalenvektor in einem Punkt (von dem angenommen wird, dass er auf der Ellipse liegt, das könnte man aber natürlich mit assert() und einem entsprechenden numerischen Error überprüfen) finden, das elliptische Betragsquadrat bestimmen, an einem Ellipsenpunkt "reflektieren" und den nächsten Schnittpunkt berechnen. 
+
+Damit die Rechenungenauigkeiten nicht zu groß sind, verwende ich überall long double. Das sieht dann so aus:
+
+{% highlight c++ %}
+
+using ld = long double;
+
+//---------------------------------- Helper structs --------------------------------------------
+
+struct Vektor {
+    ld dx, dy;
+    // constructor
+    Vektor(ld dx_, ld dy_) : dx(dx_), dy(dy_) {}
+    // add
+    Vektor operator+(Vektor v) const {
+        return Vektor(dx + v.dx, dy + v.dy);
+    }
+    Vektor& operator+=(Vektor v) {
+        dx += v.dx; dy += v.dy;
+        return *this;
+    }
+    // multiply with a scalar
+    Vektor operator*(ld f) const {
+        return Vektor(f*dx, f*dy);
+    }
+    Vektor& operator*=(ld f) {
+        dx *= f; dy *= f;
+        return *this;
+    }
+    // absolute square
+    ld absSquare() const {
+        return dx*dx + dy*dy;
+    }
+    // scalar product
+    ld dot(Vektor v) const {
+        return dx*v.dx + dy*v.dy;
+    }
+};
+
+struct Punkt {
+    ld x, y;
+    // constructor
+    Punkt(ld x_, ld y_) : x(x_), y(y_) {}
+    // vector from this point to another point
+    Vektor getDirectionalVecTo(Punkt P) const {
+        return Vektor(P.x - x, P.y - y);
+    }
+    // adding a vector
+    Punkt& operator+=(Vektor v) {
+        x += v.dx; y += v.dy;
+        return *this;
+    }
+};
+
+struct Ellipse {
+    ld a, b, c; // c is never used
+    // constructor (casts all ints to long double)
+    Ellipse(int a_, int b_, int c_) : a((ld)a_), b((ld)b_), c((ld)c_) {}
+    // normal vector
+    Vektor normalVecAt(Punkt P) const {
+        return Vektor(a*P.x, b*P.y);
+    }
+    // term in the denominator of lambda
+    ld ellipticSquare(Vektor v) const {
+        return a*v.dx*v.dx + b*v.dy*v.dy;
+    }
+    // reflection of incoming vector d at a point on the elliptical curve
+    Vektor reflectAt(Vektor d, Punkt P) const {
+        Vektor n = normalVecAt(P);
+        return d + n * ((d.dot(n) / n.absSquare()) * (-2.0));
+    }
+    // calculates factor in P_nxt = P + lambda*r to get next intersection point
+    ld getLambda(Vektor d, Punkt P) const {
+        return (d.dot(normalVecAt(P)) / ellipticSquare(d)) * (-2.0);
+    }
+
+    pair<Vektor, Punkt> nextPair(Vektor d, Punkt P) const {
+        Vektor r = reflectAt(d, P);
+        P += r * getLambda(r, P);
+        return {r, P};
+    }
+};
+
+{% endhighlight %}
+
+Jetzt fehlt nur noch die Funktion countReflections(), deren Funktionsweise ich aber oben schon beschrieben habe, und die main()-Routine mit dem Einlesen der Werte in die ganzen Strukturen, die wir gebaut haben. 
+
+Ich lasse mal einige Zeilen vom Code weg, der Lego-Baukasten ist ja prall gefüllt und man muss nur die bunte Anleitung lesen, um das Ritterschloß fürs Kinderzimmer fertigzustellen:
+
+
+{% highlight c++ %}
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+const int MAX_REFLECTIONS = 10'000;
+
+//---------------------------------- Helper functions -------------------------------------------
+
+void countReflections(Ellipse E, Punkt P0, Punkt P) {
+    int count = 1;
+    // get starting direction
+    Vektor d = P0.getDirectionalVecTo(P);
+    while (count <= MAX_REFLECTIONS) {
+        // get next pair (r, P_nxt)
+        ...
+        // check if laser leaves the white cell
+        if ( ... ) break;
+        // iterate
+        ...
+        count++;
+    }
+    cout << count << endl;
+}
+
+//---------------------------------- MAIN function ----------------------------------------------
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int T;
+    cin >> T;
+    while (T--) {
+        int a, b, c;
+        cin >> a >> b >> c; // c is never used
+        ld px0, py0, px, py;
+        cin >> px0 >> py0 >> px >> py;
+        countReflections(Ellipse(a, b, c), Punkt(px0, py0), Punkt(px, py));
+    }
+    return 0;
+}
+
+{% endhighlight %}
+
+Die ganze Sache hatte eine ganz andere Färbung, die natürlich durch den geometrischen Hintergrund der Aufgabe bedingt war. Ich kam mir ein bißchen wie ein Bibliotheken-Schreiberling vor, als ich die structs mit Leben füllte. Sich zu überlegen, wie man das möglichst "elegant" (ich will nicht behaupten, dass mir das in jederlei Hinsicht gelungen ist) lösen kann und somit möglichst von Anfang an gute Designentscheidungen treffen zu müssen, ist eine nette Herausforderung. 
+
+Und wenn es dann auch noch auf Anhieb an der Kommandozeile die ursprüngliche Aufgabe löst und man dadurch ermuntert wird, ohne viel Federlesens zu submitten, worauf prompt auch die HackerRank-Tests komplett grün werden, dann gehört dies durchaus in die überschaubare Galerie von Momenten, in denen die befriedigenden Facetten dieser ganzen Programmiererei überwiegen. 
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler144/problem
+[original]: https://projecteuler.net/problem=144
+[forum]: https://projecteuler.net/thread=144
