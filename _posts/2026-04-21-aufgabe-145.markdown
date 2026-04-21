@@ -1,0 +1,230 @@
+---
+layout: post
+title:  "Project Euler+ #145: How many reversible numbers are there below one-billion?"
+date:   2026-04-21
+categories: project-euler
+---
+
+Starker Tobak! Vor allem im Vergleich zur [ursprünglichen Aufgabe][original], die ja extrem "einfach" war und sogar mit brute force gelöst werden konnte. Deshalb war es auch gar nicht so einfach, etwas Verwertbares im [Forum][forum] zu finden.
+
+Aber nach einiger Zeit endteckte ich einen sehr schönen Beitrag des Users "Eigenray" (Kudos von mir!), in dem die notwendigen Muster der Überträge bei verschiedenen Zifferanzahlen wunderbar hergeleitet wurden. Dies konnte man dann sowohl dafür einsetzen, eine constexpr für Lösungen mit Zehnerpotenzen als Limit zu schreiben, als auch für das Zählen bis zu einem beliebigen Limit nutzen (mit ein bißchen dynamischem Programmieren geht das auch sehr schnell!). 
+
+Ich beschränke mich mal darauf, die geschlossenen Formeln und Übertragsmuster einfach wiederzugeben und nicht zu beweisen. Sei also \\( R(n) \\) die Anzahl der reversible numbers mit \\( n \\) Ziffern. Dann gilt: 
+
+$$
+R(n) = 
+\begin{cases}
+20\cdot 30^{r - 1}, &  \text{wenn } n = 2r, \\
+0, & \text{wenn } n = 4t + 1, \\
+100\cdot 500^t, & \text{wenn } n = 4t + 3.
+\end{cases}
+$$
+
+Dies gibt schonmal Anlass dazu, einen constexpr-Array aufzusetzen, der diese Anzahlen kumuliert, hier der Code: 
+
+{% highlight c++ %}
+
+using ll = long long;
+using ull = unsigned long long;
+
+//---------------------------------- GLOBAL constants ------------------------------------------
+
+constexpr int MAX_DIGITS = 18;
+constexpr int MAX_PAIR_IDX = 9; // for later use
+
+// have to make a constexpr pow-function to use it below
+constexpr ull pow_ull(ull base, int exp) {
+    ull result = 1;
+    for (int i = 0; i < exp; i++) result *= base;
+    return result;
+}
+// reversible numbers with exactly n digits (see formulas by Eigenray)
+constexpr ull R(int n) {
+    if (n < 2) return 0;
+    if ((n & 1) == 0) { 
+        int r = n / 2;
+        return 20ULL * pow_ull(30ULL, r - 1);
+    }
+    if (n % 4 == 1) return 0;
+    int t = (n - 3) / 4;
+    return 100ULL * pow_ull(500ULL, t);
+}
+// Prefsums of R(n)
+constexpr array<ull, MAX_DIGITS + 1> build_R_prefs() {
+    array<ull, MAX_DIGITS + 1> R_prefs{};
+    for (int n = 1; n <= MAX_DIGITS; n++) {
+        R_prefs[n] = R(n);
+        R_prefs[n] += R_prefs[n - 1];
+    }
+    return R_prefs;
+}
+
+// R_prefs[9] solves the original problem
+constexpr auto R_prefs = build_R_prefs();
+
+
+{% endhighlight %}
+
+Seien die Ziffern der reversible number mit \\( a_ka_{k-1}\dots a_1a_0 \\) bezeichnet (diese Nummerierung passt mit der im Programm später zusammen, die Ziffern werden in umgekehrter Reihenfolge in einem Array gespeichert, der 0-te Eintrag entspricht also der Ziffer am weitesten rechts). 
+Die Überträge \\(  c_i \in \lbrace 0, 1 \rbrace \\) bei Addition der umgekehrten Zahl erfüllen die Gleichung
+
+$$
+a_i + a_{k - i} + c_i = 10c_{i + 1} + s_i,
+$$
+
+wobei \\( s_i \\) die Ziffer der Summe an dieser Stelle bezeichnet. Da \\( s_i \\) stets ungerade sein soll, ist der Übertrag \\( c_i \\) durch das Zifferpaar \\( \lbrace a_i, a_{k - i} \rbrace \\) festgelegt (und umgekehrt natürlich auch die Parität der Summe des Ziffernpaars, wenn \\( c_i \\) bekannt ist). Aus Symmetriegründen gilt zum Beispiel 
+
+$$
+a_i + a_{k - i} + c_i = a_{k - i} + a_i + c_{k - i},
+$$
+
+also hat man \\( c_i = c_{k - i} \\) und braucht nur Index**paare** (im Programm nenne ich das "pidx", was kurz für pair_index steht) zu betrachten. 
+
+Geht man die Sachen sauber durch (man lese dazu den gefeierten Beitrag von Eigenray), so ergeben sich folgende Übertragsmuster: 
+
+1. Im Fall \\( n = 2r \\) gilt \\( c_i = 0 \\) für alle \\( 0 \leq i < r \\). 
+2. Im Fall \\( n = 4t + 3 \\) sind die Überträge alternierend. Der Übertrag für das äußerste Paar ist natürlich \\( c_0 = 0 \\) und dann folgen abwechselnd Einser und Nullen, also \\( c_{2i} = 0 \\) und \\( c_{2i + 1} = 1 \\) für alle \\( i \\). Das mittlere "Paar" bei \\( r = \frac{n - 1}{2} \\) ist hier eine einzelne Ziffer, die mit sich selbst addiert per \\( c_r = 1 \\) zwar ein ungerades \\( s_r \\) erzeugen kann, aber selbst wegen \\( c_{r + 1} = c_{r - 1} = 0 \\) keinen Übertrag erzeugen darf, also muss \\( a_r \leq 4 \\) sein. 
+
+Der Trick bei der [HackerRank-Version][problem] ist nun folgender:
+Erhält man ein beliebieges Limit \\( N \leq 10^{18} \\), so zählt man erstmal seine Ziffern (bzw. die von \\( N - 1 \\), denn es steht ja "strictly below" da) und speichert das unter \\( n \\) (um Verwechslungen auszuschließen, habe ich im Programm den Namen "digLen" statt \\( n \\) verwendet). Für die Anzahl reversibler Zahlen mit weniger Ziffern als \\( n \\) nehmen wir unseren constexpr-Array von oben her. 
+
+Die große Schwierigkeit bestand also darin, die reversiblen Zahlen mit genau \\( n \\) Ziffern zu zählen, die kleiner als \\( N \\) sind. Das machen wir folgendermaßen:
+
+1. Man arbeitet sich von der Mitte nach außen durch die Ziffernpaare. Je nach betrachtetem \\( n \\) (gerade oder ungerade) kann man die Zulässigkeit eines Paares beurteilen (manchmal muss die Summe ungerade, manchmal gerade, manchmal kleiner als 10, manchmal größer gleich 10 sein). Dies gibt eine Funktion isValidPair()
+
+{% highlight c++ %}
+
+//---------------------------------- Helper functions -------------------------------------------
+
+bool isValidPair(int pidx, int lft, int rgt, bool odd) {
+    int sum = lft + rgt;
+    if (!odd)  // all carries are zero for even digLen
+        return (sum & 1) && (sum < 10);
+    // special case, middle number for odd digLen
+    int mid = digLen >> 1;
+    if (pidx == mid) return lft == rgt && lft <= 4;
+    // if n = 4t + 3, then from center to outside carries have to alternate 0,1,0,1,...,0
+    int from_center = mid - pidx;
+    bool high_carry = (from_center & 1);
+    if (high_carry)
+        return (sum & 1) && (sum >= 10);
+    return !(sum & 1) && (sum < 10);
+}
+
+{% endhighlight %}
+
+{: start="2"}
+2. Führe ein enum BoundState ein, das angibt, in welchem Zustand bezüglich des Limits \\( N - 1\\) sich die Wahl unserer Paare gerade befindet. Haben wir kleinere Ziffern als an den entsprechenden Stellen des Limits gewählt, können wir den BoundState auf "sicher" setzen (das wäre BELOW_N), haben wir größere Zahlen gewählt, setzen wir ihn auf "unsicher" (das ist ABOVE_N), sind die Zahlen genau gleich denen des Limits, betrachten wir dies als einen Extra-Zustand und nennen ihn EQUAL_N. Die Bestimmung des neuen BoundState lagern wir in eine Funktion nextBS() aus
+
+{% highlight c++ %}
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+enum BoundState : int { // have to use a ternary here, so give them names
+    ABOVE_N = 0,
+    BELOW_N = 1,
+    EQUAL_N = 2
+};
+
+//---------------------------------- Helper functions -------------------------------------------
+
+BoundState nextBS(int pidx, int lft, int rgt, BoundState bs) {
+    BoundState nxt = bs;
+    if (lft < digitsOfN[digLen - pidx - 1]) nxt = BELOW_N;
+    else if (lft > digitsOfN[digLen - pidx - 1]) nxt = ABOVE_N;
+    // if nxt is still at 2, check the right digit of the pair
+    if (nxt == EQUAL_N) {
+        if (rgt < digitsOfN[pidx]) nxt = BELOW_N;
+        else if (rgt > digitsOfN[pidx]) nxt = ABOVE_N;
+    }
+    return nxt;
+}
+
+{% endhighlight %}
+
+{: start="3"}
+3. In der Funktion countSameDigits() zählen wir nun ausgehend von diesen Wahlen von Zifferpaaren, wie oft wir in einem erlaubten Zustand (also BElOW_N oder EQUAL_N) landen, wenn wir zu Ende gewählt haben. Diese Ergebnisse dokumentieren wir in einem dynamic programming array "cnt", wobei wir in diesem sowohl den Paar-Index (pidx) als auch den BoundState (bs) als "Dimensionen" bewahren (der array hat somit insgesamt nur \\( 9\cdot 3 = 27 \\) Einträge!). Vorsicht! Diesen Array müssen wir vor jedem neuen Test wieder neu mit -1 initialisieren. 
+
+{% highlight c++ %}
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+ll cnt[MAX_PAIR_IDX][3]; // for dp
+
+//---------------------------------- Helper functions -------------------------------------------
+
+ll countSameDigits(int pidx, BoundState bs, bool odd) {
+    if (pidx < 0) return bs >= BELOW_N;
+    ll &ret = cnt[pidx][bs];
+    if (ret != -1) return ret;
+
+    ret = 0;
+    int from = (pidx == 0) ? 1 : 0;
+    for (int lft = from; lft < 10; lft++) {
+        for (int rgt = from; rgt < 10; rgt++) {
+            if (!isValidPair(pidx, lft, rgt, odd)) continue;
+            BoundState nxt = nextBS(pidx, lft, rgt, bs);
+            ret += countSameDigits(pidx - 1, nxt, odd);
+        }
+    }
+    return ret;
+}
+
+{% endhighlight %}
+
+{: start="4"}
+4. In der Funktion countRevNumsToLimit() bauen wir alles zu einem funktionierenden System zusammen. Wir kontrollieren die Parität der Ziffernanzahl von \\( N - 1 \\), starten dann countSameDigits() mit den passenden Startwerten und addieren schlußendlich noch den Eintrag R_prefs[n - 1] dazu. Diesmal gibt es den Code nur mit Auslassungen (dafür gibts eine superbillige main()-Routine gratis dazu):
+
+{% highlight c++ %}
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+int digLen;
+int digitsOfN[MAX_DIGITS]; // holds digits of given N in reverse order
+
+//---------------------------------- Helper functions -------------------------------------------
+
+ll countRevNumsToLimit(ll N) {
+    if (N < 10) return 0;
+    N--; // count numbers strictly below limit
+    digLen = 0;
+    while (N) { 
+        digitsOfN[digLen++] = (int)(N % 10);
+        N /= 10;
+    }
+    // no reversible numbers for digLen = 1 (mod 4), just return the prefsum
+    if ( ... ) return ...
+    // initialize cnt-array with -1
+    ...
+    bool odd = (digLen & 1); // switch to odd mode if necessary
+    int start_pidx = (digLen - 1) >> 1; // start in the middle of the number
+    ll same_digits = countSameDigits(start_pidx, EQUAL_N, odd);
+    // don't forget to add the prefsum
+    return ...
+}
+
+//---------------------------------- MAIN function ----------------------------------------------
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int T;
+    cin >> T;
+
+    while (T--) {
+        ll N;
+        cin >> N;
+        cout << countRevNumsToLimit(N) << '\n';
+    }
+
+    return 0;
+}
+
+{% endhighlight %}
+
+Das wäre ohne die wertvolle Einstiegshilfe von Eigenray deutlich aufwändiger gewesen. Ich liebe inzwischen die Funktion im Projekt-Euler-Forum, mit der man sich die Beiträge mit den meisten Kudos anzeigen lassen kann. So kommt man schneller an den guten Stoff!
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler145/problem
+[original]: https://projecteuler.net/problem=145
+[forum]: https://projecteuler.net/thread=145
