@@ -86,7 +86,7 @@ Geht man die Sachen sauber durch (man lese dazu den gefeierten Beitrag von Eigen
 2. Im Fall \\( n = 4t + 3 \\) sind die Überträge alternierend. Der Übertrag für das äußerste Paar ist natürlich \\( c_0 = 0 \\) und dann folgen abwechselnd Einser und Nullen, also \\( c_{2i} = 0 \\) und \\( c_{2i + 1} = 1 \\) für alle \\( i \\). Das mittlere "Paar" bei \\( r = \frac{n - 1}{2} \\) ist hier eine einzelne Ziffer, die mit sich selbst addiert per \\( c_r = 1 \\) zwar ein ungerades \\( s_r \\) erzeugen kann, aber selbst wegen \\( c_{r + 1} = c_{r - 1} = 0 \\) keinen Übertrag erzeugen darf, also muss \\( a_r \leq 4 \\) sein. 
 
 Der Trick bei der [HackerRank-Version][problem] ist nun folgender:
-Erhält man ein beliebieges Limit \\( N \leq 10^{18} \\), so zählt man erstmal seine Ziffern (bzw. die von \\( N - 1 \\), denn es steht ja "strictly below" da) und speichert das unter \\( n \\) (um Verwechslungen auszuschließen, habe ich im Programm den Namen "digLen" statt \\( n \\) verwendet). Für die Anzahl reversibler Zahlen mit weniger Ziffern als \\( n \\) nehmen wir unseren constexpr-Array von oben her. 
+Erhält man ein beliebiges Limit \\( N \leq 10^{18} \\), so zählt man erstmal seine Ziffern (bzw. die von \\( N - 1 \\), denn es steht ja "strictly below" da) und speichert das unter \\( n \\) (um Verwechslungen auszuschließen, habe ich im Programm den Namen "digLen" statt \\( n \\) verwendet). Für die Anzahl reversibler Zahlen mit weniger Ziffern als \\( n \\) nehmen wir unseren constexpr-Array von oben her. 
 
 Die große Schwierigkeit bestand also darin, die reversiblen Zahlen mit genau \\( n \\) Ziffern zu zählen, die kleiner als \\( N \\) sind. Das machen wir folgendermaßen:
 
