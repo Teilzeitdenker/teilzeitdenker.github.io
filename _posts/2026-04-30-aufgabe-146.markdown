@@ -1,0 +1,174 @@
+---
+layout: post
+title:  "Project Euler+ #146: Investigating a Prime Pattern"
+date:   2026-04-30
+categories: project-euler
+---
+
+Wenn man keinen dummen Fehler einbaut, dann ist die [Aufgabe][problem] wahrscheinlich sogar recht leicht (also tatsächlich "easy" nach HackerRank-Kriterien). Das ist mir allerdings nicht auf Anhieb gelungen und so musste ich für die letzten 5 Tests (die restlichen 20 gingen sofort durch) doch noch lange nach dem Bug suchen. 
+
+Aber "first things first". Wir suchen also die Summe aller positiven Zahlen \\( n < L \\) unterhalb eines Limits \\( L \leq 10^7 \\), für die alle Zahlen \\( P_i = n^2 + a_i \\) für 6 vorgegebene "offsets" \\( a_i \\) nicht nur prim sind, sondern auch **aufeinanderfolgende** Primzahlen sind. Wir müssen also auch garantieren können, dass die Zahlen zwischen den \\( P_i \\) (und wirklich **nur** dazwischen) keine Primzahlen sind. 
+
+Schauen wir zuerst im [Forum][forum] vorbei, ob wir denn bei den High-Kudo-Beiträgen ein paar gute Ideen für den allgemeinen Fall abkupfern können (im [Original][original] waren die \\( a_i \\) fest vorgegeben, dafür war das Limit mit 150 Millionen ziemlich hoch). 
+
+Nach ein wenig Lesen wurde ich bei "papaoutai" und "philiplu" hellhörig, die beide einen einfachen Mechanismus vorschlugen, um die möglichen Kandidaten für unser \\( n \\) zu reduzieren, denn das Überprüfen aller maximal 10 Millionen \\( n \\) (also das Checken der Primeigenschaft mit Miller-Rabin für all die obigen \\( P_i \\) und alles dazwischen) würden wohl zu lange dauern (das habe ich übrigens nicht gecheckt, aber ich schätze mal, dass es dann ordentlich TLE's hagelt). 
+
+Der Trick ist schnell erklärt: Für jedes \\( n \\) nehmen wir kleine Primzahlen \\( p \\) (bis zu welchem PRIME_LIMIT ist noch die Frage, da gibt es sicher einen "sweet spot", aber die Mühe habe ich mir nicht gemacht und bin einfach die Primzahlen kleiner 500 durchgegangen) und schauen für diese nach, ob für irgendein \\( i \\) die Kongruenz 
+
+$$
+P_i = n^2 + a_i \equiv 0 \pmod{p}
+$$
+
+gilt. Wenn ja, dann heißt das, dass \\( p \mid P_i \\) und solange \\( P_i \neq p \\) folgt damit, dass \\( P_i \\) nicht prim ist, also scheidet \\( n \\) als Kandidat aus. 
+
+Schreibt man obige Kongruenz zu \\( n^2 \equiv -a_i \pmod{p} \\) um, so sieht man, dass man für die Primzahlen \\( p \\) alle Restklassen vorberechnen kann, die beim Quadrieren von \\( n \\) **nicht** herauskommen dürfen. Diese Restklassen-Mengen \\( \lbrace - \overline{a_i} \rbrace \\) speichere ich in einer Map-Struktur mit \\( p \\) als key ab.
+
+Hier mal alle Hilfsfunktionen bezüglich Primzahlen (die komplett aus vorherigen Aufgaben übernommen wurden) und die fillRejectResidues()-Funktion: 
+
+{% highlight c++ %}
+
+typedef __int128 int128;
+typedef unsigned long long ull;
+typedef long long ll;
+typedef unsigned int ui;
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+constexpr int PRIME_LIMIT{500};
+static vector<bool> sieve;
+static vector<ull> primes;
+static set<ull> as;
+static ull min_offset, max_offset, L;
+static map<ull, set<ull>> rejectResidues;
+static vector<ull> cands;
+
+//------------------------------ Prime sieve and Miller-Rabin ----------------------------------
+
+// fillSieve() and fillPrimes() taken from problem 129
+void fillSieve() { ... }
+void fillPrimes() { ... } // check sieve[i >> 1] instead of using isPrime() here 
+
+// sprp() and isPrime() taken from problem 130, @copyright Brett Hale
+static bool sprp(ull n, ull a) { ... }
+static bool isPrime(ull n) { ... }
+
+//---------------------------------- Helper functions ------------------------------------------
+
+void fillRejectResidues() {
+    rejectResidues.clear();
+    for (auto p : primes) {
+        set<ull> rej;
+        for (auto a : as)
+            // add residue -a (mod p), be careful with modulo of ull's
+            // since a % p could be 0, have to take % p once more
+            rej.insert((p - a % p) % p);
+        rejectResidues[p] = rej;
+    }
+}
+
+{% endhighlight %}
+
+Eine kleine Bemerkung zur isPrime()-Funktion: In Aufgabe 130 habe ich die sprp64_shortest_base von Worley verwendet. Diese ist aber nur bis etwa \\( 5\cdot 10^{13} \\) deterministisch. Bei unserer Aufgabe werden die Zahlen \\( P_i \\) jedoch wegen \\( n \leq 10^7 \\) bis zu \\( 10^{14} + 40 \\) groß (und in der Original-Aufgabe sogar bis zu \\( 2.3 \cdot 10^{16} \\)). Das bedeutet, wenn wir absolut auf der sicheren Seite sein wollen, müssten wir hier eigentlich die Sinclair-Zeugen verwenden (siehe Code in Aufgabe 130). Man kann das "Risiko" aber eingehen, der nicht-deterministische Test ist ja immerhin "strong probable". Ich habe es ausprobiert und sowohl HackerRank als auch das Original gehen mit der Worley-Basis durch!
+
+So, dann füllen wir mal unsere Kandidaten-Liste. Gehen wir also für ein gewähltes \\( 1 \leq n < L \\) durch die rejectResidues-Map und schauen, ob wir fündig werden. Überprüfe aber, dass das entsprechende \\( P_i \\) auch wirklich **größer** als \\( p \\) ist, sonst schließen wir vielversprechende Kandidaten fälschlicherweise aus. Ich mache mal ein Beispiel, das durch die Original-Aufgabe inspiriert ist. Seien \\( n = 10 \\), \\( p = 101 \\) und \\( a_1 = 1 \\). Dann ist zwar \\( P_1 = n^2 + a_1 \equiv 0 \pmod{p} \\), aber \\( P_1 \\) ist trotzdem prim, weil es **genau** \\( = p \\) ist. 
+
+Hier die zugehörige Funktion:
+
+{% highlight c++ %}
+
+void getCands() {
+    cands.clear();
+    for (ull n = 1; n <= L; n++) {
+        bool rejected = false;
+        ull n2 = n * n;
+        for (auto& [p, rej] : rejectResidues) {
+            if (!rej.count(n2 % p)) continue; // n^2 not in rejected set of residues
+            for (auto a : as) { // check that P_i ist strictly bigger than p
+                if ((n2 + a) % p == 0 && n2 + a > p) {
+                    rejected = true;
+                    break;
+                }
+            }
+            if (rejected) break;
+        }
+        if (!rejected) cands.push_back(n);
+    }
+}
+
+{% endhighlight %}
+
+Auf diese Art und Weise kann man die Kandidaten wirklich **massiv** reduzieren. Geht man mit dem PRIME_LIMIT bis auf 1 Million hoch, so bleiben z.B. für die Original-Aufgabe (also für \\( n < 15\cdot 10^7 \\)) nurmehr 131 Kandidaten übrig, die man mit Miller-Rabin überprüfen muss. Das zugehörige Programm braucht für diese Reduktion allerdings auch etwa 10 Sekunden, das ist also hart erkauft!
+
+Als letzte Ingredienz brauchen wir "nur" noch die Summe aller erfolgreich mit Miller-Rabin geprüften Kandidaten ermitteln. Hier habe ich einen gravierenden Fehler eingebaut, denn ich startete (was im Original überhaupt kein Problem darstellt) mit einem Offset von 1. In der Aufgabenstellung ist aber nicht verlangt, dass zwischen \\( n^2 \\) und \\( n^2 + a_1 \\) keine Primzahlen vorkommen dürfen. Es ist nur davon die Rede, dass die \\( P_i \\) aufeinanderfolgende Primzahlen sein müssen. Das lieferte mir bei 5 Tests üble Wrong Answers und ich habe extrem lange gebraucht, um diesen Bug zu finden (weil er an einer Stelle war, wo ich ihn absolut nicht vermutet hatte, aber so ist das ja meistens).
+Hier die nötige Funktion für den letzten Schritt (mit Auslassungen):
+
+{% highlight c++ %}
+
+ull sumOfSuccessfulCands() {
+    ull sum = 0;
+    for (auto cand : cands) {
+        bool rejected = false;
+        // start at minimal offset (for LOWER offsets primes are ALLOWED!)
+        ull offset = min_offset;
+        ull cand2 = cand * cand;
+        while (!rejected && offset <= max_offset) {
+            if (as.count(offset)) { // this should yield a prime
+                ...
+            } else { // this should explicitly NOT be a prime!
+                ...
+            }
+            offset++;
+        }
+        if (!rejected) sum += cand;
+    }
+    return sum;
+}
+
+{% endhighlight %}
+
+Mit einer kurzen main()-Routine bauen wir noch alles fertig zusammen und submitten fröhlich ins System!
+
+{% highlight c++ %}
+
+//---------------------------------- Main function ----------------------------------------------
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    // prepare
+    fillSieve();
+    fillPrimes();
+    
+    int T; cin >> T;
+    while (T--) {
+        cin >> L;
+        L--; // strictly below L
+        
+        as.clear();
+        for (int i = 1; i <= 6; i++) {
+            int a_i; cin >> a_i;
+            if (i == 1) min_offset = a_i;
+            if (i == 6) max_offset = a_i;
+            as.insert(a_i);
+        }
+
+        fillRejectResidues(); // calculate residue sets of -a_i for all primes p
+        getCands();
+        ull result = sumOfSuccessfulCands();
+        cout << result << endl;
+    }
+
+    return 0;
+}
+
+{% endhighlight %}
+
+Wieder zeigt sich: Wer die nötigen Hilfsmittel schon "gebaut" hat, ist klar im Vorteil. Die Original-Aufgabe kann man mit dieser Methode übrigens in etwa 1.5 Sekunden lösen, was gar nicht schlecht ist. 
+
+Wer mag, könnte für die HackerRank-Version auch einen candidates-Array aus 10 Millionen bools bauen, diese anfangs alle auf true setzen und dann quasi mit den Primzahlen p < PRIME_LIMIT und obiger Methode "durchsieben". Dazu braucht man für jedes \\( p \\) nur die Zahlen \\( 1 \leq n < p \\) anschauen und verwendet, dass falls \\( n^2 + a_i \equiv 0 \pmod{p} \\) gilt, dies natürlich auch für \\( n + kp \\) mit \\( k \in \mathbb{N} \\) gilt. Also kann man an diesen Indizes den Kandidaten-Array auf false setzen. Man muss bloß aufpassen (wie oben), dass nicht \\( P_i = p \\) gilt, bzw. vielleicht löscht man einfach erst ab \\( n + p \\) (es macht ja nichts, wenn man Kandidaten "drin" lässt, die nichts taugen, die fliegen ja dann eh durch den Miller-Rabin-Test). 
+
+Mit dieser Sieb-Methode kann man nur leider das Original nicht mehr lösen, denn ein Array mit 150 Millionen bools würde dann eben doch etwa 20 MB RAM verbraten, also habe ich mich hier für eine andere Lösung mit cands-Vektor entschieden. Aber wer weiß, mit den heutigen Hardware-Möglichkeiten kenne ich mich ja offensichtlich nicht mehr so aus, da passen vielleicht auch 50 MB rein. Wenn ich mal ganz viel Zeit habe, probier' ich das!
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler146/problem
+[original]: https://projecteuler.net/problem=146
+[forum]: https://projecteuler.net/thread=146
