@@ -26,7 +26,7 @@ Ferner muss man für ungerade A noch einen Term hinzuzählen, nämlich den, der 
 Statt durch 3 zu teilen kann man bei der HackerRank-Aufgabe einfach das modulare Inverse von 3 bezüglich \\( 10^9 + 7 \\) multiplizieren. Und schönerweise kann man das im Kopf berechnen, denn \\( 10^9 + 8 \\) ist ja durch drei teilbar, also gilt:
 
 $$
-3^{-1} \equiv 333333336 \mod 10^9 + 7 
+3^{-1} \equiv 333333336 \pmod{10^9 + 7 }
 $$
 
 Wegen der hohen Grenze von einer Milliarde für A und dem Term der Ordnung \\( K^3 \\) auf der rechten Seite sollte man bei der ganzen Aufgabe gleich auf __int128 als Datentyp setzen. Das erspart einem auch einiges Kopfzerbrechen wegen integer overflow (und zusätzlich einige Modulo-Operationen beim Potenzieren). 
@@ -58,7 +58,7 @@ int128 get_RES_odd_2(int128 A) { // add an extra term for A odd
 
 Das Interessante an dieser Aufgabe ist natürlich der Fall e = 3. Hier bleibt einem zunächst nichts anderes übrig als einfach mal auf Papier loszurechnen. Meine Tips lauten:
 1. Entwickle \\( (a - 1)^n + (a + 1)^n \\) mit Binomialkoeffizienten, lösche alle Potenzen, die \\( a^3 \\) enthalten und fasse dann getrennt nach n gerade oder ungerade zusammen.
-2. Berechne \\( R(2, 3) = 4 \\), \\( R(3, 3) = 24 \\) und \\( R(4, 3) = 56 \\) von Hand, indem einfach mal alle n von 0 bis \\( a^3 \\) eingesetzt werden. So entwickelt man auch ein Gefühl für die periodische Dynamik, die hier mit im Spiel ist. 
+2. Berechne \\( R(3, 3) = 24 \\) und \\( R(4, 3) = 56 \\) von Hand, indem einfach mal alle n von 0 bis \\( a^3 \\) eingesetzt werden. So entwickelt man auch ein Gefühl für die periodische Dynamik, die hier mit im Spiel ist. 
 3. Teste damit, dass die Formeln aus Schritt 1 auch tatsächlich stimmen. Wenn das passt, kann man auch noch \\( R(5, 3) \\) in Angriff nehmen, danach wird es aber von Hand unangenehm, denn die dritte Potenz ist dann schon sehr groß.
 4. Aber auch anhand dieser wenigen Beispiele läßt sich schon ein Muster ähnlich zu dem für e = 2 erkennen. Formuliere diese Vermutung getrennt nach a gerade und a ungerade. 
 5. Checke, dass diese Vermutung (richtigerweise) auch \\( R(6, 3) = 120 \\) und zum Beispiel \\( R(15, 3) = 3360 \\) (für \\( n_{max} = 337 \\)) liefert.
