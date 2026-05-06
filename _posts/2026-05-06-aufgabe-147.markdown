@@ -1,0 +1,182 @@
+---
+layout: post
+title:  "Project Euler+ #147: Rectangles in cross-hatched grids"
+date:   2026-05-06
+categories: project-euler
+---
+
+Hierfür hatte ich mir vor 5 Jahren die allgemeinen Formeln für festes \\( m, n \in \mathbb{N} \\) hergeleitet. Diese lauten (hierbei bezeichnet \\( R \\) die Anzahl der regulären Rechtecke und \\( D \\) die der "diagonalen" Rechtecke):
+
+$$
+\begin{align*}
+R(m, n) &= \frac{1}{4}m(m + 1)n(n + 1) \\
+D(m, n) &= \frac{1}{6}\left\lbrace (n^2 - 4n^4 - 3n) + 2m(4n^3 - n)\right\rbrace , \quad \text{wobei} \quad m \geq n
+\end{align*}
+$$
+
+Da wir hier mit ziemlich vielen Tests rechnen müssen, brauchen wir wohl geschlossene Formeln für die Summation über alle \\( m \leq M \\) und \\( n \leq N \\). Für die regulären Rechtecke ist das leicht. Hier gilt: 
+
+$$
+\begin{align*}
+R_{\Sigma}(M, N) &= \sum_{m = 1}^M \sum_{n = 1}^N R(m, n) \\
+&= \frac{1}{4} \sum_{m = 1}^M m(m + 1) \sum_{n = 1}^N n(n + 1) \\
+&= \frac{1}{36}M(M + 1)(M + 2)N(N + 1)(N + 2)
+\end{align*}
+$$
+
+Damit wäre das schon erledigt! Für die "diagonalen" Rechtecke haben wir aber die Bedingung \\( m \geq n \\), also müssen wir den Parameterbereich \\( \lbrace (m, n) \mid m \leq M, n \leq N \rbrace \\) hier in zwei verschiedene Regionen aufteilen und in der Region mit \\( m < n \\) die Parameter von \\( D \\) vertauschen. Hierbei verwende ich o.B.d.A, dass \\( M \geq N \\) ist, denn das Ergebnis muss bezüglich dem Austausch von \\( M \\) und \\( N \\) ohnehin symmetrisch sein. 
+
+$$
+\begin{align*}
+D_{\Sigma}(M, N) &= \sum_{m = 1}^M \sum_{n = 1}^N D(m, n) \\
+&=  \underbrace{\sum_{m = 1}^M \; \sum_{n = 1}^{\mathrm{min}(m, N)}  D(m, n)}_{\text{Region } I\; (m \geq n)}
+\quad \quad + \quad \quad
+\underbrace{\sum_{m = 1}^{N -1} \; \sum_{n = m +1}^{N}  D(n, m)}_{\text{Region } II\; (m < n)}
+\end{align*}
+$$
+
+Stellt man sich Region \\( I \\) im Parameterraum \\( (m, n) \\) vor, so setzt sie sich aus einem dreieckigen (für \\( m \leq N \\)) und einem rechteckigen Teil (für \\( m > N \\)) zusammen, während Region \\( II \\) ein kleineres Dreieck ist (in der Abbildung für \\( M = 9 \\) und \\( N = 4 \\) sind das die sechs Punkte links oben): 
+
+<p style="text-align:center;">
+<img src="/assets/images/aufgabe-147-parameterbereich.svg" alt="Parameterbereiche der Regionen I und II" style="max-width:450px; width:100%;">
+</p>
+
+Jetzt geht es ans Rechnen! Ich werde das hier nicht komplett ausführen, sondern nur andeuten, wie man sich die Finger möglichst wenig schmutzig macht: 
+
+1. Finde zunächst die Potenzsummen \\( S_k(x) = \sum_{n = 1}^x n^k\\) über die Faulhaber-Formeln. Wir brauchen sie für \\( k = 1 \dots 4 \\).
+2. Schreibe 
+   
+   $$
+   D(m, n) = \frac{1}{6}(a(n) + 2mb(n))
+   $$
+   
+   mit den Hilfsfunktionen
+   
+   $$
+   \begin{align*}
+   a(n) &= n^2 - 4n^4 - 3n \\
+   b(n) &= 4n^3 - n
+   \end{align*}
+   $$
+3. Nun schreibe für die Region \\( I \\) die Summe über \\( m \\) als Summe des dreieckigen Bereichs und des rechteckigen Bereichs, also
+
+   $$
+   I = \frac{1}{6} \left\lbrace \sum_{m = 1}^N \left( A(m) + 2mB(m) \right) + \sum_{m = N + 1}^M \left( A(N) + 2m B(N)\right) \right\rbrace,
+   $$ 
+   
+   wobei \\( A(x) = \sum_{n = 1}^x a(n) \\) und ähnlich für \\( B(x) \\).
+4. Der hintere rechteckige Teil lässt sich leicht aufsummieren, aber der dreieckige Teil muss erst ein bißchen bearbeitet werden. Tausche hierzu die Reihenfolge der Summation! Es gilt nämlich: 
+
+   $$
+   \sum_{m = 1}^N \sum_{n = 1}^m a(n) + 2mb(n)  = \sum_{n = 1}^N \sum_{m = n}^N a(n) + 2mb(n) = \sum_{n = 1}^N (N - n + 1)a(n) + 2b(n)(S_1(N) - S_1(n - 1))
+   $$
+
+5. Führe im dreieckigen Teil nun die Summe über \\( n \\) aus, dabei entstehen einige Faulhaber-Summen (auch \\( S_5(N) \\) kommt kurz vor, kürzt sich aber später wieder heraus). 
+6. Führe den dreieckigen mit dem rechteckigen Teil zusammen und erhalte so eine geschlossene Formel für die Region \\( I \\), in der nur Faulhaber-Summen und die Hilfsfunktionen \\( A \\) und \\( B \\) vorkommen
+7. Gehe für Region \\( II \\) ähnlich vor. Es gilt: 
+   
+   $$
+   \begin{align*}
+   II &= \frac{1}{6} \sum_{m = 1}^{N - 1} \; \sum_{n = m + 1}^{N}  a(m) + 2nb(m) \\
+   &= \frac{1}{6} \sum_{m = 1}^{N - 1}  (N - m)a(m) + 2b(m)(S_1(N) - S_1(m)) 
+   \end{align*}
+   $$
+8. Summiere dies über \\( m = 1 \dots N - 1 \\) und erhalte wieder viele Faulhaber-Terme. Ähnlich wie vorher kürzen sich aber Vielfache von \\( S_3(N - 1) \\) und \\( S_5(N - 1) \\) wieder heraus und wir erhalten eine geschlossene Formel für Region \\( II \\), in der ebenfalls nur Faulhaber-Summen und \\( A \\) und \\( B \\) enthalten sind
+
+Bei der Implementierung ist zu beachten, dass wir an geeigneten Stellen modulo rechnen müssen, um overflow zu vermeiden. Damit der Code nicht allzu hässlich wird, entschied ich mich dafür, gleich von Anfang an unsigned __int128 zu verwenden, damit ist es möglich, immerhin 4 Faktoren kleiner als \\( 10^9 + 7 \\) zu multiplizieren, bevor man wieder modulo nehmen muss. Außerdem habe ich im Vorhinein die modularen Inversen von 2, 3, 4, 5 und 6 berechnet und dann als Vorfaktoren statt Halben, Dritteln, Sechsteln usw. verwendet. Die entscheidenden Formeln für die beiden Regionen sind natürlich ausgelassen:
+
+
+{% highlight c++ %}
+
+typedef unsigned __int128 ull; // allows up to 4 factors without taking % MOD
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+constexpr ull MOD = 1'000'000'007;
+constexpr ull MODINV_2 = 500'000'004;
+constexpr ull MODINV_3 = 333'333'336;
+constexpr ull MODINV_4 = 250'000'002;
+constexpr ull MODINV_5 = 400'000'003;
+constexpr ull MODINV_6 = 166'666'668;
+
+//---------------------------------- Helper functions -------------------------------------------
+
+// Faulhaber sums and combinations of these
+ull S1(ull x) {
+    return MODINV_2*x*(x + 1) % MOD;
+}
+
+ull S2(ull x) {
+    return MODINV_6*x*(x + 1)*(2*x + 1) % MOD;
+}
+
+ull S3(ull x) {
+    ull prod = x*x*(x + 1)*(x + 1) % MOD;
+    return MODINV_4 * prod % MOD;
+}
+
+ull S4(ull x) {
+    ull fac = (3*x*x + 3*x + (MOD - 1)) % MOD;
+    return MODINV_5 * S2(x) * fac % MOD;
+}
+
+ull A(ull x) {
+    ull to_subtr = (4*S4(x) + 3*S1(x)) % MOD;
+    return (S2(x) + (MOD - to_subtr)) % MOD;
+}
+
+ull B(ull x) {
+    return (4*S3(x) + (MOD - S1(x))) % MOD;
+}
+
+// closed formulas for the sums of usual rectangles and diagonal rectangles
+ull R_sum(ull M, ull N) {
+    ull prod1 = M*(M + 1)*(M + 2) % MOD;
+    ull prod2 = N*(N + 1)*(N + 2) % MOD;
+    return MODINV_6 * MODINV_6 * prod1 * prod2 % MOD;
+}
+
+// is symmetric w.r. to M <-> N, but in calculation of the regions I and II we use M >= N
+ull D_sum(ull M, ull N) {
+    assert(M >= N);
+    ull I = MODINV_6 * (...) % MOD;
+    ull II = MODINV_6 * (...) % MOD;
+    return (I + II) % MOD;
+}
+
+//---------------------------------- Main function ----------------------------------------------
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int T;
+    cin >> T;
+    while (T--) {
+        int M_int, N_int;
+        cin >> M_int >> N_int;
+        ull M = (ull)max(M_int, N_int); // make M >= N, necessary for D_sum()
+        ull N = (ull)min(M_int, N_int);
+        int R = (int)R_sum(M, N); // normal rectangles
+        int D = (int)D_sum(M, N); // diagonal rectangles
+        cout << R << " " << D << endl;
+    }
+
+    return 0;
+}
+
+{% endhighlight %}
+
+Also ich fand das insgesamt nicht leicht, wobei die Schwierigkeit weniger in den Methoden als in der Korrektheit der Ausführung und der Konsequenz lag. Und besonders schön war es am Ende leider auch nicht. Man wusste, man kommt irgendwann zum Ziel (also zur geschlossenen Formel), aber bei der ganzen Faulhaberei gab es auch genug Stellen, an denen man sich verrechnet hat. Gut, dass es den Bronstein gibt, da stehen die Formeln für niedrige \\( k \\) alle explizit drin, sonst hätte ich mich schon bei den Grundlagen vertan. 
+
+Jetzt freue ich mich auf das Pascal'sche Dreieck in der nächsten Aufgabe, daran kann ich mich noch gut erinnern. Das habe ich im September 2021 auf den letzten Drücker noch gelöst gekriegt, nachdem ich mir in einer abgelegenen Sportvereins-Gastwirtschaft in Schwabmünchen (also am absoluten Arsch der Welt) auf einer Bierbank bereits mehrere Stunden den Hintern platt gesessen hatte, während ich darauf wartete, dass mein Sohn in seinem Keller-Poker-Club-Raum die anderen (viel älteren) Spieler endlich weggeblufft hatte, um ihn anschließend durch die ganze Pampas wieder Richtung Heimat chauffieren zu dürfen. 
+
+Für ein paar dieser Termine lang war es sogar cool dort zu hocken, denn ein WLAN-Passwort des freundlichen Wirtes und der Zugang zu einer Steckdose ermöglichten es mir, während diesen 6-8 Stunden mit meinem damals noch ganz neuen ThinkPad an Projekt-Euler-Aufgaben zu schrauben (damals noch in Python). An besagtem Abend habe ich das Kunststück vollbracht, die Aufgaben 145-148 allesamt zu lösen und diese Pascal'sche Dreiecksaufgabe war die letzte. 
+
+Ich begann sie glaube ich etwas unentschlossen (weil ich mir nicht sicher war, ob ich sie noch schaffen würde) erst spät am Abend gegen 21.30 Uhr (die cross-hatched grids hier hatten mich schon ordentlich Hirnschmalz gekostet, mit vielen bunten Skizzen und ausführlichen Rechnungen). Just in dem Moment, als ich die richtige Lösung submittet hatte (ziemlich genau um 22.30 Uhr) und ohnehin schon von einem Hochgefühl der Befriedigung durchflutet wurde, ist mein Sohn siegreich dem Keller entstiegen und war ebenfalls in Feierlaune aufgrund seiner Leistung, das war einfach perfekt getimt und die ganze Rückfahrt durch die Nacht war extrem gechillt, fast wie im Rausch, weil das viele Rechnen und stundenlange Pokern uns wohl beide auf eine ganz andere Bewußtseinsebene katapultiert hatte! Wir philosophierten den ganzen Weg lang über die Analogien zwischen unseren beiden abendlichen Beschäftigungen, welche Herangehensweise am effizientesten ist, wie man den Schlüssel zum Erfolg findet, welche Theorien es in beiden Bereichen gibt und wie diese zu interpretieren und anzuwenden sind. Herrlich! 
+
+Der Poker-Club existiert anscheinend gar nicht mehr (alle alten Links sind jedenfalls tot), was mich aber nicht wundert, weil die Leute (und insbesondere der Vorstand) wirklich komplett zum Kotzen waren. Und so ging diese Zeit auch recht schnell vorbei, das letzte Mal waren wir wohl zwei Monate später im November dort und die ganze Episode endete nicht gerade schön. Und dennoch wird sie für mich immer mit dem Projekt Euler, dem Pascal'schen Dreieck und seinen verborgenen fraktalen Strukturen verbunden sein. Welch seltsame, höchst individuelle Assoziationen man doch im Laufe seines Lebens anhäuft!
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler147/problem
+[original]: https://projecteuler.net/problem=147
+[forum]: https://projecteuler.net/thread=147
