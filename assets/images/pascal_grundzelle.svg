@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="536" height="468">
+  <rect width="100%" height="100%" fill="black"/>
+  <polygon points="268.00,16.00 232.00,78.35 304.00,78.35" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="268.00" y="54.66" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">1</text>
+  <polygon points="232.00,78.35 196.00,140.71 268.00,140.71" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="232.00" y="117.01" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">1</text>
+  <polygon points="304.00,78.35 268.00,140.71 340.00,140.71" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="304.00" y="117.01" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">1</text>
+  <polygon points="196.00,140.71 160.00,203.06 232.00,203.06" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="196.00" y="179.37" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">1</text>
+  <polygon points="268.00,140.71 232.00,203.06 304.00,203.06" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="268.00" y="179.37" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">2</text>
+  <polygon points="340.00,140.71 304.00,203.06 376.00,203.06" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="340.00" y="179.37" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">1</text>
+  <polygon points="160.00,203.06 124.00,265.42 196.00,265.42" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="160.00" y="241.72" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">1</text>
+  <polygon points="232.00,203.06 196.00,265.42 268.00,265.42" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="232.00" y="241.72" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">3</text>
+  <polygon points="304.00,203.06 268.00,265.42 340.00,265.42" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="304.00" y="241.72" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">3</text>
+  <polygon points="376.00,203.06 340.00,265.42 412.00,265.42" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="376.00" y="241.72" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">1</text>
+  <polygon points="124.00,265.42 88.00,327.77 160.00,327.77" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="124.00" y="304.07" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">1</text>
+  <polygon points="196.00,265.42 160.00,327.77 232.00,327.77" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="196.00" y="304.07" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">4</text>
+  <polygon points="268.00,265.42 232.00,327.77 304.00,327.77" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="268.00" y="304.07" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">6</text>
+  <polygon points="340.00,265.42 304.00,327.77 376.00,327.77" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="340.00" y="304.07" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">4</text>
+  <polygon points="412.00,265.42 376.00,327.77 448.00,327.77" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="412.00" y="304.07" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">1</text>
+  <polygon points="88.00,327.77 52.00,390.12 124.00,390.12" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="88.00" y="366.43" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">1</text>
+  <polygon points="160.00,327.77 124.00,390.12 196.00,390.12" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="160.00" y="366.43" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">5</text>
+  <polygon points="232.00,327.77 196.00,390.12 268.00,390.12" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="232.00" y="366.43" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">3</text>
+  <polygon points="304.00,327.77 268.00,390.12 340.00,390.12" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="304.00" y="366.43" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">3</text>
+  <polygon points="376.00,327.77 340.00,390.12 412.00,390.12" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="376.00" y="366.43" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">5</text>
+  <polygon points="448.00,327.77 412.00,390.12 484.00,390.12" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="448.00" y="366.43" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">1</text>
+  <polygon points="52.00,390.12 16.00,452.48 88.00,452.48" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="52.00" y="428.78" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">1</text>
+  <polygon points="124.00,390.12 88.00,452.48 160.00,452.48" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="124.00" y="428.78" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">6</text>
+  <polygon points="196.00,390.12 160.00,452.48 232.00,452.48" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="196.00" y="428.78" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">1</text>
+  <polygon points="268.00,390.12 232.00,452.48 304.00,452.48" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="268.00" y="428.78" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">6</text>
+  <polygon points="340.00,390.12 304.00,452.48 376.00,452.48" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="340.00" y="428.78" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">1</text>
+  <polygon points="412.00,390.12 376.00,452.48 448.00,452.48" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="412.00" y="428.78" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">6</text>
+  <polygon points="484.00,390.12 448.00,452.48 520.00,452.48" fill="white" stroke="#444" stroke-width="0.8"/>
+  <text x="484.00" y="428.78" text-anchor="middle" dominant-baseline="middle" font-size="27.4" font-family="monospace" fill="black">1</text>
+</svg>

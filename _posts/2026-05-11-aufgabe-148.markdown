@@ -1,0 +1,179 @@
+---
+layout: post
+title:  "Project Euler+ #148: Exploring Pascal's triangle"
+date:   2026-05-11
+categories: project-euler
+---
+
+Hierfür (also natürlich spreche ich nur vom [Original][original] mit einer Milliarde Zeilen) hatte ich vor 5 Jahren unter den ausführlich in der letzten Aufgabe (also #147) am Ende beschriebenen Umständen in kürzester Zeit eine kleine Python-Routine zusammengeschraubt, die ich gerne wiedergeben möchte, weil sie mir als Ausgangspunkt für meine jetzige Lösung dienen wird:
+
+{% highlight python %}
+
+def divs_by_7(n):
+    fac = 1
+    total = 0
+    for i in range(10, -1, -1):
+        if n < 7**i:
+            continue
+        lines = n//(7**i)
+        total += fac*lines*(lines+1)//2*(28**i)
+        fac *= lines + 1
+        n = n - lines*(7**i)
+    return total
+
+{% endhighlight %}
+
+Warum funktioniert das? Naja, am besten versucht man es zunächst für die ersten paar Zeilen selbst und schreibt die Zahlen des [Pascal'schen Dreiecks][pascal] modulo 7 auf. Hier mal die ersten 7 Zeilen, die sozusagen auch die "Grundzelle" der Struktur bilden (die schwarzen Dreiecke sind hier wirklich komplett leer und nur aus ästhetischen Gründen eingefügt): 
+
+<p style="text-align:center;">
+<img src="/assets/images/pascal_grundzelle.svg" alt="Grundzelle: Pascal'sches Dreieck modulo 7, erste 7 Zeilen" style="max-width:500px; width:100%;">
+</p>
+
+ Man wird schnell erkennen, dass sich in der Folge eine Spielart des [Sierpinski-Dreiecks][sierpinski] ergibt. Allerdings wiederholen sich die Strukturen erst alle 7 Zeilen. Das "gewöhnliche" Sierpinski-Dreieck (genauer gesagt eine endliche Form davon) würde sich dann ergeben, wenn man nur die Parität der Zahlen im Pascal'schen Dreieck betrachtet, also modulo 2 rechnet. Nach zwei Iterationen (also bis zu Zeile 49) sieht das dann so aus (die größeren schwarzen Bereiche sind jetzt mit Nullen gefüllt): 
+
+<p style="text-align:center;">
+<img src="/assets/images/sierpinski_mod_7.svg" alt="Sierpinski-artige Struktur: Pascal'sches Dreieck modulo 7, zwei Iterationen" style="max-width:580px; width:100%;">
+</p>
+
+Das Ganze setzt sich auf fraktale Weise fort. Obige "Grundzelle" besteht aus einem Dreieck mit \\( \frac{7 \cdot 8}{2} = 28 \\) nicht durch 7 teilbaren Zahlen. Das bedeutet, dass auf einem höheren Level \\( i \\) eine komplette solche Zelle (jetzt mit "Löchern" aus Nullen) genau \\( 28^i \\) nicht durch 7 teilbare Zahlen enthalten wird. Wir werden also die Potenzen von \\( 7 \\) und \\( 28 \\) brauchen, und zwar bis zu einer maximalen Hochzahl von \\( 21 \\), denn bei HackerRank galt \\( N_{\mathrm{max}} = 10^{18} \\) und \\( 7^{22} >  N_{\mathrm{max}} \\). Schreiben wir also mal ein paar constexpr, die das bewerkstelligen. Die Potenzen von \\( 28 \\) sind dabei bereits modulo \\( 10^9 + 7 \\) genommen:
+
+{% highlight c++ %}
+
+typedef unsigned long long ull;
+typedef unsigned __int128 int128;
+
+//---------------------------------- GLOBAL constants -------------------------------------------
+
+constexpr int128 MOD = 1'000'000'007;
+constexpr int MAX_POWER = 21; // 7^22 > 10^18
+
+constexpr int128 pow_of(int128 base, int exp) {
+    int128 res = 1;
+    for (int i = 0; i < exp; i++) res *= base;
+    return res;
+}
+
+constexpr array<int128, MAX_POWER + 1> build_powers_of(int128 base, bool modulo) {
+    array<int128, MAX_POWER + 1> powers{};
+    for (int i = 0; i <= MAX_POWER; i++) {
+        powers[i] = pow_of(base, i);
+        if (modulo) powers[i] %= MOD;
+    }
+    return powers;
+}
+
+constexpr auto powers_of_7 = build_powers_of(7, false); // not taken % MOD, since these adjust N and R
+constexpr auto powers_of_28 = build_powers_of(28, true); // taken % MOD, since only added to counts
+
+{% endhighlight %}
+
+Die Funktion zur Zählung bei Betrachtung **aller** Spalten (also \\( R = N \\)) können wir leicht angepasst aus dem Python-Programm übernehmen:
+
+{% highlight c++ %}
+
+//---------------------------------- Helper functions -------------------------------------------
+
+int128 solve_complete(int128 N) {
+    int128 fac = 1;
+    int128 total = 0;
+    for (int i = MAX_POWER; i >= 0; i--) {
+        int128 lines = N / powers_of_7[i];
+        if (lines == 0) continue;
+        int128 pre = ((fac * lines * (lines + 1)) / 2) % MOD;
+        total += pre * powers_of_28[i];
+        total %= MOD;
+        fac *= lines + 1;
+        N -= lines*powers_of_7[i];
+    }
+    return total;
+}
+
+{% endhighlight %}
+
+Das funktioniert so: Finde die größte Zelle mit Zeilenlänge \\( 7^i \\), die in das vorgegebene \\( N \\) hineinpasst. Je nachdem wie oft dies hineinpasst, landen wir in einer bestimmten Zeile der fraktalen Struktur (deswegen habe ich diese Variable "lines" genannt). Zähle also, wie viele Dreiecke der Größe \\( 7^i \\) dadurch abgedeckt werden, was zu einem Vorfaktor (deshalb "pre") führt und addiere dann die Anzahl von durch 7 teilbaren Zahlen in so einer Zelle (also \\( 28^i \\)) mal diesem Vorfaktor zu "total". Zu beachten ist, dass wir für die restlichen zu bearbeitenden Zeilen einen weiteren Faktor (nämlich "fac") beachten müssen, der von Iteration zu Iteration immer größer wird. Dieser beschreibt, wie viele gleichartige Strukturen unterhalb "entspringen" werden, wird also nach jedem Schritt mal (lines + 1) genommen (ich weiß noch, dass ich in dieser Kneipe sitzend total stolz war, noch zu später Stunde auf diesen Vervielfältigungs-Faktor gekommen zu sein, der mir eine erfolgreiche Lösung des Originals bescherte!)
+
+Nun gilt es also "nur" noch, die zusätzliche [HackerRank-Komplexität][problem] mit einem nichttrivialen Spaltenlimit \\( R < N \\) in Angriff zu nehmen. Dafür habe ich zunächst eine Idee entwickelt, wie man sich die 120°-Symmetrie der Anordnung zunutze machen kann. Es ist nämlich so: 
+Stellen wir uns vor, wir "schneiden" mit unseren beiden Limits \\( N \\) und \\( R \\) durch genau so eine fraktale Struktur (wobei wir nun annehmen, wir wären auf Level \\( i \\) mit \\( i \leq 21 \\) beliebig). Das sieht dann zum Beispiel so aus: 
+
+<p style="text-align:center;">
+<img src="/assets/images/sierpinski_mod_7_lines.svg" alt="Fraktal mit N- und R-Schnittlinien" style="max-width:580px; width:100%;">
+</p>[sierpinski]: https://de.wikipedia.org/wiki/Sierpinski-Dreieck
+
+Die Dreiecke, die vollständig im betrachteten Bereich liegen (im Beispiel sind das die neun Stück links oben) sind einfach. Wir müssen sie bloß zählen. Das tun wir, indem wir von den \\( \frac{1}{2}\cdot\mathrm{lines}\cdot (\mathrm{lines} + 1) \\) Dreiecken (im Beispiel wären das \\(\frac{1}{2}\cdot 5\cdot 6 = 15 \\)) die von \\( R \\) durchschnittenen und die komplett nicht betrachteten abziehen (das wären im Beispiel 6 Stück). 
+
+Dann hätten wir noch die Dreiecke, die **nur** von \\( R \\) durchschnitten werden (dies sind im Beispiel genau drei Stück). Sieht man sich diese Dreiecke von der rechten unteren Spitze aus an, so erkennt man, dass man solve_complete() anwenden kann, wenn man sozusagen Zeilen und Spalten vertauscht. Es gilt
+
+$$
+Z_{\mathrm{divided}} = 28^i - \mathrm{solve\_complete}(7^i - R_{\mathrm{rest}}),
+$$
+
+wobei \\( R_{\mathrm{rest}} = R - \mathrm{floor}(R / 7^i)\cdot 7^i \\) quasi der "überstehende" Teil von \\( R \\) innerhalb des durchschnittenen Dreiecks ist. 
+
+Bleiben die Dreiecke am unteren Rand übrig. Wenn sie **nur** von \\( N \\) durchschnitten werden, können wir solve_complete(\\(  N_{\mathrm{rest}} \\)) anwenden, wobei \\( N_{\mathrm{rest}} = N - \mathrm{lines}\cdot 7^i \\). Das letzte Dreieck ist dasjenige, das **sowohl** von \\( N \\) **als auch** von \\( R \\) geschnitten wird und hier rekursieren wir mit den entsprechenden reduzierten Werten \\( N_{\mathrm{rest}} \\) und \\( R_{\mathrm{rest}} \\) mit der nächstkleineren Hochzahl \\( i - 1 \\) (und zoomen damit einen Schritt weiter in die gottseidank endliche fraktale Struktur hinein).
+
+Die entsprechende Funktion (mit Auslassungen) und eine main()-Routine sind dann nicht mehr schwer zu schreiben:
+
+{% highlight c++ %}
+
+int128 solve(int128 N, int128 R) {
+    if (N == 0 || R == 0) return 0;
+    if (N <= R) return solve_complete(N);
+    int128 total = 0;
+    for (int i = MAX_POWER; i >= 0; i--) {
+        int128 lines = N / powers_of_7[i];
+        if (lines == 0) continue;
+        int128 all_triangles = (lines * (lines + 1)) / 2;
+        int128 full_cols = (R >= N) ? lines : (R / powers_of_7[i]);
+        int128 diff = lines - full_cols;
+        int128 triangles_to_subtr = (diff * (diff + 1)) / 2;
+        // these triangles are completely inside both limits
+        total += ...
+        total %= MOD;
+        // add diff * (Z_divided) for the triangles divided by the R limit
+        // use symmetry (look at these from the bottom right corner)
+        int128 R_rest = R - full_cols * powers_of_7[i];
+        if (diff > 0) {
+            int128 nums_to_subtr = ...
+            int128 Z_divided = powers_of_28[i] + (MOD - nums_to_subtr);
+            total += ...
+            total %= MOD;
+        }
+        // adjust N to N_rest
+        N -= lines * powers_of_7[i];
+        // add full_cols * (triangle with N_rest rows and no R limit)
+        total += ...
+        total %= MOD;
+        // adjust R and recurse with i - 1
+        R = R_rest;
+    }
+    return total;
+}
+
+//---------------------------------- Main function ----------------------------------------------
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    int T;
+    cin >> T;
+    while (T--) {
+        ull N, R;
+        cin >> N >> R;
+        ull result = (ull)solve((int128)N, (int128)R);
+        cout << result << endl;
+    }
+
+    return 0;
+}
+
+{% endhighlight %}
+
+Eine Bemerkung zu einem Bug, den ich zuerst drin hatte, muss ich noch machen: Im Laufe der Iterationen kann es passieren, dass \\( R > N \\) wird! Nehmen wir mal ein Beispiel: Sei \\( N = 8 \\) und \\( R = 2 \\). In der ersten interessanten Iteration (mit \\( i = 1 \\)) wird dann lines = 1 und full_cols = 0, demnach werden die reduzierten Werte für den nächsten Schritt \\( N_{\mathrm{rest}} = 1 \\) und \\( R_{\mathrm{rest}} = 2 \\) sein. Dies führt aber dazu, dass wir bei \\( i = 0 \\) die Variable full_cols nicht einfach gleich \\( \mathrm{floor}(R / 7^i) \\) setzen können, denn das wäre nun 2 und damit würde diff \\( = 1 - 2 = -1 \\) negativ werden. Also müssen wir full_cols auf den Wert von lines als Maximum begrenzen! Dieser Bug war wiedermal schwierig zu finden (die test cases und das Original werden auch ohne Begrenzung richtig gelöst), aber gottseidank passieren diese seltsamen Dinge schon für recht kleine Parameter und man braucht bloß schauen, wann die Werte des Programms nicht mehr mit den von Hand berechneten übereinstimmen. In diesem Zusammenhang muss ich sagen, dass ich auch froh war, gleich von Anfang an die unsigned-Versionen der Datentypen verwendet zu haben. Denn wenn man negative Werte (wie bei diff) erzeugt, bekommt man wegen dem wraparound sofort hammergroße Zahlen heraus, die bei so kleinen \\( N, R \\) extrem ins Auge springen. Und so kommt man dem Übeltäter schnell auf die Spur, denn nun muss man nur gucken, an welchen Stellen man Dinge voneinander abzieht. Aufwendig war es trotzdem. 
+
+So, das wars! Leider hat es gar nicht so viel Spaß gemacht, wie ich ursprünglich gehofft hatte (auch wegen dem Bug). Ich hatte ursprünglich noch den Plan, statt dem ständigen Geteile durch Potenzen von \\( 7 \\) einfach die Darstellung von \\( N \\) und \\( R \\) in der Basis \\( 7 \\) zu verwenden, denn natürlich entspricht dies genau den Variablen lines und full_cols aus dem Programm. Dann müsste man nur über einen Zeigerindex in diese beiden Arrays mit Zahlen zwischen 0 und 6 iterieren und könnte die Anfangsnullen leicht überspringen ohne zu teilen. Außerdem könnte man sich überlegen, ob man ein wenig dynamisch programmiert und Zwischenergebnisse in einer dp-map abspeichert. Aber jetzt hab' ich ja auch so die Zeitlimits einhalten können und mag nicht mehr, basta!
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler148/problem
+[original]: https://projecteuler.net/problem=148
+[forum]: https://projecteuler.net/thread=148
+[pascal]: https://de.wikipedia.org/wiki/Pascalsches_Dreieck
