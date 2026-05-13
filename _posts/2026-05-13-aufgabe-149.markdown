@@ -1,0 +1,316 @@
+---
+layout: post
+title:  "Project Euler+ #149: Searching for a maximum-sum subsequence"
+date:   2026-05-13
+categories: project-euler
+---
+
+Im Gegensatz zur letzten Aufgabe hat die Bastelei (auch wenn sie teilweise etwas langatmig war) hier wieder richtig Spaß gemacht! Allerdings hatte ich auf [CSES][cses] gerade "neulich" (als ich vor ein paar Monaten das letzte Mal daran gearbeitet habe) eine recht ähnlich wirkende Aufgabe gelöst und wusste recht schnell wie ich ansetzen kann. Also rein ins Vergnügen! 
+
+Bevor man hier loslegen konnte, musste man sich erstmal mit der "lagged Fibonacci random sequence" herumschlagen, um das quadratische Gitter überhaupt mit den richtigen Einträgen zu füllen. Schon ein wenig nervig, aber irgendwie auch lustig. Lesen wir doch mal die Inputs ein und schauen uns die Struktur einer möglichen Lösung in der main()-Routine an: 
+
+{% highlight c++ %}
+
+typedef long long ll;
+typedef vector<ll> vll;
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+constexpr int SZ = 5; // size of fs and gs
+constexpr ll MIN_INF = -200'000; // minimal grid entry is like "minus infinity" for results
+int N; // dimension of square grid
+ll l, m; // modulos
+vll as, bs; // entries of grid
+array<ll, SZ> fs, gs; // sequences for lagged Fibonacci
+// subarray grids, "rows" corresponds to the actual N * N grid
+vector<vll> rows, cols, diags_right, diags_down, antidiags;
+vll main_diag;
+// results
+vector<ll> best;
+
+//---------------------------------- Main function --------------------------------------------
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    cin >> N;
+    cin >> l;
+    as.resize(l);
+    for (int i = 0; i < l; i++) cin >> as[i];
+    for (int i = 0; i < SZ; i++) cin >> fs[i];
+    cin >> m;
+    bs.resize(m);
+    for (int i = 0; i < m; i++) cin >> bs[i];
+    for (int i = 0; i < SZ; i++) cin >> gs[i];
+    // prepare subarray grids
+    fill_grids();
+    // run algorithm
+    fill_best();
+    // output
+    for (auto bst : best) cout << bst << endl;
+
+    return 0;
+}
+
+{% endhighlight %}
+
+Der erste Schritt besteht darin, die Funktionsweise der "Zufalls"-Sequenzen zu verstehen. Wir bekommen unsere Einträge \\( s_i = a_{f_i} + b_{g_i} \\) als Summen zweier bestimmter Zahlen aus zwei gegebenen Vektoren (die habe ich passend "as" und "bs" benannt). An welchen Indizes wir die Summanden rausziehen müssen, sagen uns die beiden Folgen 
+
+$$
+\left( f_i \right)_{0\leq i < N^2} \quad \text{und} \quad \left( g_j \right)_{0 \leq j < N^2}
+$$
+
+die beide eine Fibonacci-artige Rekursionsrelation der Ordnung 5 erfüllen (die ersten nötigen Folgenglieder werden ebenfalls gegeben). 
+
+In einer Funktion fill_rows() rechnen wir diese Folgenglieder Schritt für Schritt aus, berechnen sofort \\( s_i \\) und schreiben diesen Eintrag an die richtige Stelle ins Grid. Wenn wir damit fertig sind, schreiben wir alle Subarrays, die wir im Folgenden betrachten müssen in die dafür vorgesehenen Strukturen. Ich lasse fill_cols() und Teile der anderen Funktionen mal weg, das kann man sich überlegen (auch wenn das mit den Indizes teilweise recht fummelig ist). Ich empfehle, die Richtigkeit mit dem Beispiel-Input von HackerRank zu debuggen. 
+
+{% highlight c++ %}
+
+//-------------------------- Helper functions (lagged fibonacci) -----------------------------
+
+void fill_rows() {
+    rows.resize(N);
+    for (int i = 0; i < N; i++) rows[i].resize(N);
+
+    ll actual_f = 0, actual_g = 0;
+    for (int i = 0; i < SZ; i++) {
+        actual_f += fs[i];
+        actual_g += gs[i];
+        if (i < N * N) // add entry to rows
+            rows[i / N][i % N] = as[fs[i]] + bs[gs[i]];
+    }
+    actual_f %= l;
+    actual_g %= m;
+    for (int i = 5; i < N * N; i++) {
+        // add entry to rows
+        rows[i / N][i % N] = as[actual_f] + bs[actual_g];
+        int idx = i % 5;
+        // subtract entry at i - 5 from actual
+        ll tmp_f = (actual_f + (l - fs[idx])) % l;
+        ll tmp_g = (actual_g + (m - gs[idx])) % m;
+        // update array entry
+        fs[idx] = actual_f;
+        gs[idx] = actual_g;
+        // calculate next values
+        actual_f += tmp_f;
+        actual_f %= l;
+        actual_g += tmp_g;
+        actual_g %= m;
+    }
+}
+
+void fill_cols() {
+    cols.resize(N);
+    ...
+}
+
+void fill_diags() {
+    // get main diagonal
+    main_diag.resize(N);
+    for (int i = 0; i < N; i++) main_diag[i] = rows[i][i];
+    // diagonals along top edge of the grid
+    // diags_right[0] is empty, then diags_right[i] starts at rows[0][i]
+    diags_right.resize(N);
+    for (int i = 1; i < N; i++) {
+        diags_right[i].resize(N - i);
+        for (int j = 0; j < N - i; j++)
+            diags_right[i][j] = rows[j][j + i];
+    }
+    // diagonals along left edge of the grid
+    // diags_down[0] is empty, then diags_down[i] starts at rows[i][0]
+    diags_down.resize(N);
+    ...
+}
+
+void fill_antidiags() {
+    antidiags.resize(2*N - 1);
+    for (int i = 0; i < 2*N - 1; i++) {
+        // main antidiagonal will be at index N - 1
+        int dist_to_main = N - 1 - i;
+        if (dist_to_main < 0) dist_to_main *= -1;
+        antidiags[i].resize(N - dist_to_main);
+    }
+    for (int i = 0; i <= N - 1; i++) {
+        for (int j = 0; j < (int)antidiags[i].size(); j++) {
+            ...
+        }
+    }
+    for (int i = N; i < 2*N - 1; i++) {
+        for (int j = 0; j < (int)antidiags[i].size(); j++) {
+            ...
+        }
+    }
+}
+
+void fill_grids() {
+    fill_rows();
+    fill_cols();
+    fill_diags();
+    fill_antidiags();
+}
+
+{% endhighlight %}
+
+Damit ist der erste Teil erledigt und wir kommen zum Kernstück, dem Auffinden der maximal subarray sum für alle quadratischen Untergrids, die von links oben nach rechts unten wachsen sollen. Klar ist, dass wir einen Algorithmus finden müssen, der in \\( \mathcal{O}(N^2) \\) läuft, sonst drohen TLE's. Beim Durchlaufen der ganzen Subarrays müssen wir also immer um ein Element (bei den Antidiagonalen sogar um zwei Elemente) erweitern und dann den passenden Eintrag in "best" aktualisieren. 
+
+In der Aufgabe [Subarray Sum Queries II][cses-problem] auf CSES ging es darum, in einem gegebenen Array (mit bis zu \\( 2\cdot 10^5 \\) Einträgen) in kürzester Zeit sehr viele Queries bezüglich der maximal subarray sum in sich ständig ändernden Indexintervallen zu beantworten. Ein kleiner Unterschied bestand darin, dass dort der "leere" subarray erlaubt war, d.h. die Antwort war immer mindestens null. 
+
+Das struct "Sub" (Abkürzung für Subarray) habe ich komplett von dort übernommen. Interessant ist hier vor allem, wie man die Lösung bei der Vereinigung von zwei Subs findet und welche Kenngrößen man dazu "mitführen" muss. Dies bewerkstelligt die merge()-Funktion (die wir in dieser Allgemeinheit hier gar nicht benötigen, weil wir immer nur einzelne Elemente reinmergen, wir schießen also ein bißchen mit Kanonen auf Spatzen, aber das passt schon):
+
+{% highlight c++ %}
+
+//---------------------------------- Helper structs -------------------------------------------
+
+// taken from CSES - Subarray Sum Queries II
+struct Sub { // bulk sum, prefix, suffix and result
+    ll blk, pre, suf, res;
+};
+
+inline Sub make_sub(ll v) {
+    return {v, v, v, v};
+}
+// this is the decisive function to merge two subarrays
+// in this problem we only need it to merge single elements from left or right
+inline Sub merge(const Sub& L, const Sub& R) {
+    Sub res;
+    res.blk  = L.blk + R.blk;
+    res.pre = max(L.pre, L.blk + R.pre);
+    res.suf = max(R.suf, R.blk + L.suf);
+    res.res = max(max(L.res, R.res), L.suf + R.pre);
+    return res;
+}
+
+{% endhighlight %}
+
+So, dann fangen wir doch mal mit etwas Einfachem an. Nehmen wir mal die Hauptdiagonale des Grids. Starten wir mit dem ersten Element und updaten best[0] mit dem result des Subs. Dann mergen wir das zweite Element in das Sub und updaten als nächstes best[1] und immer so weiter. Das sieht dann so aus:
+
+{% highlight c++ %}
+
+//-------------------------- Helper functions (update best values) ---------------------------
+
+// let's begin with something easy
+void update_with_main_diag() {
+    Sub actual = {0, MIN_INF, MIN_INF, MIN_INF};
+    for (int i = 0; i < N; i++) {
+        actual = merge(actual, make_sub(main_diag[i]));
+        best[i] = max(best[i], actual.res);
+    }
+}
+
+{% endhighlight %}
+
+Da das updaten bei den beiden Grids rows und cols absolut gleich abläuft, schreiben wir eine Funktion update_with_grid(). Jetzt muss man schon ein wenig aufpassen, dass man erst anfängt best zu aktualisieren, wenn die entsprechende Zeile oder Spalte "ins Visier" des zugehörigen Quadrats kommt. Hier die Funktion dazu: 
+
+{% highlight c++ %}
+
+// symmetric for rows and cols
+void update_with_grid(const vector<vll>& grid) {
+    for (int i = 0; i < N; i++) {
+        Sub actual = {0, MIN_INF, MIN_INF, MIN_INF};
+        for (int j = 0; j < N; j++) {
+            actual = merge(actual, make_sub(grid[i][j]));
+            // only comes into play for j >= i
+            if (j >= i) best[j] = max(best[j], actual.res);
+        }
+    }
+}
+
+{% endhighlight %}
+
+Wie man mit den Diagonalen updatet, kann man sich selbst überlegen. Am Härtesten ist das Updaten mit den Antidiagonalen. Man muss (abhängig von der Parität der Mächtigkeit der Antidiagonale) in die Mitte springen, dann vorne ein Element und hinten ein Element reinmergen und schlußendlich best an der richtigen Stelle aktualisieren. Das ist gar nicht so einfach, weil ab dem Index \\( N - 1 \\) die Mächtigkeit der Antidiagonalen wieder abnimmt und man daher verschiedene Variablen für die "Mitte" und den Index, an dem man updatet einführen muss. Hier habe ich recht lange schrauben müssen, bis es so lief wie ich wollte. Ein Out-of-Bounds-Zugriff (mit entsprechenden Riesenzahlen im Output) brachte mich dann auf den Bug, den ich eingebaut hatte, weil ich partout alle Antidiagonalen am Stück abarbeiten wollte. 
+
+Ferner muss man bei den Antidiagonalen darauf achten, dass die "höheren" best-Einträge ebenfalls aktualisiert werden müssen, wenn die Antidiagonale komplett "voll" ist (das hatte ich bereits von Anfang an berücksichtigt, so schlau war ich immerhin).
+
+Hier die nötigen restlichen Funktionen (mit Auslassungen, aber ausführlichen Anmerkungen):
+
+{% highlight c++ %}
+
+// symmetric for right/down, so use the same function
+void update_with_diags(const vector<vll>& diags) {
+    // diags only filled from i = 1 to N - 1
+    ...
+    }
+}
+
+// this is the hardest task
+void update_with_antidiags() {
+    // first and last entries are not interesting (only one element -> done in rows)
+    // first case: even number of entries
+    for (int i = 1; i < 2*N - 2; i += 2) {
+        // mid = (i+1)/2 is correct for best[] indexing
+        // but element access must start at the actual array center instead
+        // because for antidiags past the main diagonal size/2 != (i + 1)/2
+        int mid = (i + 1) / 2;
+        int above_mid = (int)antidiags[i].size() / 2;  // actual array center
+        int below_mid = above_mid - 1;
+        Sub actual = {0, MIN_INF, MIN_INF, MIN_INF};
+        for (int j = 0; j < mid; j++) {
+            // antidiagonals get shorter from main antidiagonal on
+            if (above_mid >= (int)antidiags[i].size()) break;
+            // merge correctly from left and right
+            Sub rgt = ...
+            Sub lft = ...
+            actual = ...
+            actual = ...
+            best[mid + j] = ...
+
+            above_mid++;
+            below_mid--;
+        }
+        // get all higher best entries also actualized with this antidiagonal Sub sum
+        if (i < N - 1) {
+            for (int k = i + 1; k < N; k++) best[k] = max(best[k], actual.res);
+        }
+    }
+    // second case: odd number of entries
+    for (int i = 2; i < 2*N - 2; i += 2) {
+        // mid = i/2 is correct for best[] indexing
+        // but again element access must start at the actual array center
+        int mid = i / 2;
+        int center = (int)antidiags[i].size() / 2;
+        // start with center element and update
+        Sub actual = ...
+        best[mid] = ...
+        // now go from center in both directions
+        for (int diff = 1; diff <= mid; diff++) {
+            int above_mid = center + diff;
+            // antidiagonals get shorter
+            if (above_mid >= (int)antidiags[i].size()) break;
+            int below_mid = center - diff;
+            Sub rgt = ...
+            Sub lft = ...
+            actual = ...
+            actual = ...
+            best[mid + diff] = ...
+        }
+        if (i < N - 1) {
+            for (int k = i + 1; k < N; k++) best[k] = max(best[k], actual.res);
+        }
+    }
+}
+
+// all in one
+void fill_best() {
+    // prepare
+    best.resize(N);
+    fill(best.begin(), best.end(), MIN_INF);
+    // update
+    update_with_grid(rows);
+    update_with_grid(cols);
+    update_with_main_diag();
+    update_with_diags(diags_right);
+    update_with_diags(diags_down);
+    update_with_antidiags();
+}
+
+{% endhighlight %}
+
+Das war schon ganz schön aufwendig. Der gesamte Code belief sich auf fast 300 Zeilen, was selten ist (außer ich gebrauche das bigint-struct). Aber da man die Aufgabe wieder so schön strukturieren konnte und eins nach dem Anderen "zusammenbasteln, dann nachschauen, ob's funktioniert, dann weiterbasteln ..." konnte, fiel mir das gar nicht auf. Hat aber schon zwei Tage gedauert, bis es die jetzige Form annahm. 
+
+Ich empfehle, den Beispiel-Input auch fürs Debuggen der einzelnen update-Funktionen herzunehmen. Jedesmal, wenn ich eine geschrieben hatte, habe ich alle anderen updates in fill_best() auskommentiert und dann verglichen, ob mein Output das liefert, was man im Kopf oder von Hand nachrechnen kann. Alle Probleme traten schon bei diesem "klein" dimensionierten Beispiel auf und ließen sich leicht diagnostizieren (sofern man sich die Mühe macht, ein paar Debugging-Templates zu schreiben oder aus anderen Aufgaben zu kopieren, um Vektoren und Grids auf cerr auszugeben). Viel Spaß beim (Fertig-)Lösen!
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler149/problem
+[original]: https://projecteuler.net/problem=149
+[forum]: https://projecteuler.net/thread=149
+[cses]: https://cses.fi
+[cses-problem]: https://cses.fi/problemset/task/3226
