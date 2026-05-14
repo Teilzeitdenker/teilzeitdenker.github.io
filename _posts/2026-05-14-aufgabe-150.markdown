@@ -1,0 +1,159 @@
+---
+layout: post
+title:  "Project Euler+ #150: Searching a triangular array for a sub-triangle having minimum-sum"
+date:   2026-05-14
+categories: project-euler
+---
+
+Ein Happen für zwischendurch, nicht mehr und nicht weniger. Der einzige Unterschied zwischen [Original][original] und [HackerRank-Version][problem] bestand in einer zusätzlichen Variable \\( K \\), die angab, wie viele der minimalen Dreieckssummen am Ende ausgegeben werden müssen. Mit einer priority queue konnte man das leicht bewerkstelligen. 
+
+Der Grund, dass HackerRank hier keine weiteren Schwierigkeiten einbauen konnte, lag wahrscheinlich darin, dass der einzige funktionierende Algorithmus die Zeitkomplexität \\( \mathcal{O}(N^3) \\) hat, wenn \\( N \\) die Anzahl der Zeilen des Dreiecks ist. Denn man muss eben alle Dreiecke durchgehen, es hilft alles nichts, und da gibt es insgesamt 
+
+$$
+T(N) = \frac{1}{6}N(N + 1)(N + 2) \propto N^3
+$$
+
+Stück, da beißt die Maus kein Faden ab. Daher war das maximale \\( N \\) hier auch auf schlappe 350 begrenzt, ganz untypisch für HackerRank, dass sogar das Original mit seinen 1000 Zeilen größer war.
+
+Was wir allerdings tun können, ist, statt der eigentlichen Einträge \\( s_{r1}, s_{r2}, \dots, s_{rr} \\) in der Zeile \\( r \\) gleich die Präfixsummen bis zur Spalte \\( c \\), also \\( P_r(c) = \sum_{i = 1}^c x_{ri} \\) zu speichern. So kann man sich viele Additionen sparen, denn Summen über beliebig große Teilintervalle werden damit zu einer einfachen Differenz: 
+
+$$
+\sum_{i = c_1}^{c_2} x_{ri} = P_r(c_2) - P_r(c_1 - 1)
+$$
+
+Die Vorgehensweise ist also klar:
+1. Initialisiere eine priority queue mit \\( K \\) "viel zu großen" Werten. Die Funktion q.top() spuckt immer den größten Wert in der queue aus.
+2. Gehe die Einträge des Dreiecks der Reihe nach durch. Lasse ausgehend von jedem Eintrag Zeile für Zeile alle Unterdreiecke mit ihm an der "Spitze" entstehen. 
+3. Rechne für jedes Unterdreieck mit Hilfe der Präfixsummen seine Summe aus und schaue in der queue nach, ob sie kleiner als q.top() ist. Wenn ja, poppe das top und pushe die neue Summe rein (klingt schon merkwürdig, wenn man so spricht).
+4. Zum Schluß haben wir garantiert die \\( K \\) kleinsten Summen in der queue (gottseidank gilt für alle test cases, dass \\( K \leq T(N) \\) ist) und müssen diese nur noch sortieren. Aber das übernimmt die queue ja automatisch, das heißt wir können einen Vektor von hinten nach vorne immer mit dem nächsten top befüllen und er wird danach automatisch aufsteigend sortiert sein.
+
+Das Endergebnis sieht dann so aus (ich lasse Teile der Funktion fill_q() mal aus, das sind die Schritte 2 und 3 oben):
+
+{% highlight c++ %}
+
+typedef long long ll;
+typedef vector<ll> vll;
+
+//---------------------------------- GLOBAL variables ---------------------------------------
+
+constexpr ll INF = 1'000'000'000; // for preparing the queue
+int N, K;
+vector<vll> row_sums;
+priority_queue<ll> q;
+vll results;
+
+//---------------------------------- Helper functions ---------------------------------------
+
+void prepare_q() {
+    int times = K;
+    while (times--) q.push(INF);
+}
+
+static inline ll get_sum(int r, int from, int to) {
+    return row_sums[r][to] - row_sums[r][from - 1];
+}
+
+static inline void try_push(ll val) {
+    if (q.top() > val) { q.pop(); q.push(val); }
+}
+
+void fill_q() {
+    // go through all entries
+    for (int r = 1; r <= N; r++) {
+        for (int c = 1; c <= r; c++) {
+            ll sum = get_sum(r, c, c); // element of original triangle
+            try_push(sum); // subtriangle with 1 element is allowed
+            // grow subtriangle row by row, update sum and try to push
+            for (int step = 1; ...) { 
+                ...
+            }
+        }
+    }
+}
+
+void sort_results() { // use max heap property for sorting
+    results.resize(K);
+    for (int i = K - 1; i >= 0; i--) {
+        results[i] = q.top();
+        q.pop();
+    }
+}
+
+//---------------------------------- Main function --------------------------------------------
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    cin >> N; cin >> K;
+    row_sums.resize(N + 1); // rows and columns 1-indexed
+    for (int i = 1; i <= N; i++) {
+        row_sums[i].resize(i + 1);
+        // zero-padding in front of every row makes get_sum() work without extra cases
+        row_sums[i][0] = 0; 
+        for (int j = 1; j <= i; j++) {
+            int nxt; cin >> nxt;
+            row_sums[i][j] = (ll)nxt;
+            row_sums[i][j] += row_sums[i][j - 1];
+        }
+    }
+
+    prepare_q();
+    fill_q();
+    sort_results();
+    for (auto res : results) cout << res << endl;
+
+    return 0;
+}
+
+{% endhighlight %}
+
+Toll fand ich, dass dieses Programm das ursprüngliche Problem mit den 1000 Zeilen und \\( K = 1 \\) in unter einer Sekunde lösen kann. Man muss nur vorher den *linear congruential generator* nachbauen, um ein zu HackerRank passendes Input-File zu erstellen. Kompiliere dazu folgendes Programm und pipe seine Ausführung in ein "original_input.txt"-File:
+
+{% highlight c++ %}
+
+// "original_input_gen.cpp"
+
+// extra code to get the original triangle of the Project Euler version
+// use this to generate input that the HackerRank version can read
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef vector<ll> vll;
+
+int main() {
+    int N = 1000;
+    int K = 1;
+    cout << N << " " << K << endl;
+    vll seq;
+    seq.resize(N*(N + 1)/2);
+    // linear congruential generator
+    ll t = 0;
+    for (int k = 0; k < (int)seq.size(); k++) {
+        t = (615949*t + 797807) % (1 << 20);
+        seq[k] = t - (1 << 19);
+    }
+    // output seq in rows
+    int idx = 0;
+    for (int row = 1; row <= N; row++) {
+        int times = row;
+        while (times--) {
+            cout << seq[idx] << " ";
+            idx++;
+        }
+        cout << endl;
+    }
+    return 0;
+}
+
+{% endhighlight %}
+
+Um einen Vergleich zu haben, grub ich mein 5 Jahre altes Python-Script aus, um es wieder zum Laufen zu bringen. Das hat sage und schreibe 55 Sekunden gebraucht, obwohl der Algorithmus genau derselbe war. Interpretierte Sprache eben, aber ich würde niemals lästern. 
+
+Jede Sprache hat ihre Existenzberechtigung! We love you all! Im Zweifelsfall: Delegiere einfach alles, was sie nicht gut kann (und wofür sie ja meistens auch nicht designt wurde) an entsprechende libraries (es kommt also auf das *Ökosystem* der Sprache an). Und da ist Python eben fast unschlagbar, sonst wäre es ja nicht erste Wahl, wenn es z.B. um das Gebiet der AI/ML-Anwendungen geht, das ja nicht gerade als besonders "ressourcenschonend" bekannt ist. 
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler150/problem
+[original]: https://projecteuler.net/problem=150
+[forum]: https://projecteuler.net/thread=150

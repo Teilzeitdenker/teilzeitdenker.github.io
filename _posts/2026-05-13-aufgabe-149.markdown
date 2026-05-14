@@ -7,7 +7,11 @@ categories: project-euler
 
 Im Gegensatz zur letzten Aufgabe hat die Bastelei (auch wenn sie teilweise etwas langatmig war) hier wieder richtig Spaß gemacht! Allerdings hatte ich auf [CSES][cses] gerade "neulich" (als ich vor ein paar Monaten das letzte Mal daran gearbeitet habe) eine recht ähnlich wirkende Aufgabe gelöst und wusste recht schnell wie ich ansetzen kann. Also rein ins Vergnügen! 
 
-Bevor man hier loslegen konnte, musste man sich erstmal mit der "lagged Fibonacci random sequence" herumschlagen, um das quadratische Gitter überhaupt mit den richtigen Einträgen zu füllen. Schon ein wenig nervig, aber irgendwie auch lustig. Lesen wir doch mal die Inputs ein und schauen uns die Struktur einer möglichen Lösung in der main()-Routine an: 
+Bevor man hier loslegen konnte, musste man sich erstmal mit der Erzeugung der Pseudozufallszahlen herumschlagen, um das quadratische Gitter überhaupt mit den richtigen Einträgen zu füllen. Dazu muss man sagen. dass die [HackerRank-Version][problem] hier eine völlig andere Herangehensweise an den Tag legte als das [Original][original]. Der Zusammenhang zwischen den beiden Herangehensweisen blieb im Dunkeln (zumindest habe ich keinen gesehen), um also mit dem neuen Programm das Original zu lösen (z.B. um seine Funktionalität zu überprüfen), hätte man nochmal eine Extra-Funktion schreiben müssen, die die "lagged Fibonacci sequence" von dort reproduziert. 
+
+Das habe ich mir gespart, denn meine alte Python-Lösung verwendete einen Generator dafür und immer, wenn ich solch schönen Code mit "yield" lese, fange ich nur wieder an rumzuheulen, weshalb es in C++ nur mit **erheblichem** Aufwand möglich ist, solche Generatoren mit "#include <coroutine>" und dann "co_yield" und "co_return" zu schreiben. Ich hatte das bei Aufgabe 75 mal für primitive pythagoräische Tripel gemacht und es war kein Spaß!
+
+Also lesen wir doch mal die HackerRank-Inputs ein und schauen uns die Struktur einer möglichen Lösung in der main()-Routine an: 
 
 {% highlight c++ %}
 
