@@ -15,7 +15,7 @@ $$
 
 Stück, da beißt die Maus kein Faden ab. Daher war das maximale \\( N \\) hier auch auf schlappe 350 begrenzt, ganz untypisch für HackerRank, dass sogar das Original mit seinen 1000 Zeilen größer war.
 
-Was wir allerdings tun können, ist, statt der eigentlichen Einträge \\( s_{r1}, s_{r2}, \dots, s_{rr} \\) in der Zeile \\( r \\) gleich die Präfixsummen bis zur Spalte \\( c \\), also \\( P_r(c) = \sum_{i = 1}^c x_{ri} \\) zu speichern. So kann man sich viele Additionen sparen, denn Summen über beliebig große Teilintervalle werden damit zu einer einfachen Differenz: 
+Was wir allerdings tun können, ist, statt der eigentlichen Einträge \\( x_{r1}, x_{r2}, \dots, x_{rr} \\) in der Zeile \\( r \\) gleich die Präfixsummen bis zur Spalte \\( c \\), also \\( P_r(c) = \sum_{i = 1}^c x_{ri} \\) zu speichern. So kann man sich viele Additionen sparen, denn Summen über beliebig große Teilintervalle werden damit zu einer einfachen Differenz: 
 
 $$
 \sum_{i = c_1}^{c_2} x_{ri} = P_r(c_2) - P_r(c_1 - 1)

@@ -1,0 +1,106 @@
+---
+layout: post
+title:  "Project Euler+ #151: Paper sheets of standard sizes: an expected-value problem"
+date:   2026-05-18
+categories: project-euler
+---
+
+Eine sehr angenehme Aufgabe. Man musste nur seine Zwischenergebnisse für die Erwartungswerte in einer Map "evals" speichern, um nicht für bereits berechnete Zustände wieder in die Rekursion zu gehen. 
+
+Fangen wir mal damit an, die augenblickliche Anzahl unserer ganzen A1- bis A8-Blätter in einem Array "State" zu speichern (der große Vorteil ist, dass C++ diese Arrays automatisch lexikographisch ordnet, so dass wir beim Output nichts sortieren müssen). 
+
+Abhängig von \\( N \\) sollen immer genau die hintersten \\( N \\) Stellen im Array den Zustand angeben (d.h. der \\( (8 - N) \\)-te Eintrag steht für die Anzahl der A1-Blätter). 
+Um die Brüche für die Wahrscheinlichkeiten modulo \\( 10^9 + 7 \\) darzustellen, müssen wir zusätzlich noch modulare Inverse berechnen. Dazu adaptieren wir einfach die entsprechenden Funktionen aus Aufgabe 131 (und fügen zum Zeitsparen eine Map "invs" ein, um auch hier überflüssige Doppelberechnungen zu vermeiden). 
+
+Hier die nötigen Vorbereitungen bis auf die entscheidende solve()-Funktion: 
+
+{% highlight c++ %}
+
+typedef unsigned long long ull;
+typedef __int128 int128; // used in mod_exp()
+// state of sheets fits in 8-array
+constexpr int N_MAX = 8;
+typedef array<ull, N_MAX> State;
+constexpr ull MOD = 1'000'000'007;
+
+//---------------------------------- GLOBAL variables -------------------------------------------
+
+int N;
+// memoization for expected values and modular inverses
+map<ull, ull> invs;
+map<State, ull> evals; 
+
+//---------------------------------- HELPER functions -------------------------------------------
+
+void print_state(State s) { // prints relevant N parts of the state
+    for (int i = N_MAX - N; i < N_MAX; i++) {
+        cout << s[i];
+        if (i < N_MAX - 1) cout << " ";
+    }
+}
+
+// mod_exp() and mod_inv() adapted from problem 131  (use memoization in invs)
+ull mod_exp(const ull& base, ull exp) { ... }
+
+ull mod_inv(const ull& a) { ... }
+    auto it = invs.find(a);
+    if (it != invs.end()) return (it -> second);
+    // memoize
+    return invs[a] = ...
+}
+
+//----------------------------------- MAIN function ---------------------------------------------
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    cin >> N;
+    // starting state (one A1 sheet)
+    State start{};
+    start[N_MAX - N] = 1;
+    // fill evals, then print with state keys lexicographically ordered
+    solve(st);
+    for (const auto& [k, v] : evals) {
+        print_state(k);
+        cout << ": " << v << endl;
+    }
+
+    return 0;
+}
+
+{% endhighlight %}
+
+Fehlt also nur noch, dass wir ausgehend vom Startzustand mit genau einem A1-Blatt die Map "evals" füllen. Das ist aber nicht allzu schwierig. Wollen wir den Erwartungswert für einen beliebigen Zustand \\( s \\) berechnen, so sehen wir erstmal nach, ob \\( s \\) selbst die Bedingung erfüllt, dass genau **ein** Blatt im Umschlag liegt (die Anzahl an Blättern lässt sich ganz elegant mit "accumulate" berechnen). Je nachdem, starten wir mit einem Erwartungswert von 1 oder 0. Jetzt ziehen wir zufällig ein Blatt aus dem Umschlag (gehen also die einzelnen Elemente des Zustands durch), vollführen für dieses unsere "cut-in-half"-Prozedur (berechnen also den nächsten Zustand) und addieren dann den Erwartungswert für den nächsten Zustand (unter Beachtung eines Vorfaktors, der die WSK dafür angibt, dass wir überhaupt genau **dieses** Blatt aus dem Umschlag gezogen haben). Hier der Code mit Auslassungen:
+
+{% highlight c++ %}
+
+ull solve(const State s) {
+    auto it = evals.find(s);
+    if (it != evals.end())  return (it -> second);
+
+    ull sheets = accumulate(s.begin(), s.end(), 0ULL);
+    ull res = (sheets == 1);
+    for (int i = N_MAX - N; i < N_MAX; i++) {
+        if (s[i] == 0) continue;
+        // cut-in-half procedure to get next state
+        auto nxt = s;
+        ...
+        // probability to choose one of the sheets in i-th entry 
+        // use mod_inv() here and take % MOD
+        ull prob = ...
+        // update resulting probability
+        res += solve(nxt) * prob;
+        res %= MOD;
+    }
+    // memoize
+    return evals[s] = res;
+}
+
+{% endhighlight %}
+
+Sehr seltsam, dass die Anzahl von Lösern hier wieder so drastisch auf nur 53 Leute innerhalb von 10 Jahren abgenommen hat. Bei der letzten Aufgabe waren es über 700 Löser gewesen und ich fand die beiden Aufgaben vom Schwierigkeitsgrad her sehr ähnlich. Das Programm war hier sogar um einiges kürzer (aber das heißt natürlich nicht viel, wenn man die Theorie, die hinter den wenigen Zeilen steckt, nicht versteht)!
+
+[problem]: https://www.hackerrank.com/contests/projecteuler/challenges/euler151/problem
+[original]: https://projecteuler.net/problem=151
+[forum]: https://projecteuler.net/thread=151
