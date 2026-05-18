@@ -5,7 +5,7 @@ date:   2026-05-18
 categories: project-euler
 ---
 
-Eine sehr angenehme Aufgabe. Man musste nur seine Zwischenergebnisse für die Erwartungswerte in einer Map "evals" speichern, um nicht für bereits berechnete Zustände wieder in die Rekursion zu gehen. 
+Eine sehr angenehme [Aufgabe][problem]. Man musste nur seine Zwischenergebnisse für die Erwartungswerte in einer Map "evals" speichern, um nicht für bereits berechnete Zustände wieder in die Rekursion zu gehen. Der einzige Unterschied zum [Original][original] bestand eigentlich darin, dass statt A5 hier bis zu A8 gerechnet werden musste (und die Erwartungswerte als ganze Zahlen modulo \\( 10^9 + 7 \\) ausgegeben werden mussten).
 
 Fangen wir mal damit an, die augenblickliche Anzahl unserer ganzen A1- bis A8-Blätter in einem Array "State" zu speichern (der große Vorteil ist, dass C++ diese Arrays automatisch lexikographisch ordnet, so dass wir beim Output nichts sortieren müssen). 
 
@@ -71,7 +71,7 @@ int main() {
 
 {% endhighlight %}
 
-Fehlt also nur noch, dass wir ausgehend vom Startzustand mit genau einem A1-Blatt die Map "evals" füllen. Das ist aber nicht allzu schwierig. Wollen wir den Erwartungswert für einen beliebigen Zustand \\( s \\) berechnen, so sehen wir erstmal nach, ob \\( s \\) selbst die Bedingung erfüllt, dass genau **ein** Blatt im Umschlag liegt (die Anzahl an Blättern lässt sich ganz elegant mit "accumulate" berechnen). Je nachdem, starten wir mit einem Erwartungswert von 1 oder 0. Jetzt ziehen wir zufällig ein Blatt aus dem Umschlag (gehen also die einzelnen Elemente des Zustands durch), vollführen für dieses unsere "cut-in-half"-Prozedur (berechnen also den nächsten Zustand) und addieren dann den Erwartungswert für den nächsten Zustand (unter Beachtung eines Vorfaktors, der die WSK dafür angibt, dass wir überhaupt genau **dieses** Blatt aus dem Umschlag gezogen haben). Hier der Code mit Auslassungen:
+Fehlt also nur noch, dass wir ausgehend vom Startzustand mit genau einem A1-Blatt die Map "evals" füllen. Das ist aber nicht allzu schwierig. Wollen wir den Erwartungswert für einen beliebigen Zustand \\( s \\) berechnen, so sehen wir erstmal nach, ob \\( s \\) selbst die Bedingung erfüllt, dass genau **ein** Blatt im Umschlag liegt (die Anzahl an Blättern lässt sich ganz elegant mit "accumulate" berechnen). Je nachdem, starten wir mit einem Erwartungswert von 1 oder 0. Jetzt ziehen wir zufällig ein Blatt aus dem Umschlag (gehen also die einzelnen Elemente des Zustands durch), vollführen für dieses unsere "cut-in-half"-Prozedur (berechnen also den nächsten Zustand) und addieren dann den rekursiven Erwartungswert (unter Beachtung eines Vorfaktors, der die WSK dafür angibt, dass wir überhaupt ein Blatt **dieser** Größe aus dem Umschlag gezogen haben). Hier der Code mit Auslassungen:
 
 {% highlight c++ %}
 
@@ -98,6 +98,8 @@ ull solve(const State s) {
 }
 
 {% endhighlight %}
+
+Die Antwort für die ursprüngliche Projekt-Euler-Aufgabe lautet in diesem Zusammenhang exakt 723280538. Und damit spoilere ich gar nichts, denn das ist ja modulo \\( 10^9 + 7 \\) gerechnet, schon witzig, wie die Leute von HackerRank das wieder gemacht haben. So vermeidet man natürlich geschickt den obligatorischen overflow bei \\( N > 5 \\). 
 
 Sehr seltsam, dass die Anzahl von Lösern hier wieder so drastisch auf nur 53 Leute innerhalb von 10 Jahren abgenommen hat. Bei der letzten Aufgabe waren es über 700 Löser gewesen und ich fand die beiden Aufgaben vom Schwierigkeitsgrad her sehr ähnlich. Das Programm war hier sogar um einiges kürzer (aber das heißt natürlich nicht viel, wenn man die Theorie, die hinter den wenigen Zeilen steckt, nicht versteht)!
 
